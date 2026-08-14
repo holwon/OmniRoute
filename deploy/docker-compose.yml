@@ -1,0 +1,103 @@
+# ──────────────────────────────────────────────────────────────────────
+#  OmniRoute — Production Docker Compose (pull-based, GHCR)
+# ──────────────────────────────────────────────────────────────────────
+#  Pulls prebuilt images from GitHub Container Registry instead of
+#  building from source. No checkout or build toolchain needed on the
+#  server — just Docker + Compose + this folder.
+#
+#  Usage:
+#    # 1. copy env
+#    cp .env.prod.example .env
+#    # 2. edit .env (secrets, ports, domains)
+#    # 3. start
+#    docker compose up -d
+#    # 4. inspect
+#    docker compose ps
+#    docker compose logs -f
+#    # update to the newest build
+#    docker compose pull
+#    docker compose up -d
+#
+#  Image flavors:
+#    ghcr.io/holwon/omniroute:next      — lean, no browser (most providers)
+#    ghcr.io/holwon/omniroute:next-web  — +Chromium/Playwright (gemini-web,
+#                                         claude-web, claude-turnstile)
+#
+#  Switch between them by editing the `image:` line in the
+#  `omniroute` service below, or set OMNIROUTE_IMAGE in .env.
+# ──────────────────────────────────────────────────────────────────────
+
+services:
+  # ── Redis (rate limiter + shared cache backend) ────────────────────
+  # Loopback-only published port by default: the app reaches Redis over the
+  # compose network (redis:6379); the published port is only for host-side
+  # tooling. Override REDIS_BIND_HOST together with a password if you must
+  # expose it.
+  redis:
+    image: docker.io/library/redis:8.6.5-alpine
+    container_name: omniroute-redis
+    restart: unless-stopped
+    # Redis is a small fixed-size cache/rate-limiter backend; cap it so it
+    # never eats into the OmniRoute budget on low-memory hosts.
+    mem_limit: 128m
+    command: redis-server --save 60 1 --loglevel warning
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    volumes:
+      - redis-data:/data
+    # ports:
+    #   - "${REDIS_BIND_HOST:-127.0.0.1}:${REDIS_PORT:-6379}:6379"
+
+  # ── OmniRoute (main app) ────────────────────────────────────────────
+  # Pick a flavor:
+  #   ghcr.io/holwon/omniroute:next       → lean (recommended default)
+  #   ghcr.io/holwon/omniroute:next-web   → with Chromium/Playwright
+  omniroute:
+    image: ${OMNIROUTE_IMAGE:-ghcr.io/holwon/omniroute:next}
+    container_name: omniroute
+    restart: unless-stopped
+    stop_grace_period: 40s
+    # Hard memory ceiling for this container (OOM-safe). Tune via
+    # OMNIROUTE_MEM_LIMIT in .env. On a 1.5GB host keep the Node heap
+    # (OMNIROUTE_MEMORY_MB) well below this limit (see .env).
+    mem_limit: ${OMNIROUTE_MEM_LIMIT:-1g}
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      # Container internals — do not change unless you know what you're doing
+      NODE_ENV: production
+      PORT: ${PORT:-20128}
+      DASHBOARD_PORT: ${DASHBOARD_PORT:-20128}
+      API_PORT: ${API_PORT:-20129}
+      API_HOST: 0.0.0.0
+      LIVE_WS_PORT: ${LIVE_WS_PORT:-20132}
+      LIVE_WS_HOST: 0.0.0.0
+      HOSTNAME: 0.0.0.0
+      DATA_DIR: /app/data
+      REDIS_URL: redis://redis:6379
+    ports:
+      # dashboard UI
+      - "${DASHBOARD_PORT:-20128}:${DASHBOARD_PORT:-20128}"
+      # OpenAI-compatible API
+      - "${API_PORT:-20129}:${API_PORT:-20129}"
+      # live WebSocket dashboard (optional)
+      - "${LIVE_WS_PORT:-20132}:${LIVE_WS_PORT:-20132}"
+    volumes:
+      - omniroute-data:/app/data
+    healthcheck:
+      test: ["CMD", "node", "healthcheck.mjs"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  omniroute-data:
+    name: omniroute-data
+  redis-data:
+    name: omniroute-redis-data

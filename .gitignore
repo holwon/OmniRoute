@@ -72,6 +72,10 @@ yarn-error.log*
 !.env.example
 !.env.homolog.example
 !.env.devin-bridge.example
+# Deploy template (no real secrets — only the placeholder contract), so the
+# pull-based GHCR deployment template is trackable. The real deploy/.env
+# stays ignored by the .env* rule above.
+!deploy/.env.prod.example
 # Provider API keys (never commit)
 *.api-key
 .nvidia-api-key
