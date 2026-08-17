@@ -5,6 +5,114 @@ const SENSITIVE_CONTENT_REJECTION =
   "抱歉，系统检测到您当前输入的信息存在敏感内容，我无法响应您的请求，请检查后重新输入";
 const LARGE_TOOL_METADATA_BYTES = 64 * 1024;
 
+/**
+ * CodeBuddy CN 网关返回非标准 SSE 流, 会破坏 VS Code Copilot 的 tool-calling 循环.
+ * 参考项目 proxy.js (convertDelta/convertChoice) 揭示的三个非标准行为:
+ *
+ * 1. 每个 delta chunk 都带 `"tool_calls": []` 空数组 (即使不调工具) — 必须删除该字段.
+ * 2. 带 tools 的请求里, 某些 chunk 夹带退化 tool_call (只有 index, name/arguments 为空).
+ *    这种对象若透传给 VS Code, 会产生 name 为空的 tool_calls → VS Code 无法解析 →
+ *    报 `unknown` 并无限重试. 必须过滤掉 name 为空的退化 tool_call.
+ * 3. finish_reason 返回 `""` 空字符串 (非标准). OpenAI 规范中, 进行中的 chunk
+ *    用 `null`, 最后一条用 `"stop"`. 空串在 passthrough 里会被当作"未结束",
+ *    最终由 #7800 合成逻辑补发假的 stop, 行为不稳定. 统一转 `null`.
+ *
+ * 此转换器在 chunk 进入 OmniRoute passthrough 聚合 (stream.ts) 之前清洗原始帧,
+ * 是最早、最干净的拦截点. 借鉴 glm.ts / zed-hosted.ts 的 TransformStream 模式.
+ */
+function createCodeBuddyCnStreamTransform(): TransformStream<Uint8Array, Uint8Array> {
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  const emit = (controller: TransformStreamDefaultController<Uint8Array>, data: string): void => {
+    controller.enqueue(encoder.encode(`data: ${data}\n\n`));
+  };
+
+  const processLine = (
+    line: string,
+    controller: TransformStreamDefaultController<Uint8Array>
+  ): void => {
+    const trimmed = line.trim();
+    if (trimmed === "") return;
+    if (trimmed === "data: [DONE]") {
+      controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+      return;
+    }
+    if (!trimmed.startsWith("data: ")) {
+      // 透传非 data 行 (如注释行、心跳)
+      controller.enqueue(encoder.encode(`${trimmed}\n`));
+      return;
+    }
+
+    const jsonStr = trimmed.slice(6);
+    let parsed: Record<string, unknown>;
+    try {
+      parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+    } catch {
+      // JSON 解析失败, 原样透传
+      controller.enqueue(encoder.encode(`${trimmed}\n\n`));
+      return;
+    }
+
+    const choices = parsed.choices;
+    if (Array.isArray(choices)) {
+      for (const choice of choices) {
+        if (!choice || typeof choice !== "object" || Array.isArray(choice)) continue;
+        const c = choice as Record<string, unknown>;
+        const delta = c.delta as Record<string, unknown> | undefined;
+        if (delta && typeof delta === "object" && !Array.isArray(delta)) {
+          // 1. 过滤空 tool_calls: [] 数组
+          if (Array.isArray(delta.tool_calls) && delta.tool_calls.length === 0) {
+            delete delta.tool_calls;
+          }
+          // 2. 过滤退化 tool_call (name 为空且无累积参数) — 保留有真实 name 的调用
+          if (Array.isArray(delta.tool_calls) && delta.tool_calls.length > 0) {
+            const kept = (delta.tool_calls as Array<Record<string, unknown>>).filter((tc) => {
+              if (!tc || typeof tc !== "object" || Array.isArray(tc)) return false;
+              const fn = tc.function as Record<string, unknown> | undefined;
+              const name = typeof fn?.name === "string" ? fn.name : "";
+              // 保留: 有非空 name, 或仍在累积参数 (arguments 非空说明是真实调用的后续分片)
+              const args = typeof fn?.arguments === "string" ? fn.arguments : "";
+              return name.trim().length > 0 || args.trim().length > 0;
+            });
+            if (kept.length === 0) {
+              delete delta.tool_calls;
+            } else {
+              delta.tool_calls = kept;
+            }
+          }
+        }
+        // 3. 归一 finish_reason: "" → null
+        if (c.finish_reason === "") {
+          c.finish_reason = null;
+        }
+      }
+    }
+
+    emit(controller, JSON.stringify(parsed));
+  };
+
+  return new TransformStream<Uint8Array, Uint8Array>({
+    transform(chunk, controller) {
+      buffer += decoder.decode(chunk, { stream: true });
+      let nl: number;
+      while ((nl = buffer.indexOf("\n")) !== -1) {
+        const line = buffer.slice(0, nl);
+        buffer = buffer.slice(nl + 1);
+        processLine(line, controller);
+      }
+    },
+    flush(controller) {
+      buffer += decoder.decode();
+      if (buffer.trim()) {
+        processLine(buffer, controller);
+      }
+      buffer = "";
+    },
+  });
+}
+
 function responseFromResult(result: ExecutorExecuteResult): Response {
   return result instanceof Response ? result : result.response;
 }
@@ -108,22 +216,52 @@ export class CodeBuddyCnExecutor extends DefaultExecutor {
 
   async execute(input: ExecuteInput): Promise<ExecutorExecuteResult> {
     const result = await super.execute(input);
-    if (!(await isSensitiveContentRejection(responseFromResult(result)))) {
-      return result;
+    const response = responseFromResult(result);
+    if (!(await isSensitiveContentRejection(response))) {
+      return this.wrapStreamIfPresent(result, response);
     }
 
     const compactBody = compactToolDescriptions(input.body);
-    if (!compactBody) return result;
+    if (!compactBody) return this.wrapStreamIfPresent(result, response);
 
     input.log?.debug?.(
       "CODEBUDDY_CN",
       "Upstream rejected an oversized tool request as sensitive content; retrying with compact tool descriptions"
     );
-    return super.execute({
+    const retryResult = await super.execute({
       ...input,
       body: compactBody,
       credentials: credentialsFromResult(result, input.credentials),
     });
+    return this.wrapStreamIfPresent(retryResult, responseFromResult(retryResult));
+  }
+
+  /**
+   * CodeBuddy CN returns non-standard SSE frames (empty `tool_calls: []`, degraded
+   * tool_calls with empty names, and `finish_reason: ""`) that break VS Code
+   * Copilot's tool-calling loop. Wrap the upstream stream with a transform that
+   * scrubs those artifacts before they reach OmniRoute's passthrough aggregator.
+   *
+   * For the bare `Response` arm of `ExecutorExecuteResult` we cannot mutate the
+   * body in place without re-reading it, so we only wrap when we hold the richer
+   * capture object (the normal HTTP-executor path). The bare-Response arm is only
+   * used by non-HTTP executors, which `codebuddy-cn` is not.
+   */
+  private wrapStreamIfPresent(
+    result: ExecutorExecuteResult,
+    response: Response
+  ): ExecutorExecuteResult {
+    if (result instanceof Response) return result;
+    if (!response.body) return result;
+
+    const headers = new Headers(response.headers);
+    headers.delete("content-length");
+    const wrapped = new Response(response.body.pipeThrough(createCodeBuddyCnStreamTransform()), {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+    return { ...result, response: wrapped };
   }
 
   transformRequest(
@@ -149,8 +287,10 @@ export class CodeBuddyCnExecutor extends DefaultExecutor {
     // --- Agent system prompt replacement ---
     // Tencent's content filter flags CLI agent system prompts as sensitive content.
     // Detect and replace them with a neutral prompt.
-    const NEUTRAL_PROMPT = "You are a helpful AI assistant that helps with software engineering tasks.";
-    const AGENT_PATTERN = /you are claude code|claude.?code.+official.+cli|anthropic.+official.+cli|anxthxropic.+official.+cli|you are (?:cursor|windsurf|cline|aider|continue|copilot|cody)|you are an? (?:ai )?(?:coding |code )?agent|cc_entrypoint\s*=\s*(?:cli|vscode|jetbrains|gui)|claude.?code.+issues|give feedback.+claude.?code|you are .{0,30}(?:powerful )?ai agent|orchestration capabilities|OhMyOpenCode|<agent-identity>|<Role>|<Behavior_Instructions>/i;
+    const NEUTRAL_PROMPT =
+      "You are a helpful AI assistant that helps with software engineering tasks.";
+    const AGENT_PATTERN =
+      /you are claude code|claude.?code.+official.+cli|anthropic.+official.+cli|anxthxropic.+official.+cli|you are (?:cursor|windsurf|cline|aider|continue|copilot|cody)|you are an? (?:ai )?(?:coding |code )?agent|cc_entrypoint\s*=\s*(?:cli|vscode|jetbrains|gui)|claude.?code.+issues|give feedback.+claude.?code|you are .{0,30}(?:powerful )?ai agent|orchestration capabilities|OhMyOpenCode|<agent-identity>|<Role>|<Behavior_Instructions>/i;
     const flatten = (content: unknown): string =>
       typeof content === "string"
         ? content
@@ -191,7 +331,13 @@ export class CodeBuddyCnExecutor extends DefaultExecutor {
         if (new TextEncoder().encode(s).byteLength >= 65536) {
           out.tools = (out.tools as Array<Record<string, unknown>>).map((tool) => {
             if (!tool || typeof tool !== "object" || Array.isArray(tool)) return tool;
-            if (tool.type !== "function" || !tool.function || typeof tool.function !== "object" || Array.isArray(tool.function)) return tool;
+            if (
+              tool.type !== "function" ||
+              !tool.function ||
+              typeof tool.function !== "object" ||
+              Array.isArray(tool.function)
+            )
+              return tool;
             if (!Object.prototype.hasOwnProperty.call(tool.function, "description")) return tool;
             const cf = { ...(tool.function as Record<string, unknown>) };
             delete cf.description;
