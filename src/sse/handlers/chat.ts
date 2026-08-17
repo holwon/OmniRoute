@@ -4,6 +4,10 @@ import * as chatAdmission from "./chatAdmission.ts";
 import { buildClientRawRequest, resolveDispatchClientRawRequest } from "./chat/clientRawRequest.ts";
 export { buildClientRawRequest, resolveDispatchClientRawRequest };
 import { normalizeReasoningRequest } from "@/shared/reasoning/effortStandardization";
+import { isDetailedLoggingEnabled } from "@/lib/db/detailedLogs";
+import { resolvePreviousResponseState } from "@/lib/db/responsesContinuationStore";
+import { normalizeResponsesPreviousResponseIdMode } from "@omniroute/open-sse/utils/responsesStatePolicy.ts";
+import { FORMATS } from "@omniroute/open-sse/translator/formats.ts";
 import { resolveRoutingModel, RoutingModelOps } from "./resolveRoutingModel";
 import {
   getProviderCredentialsWithQuotaPreflight,
@@ -62,6 +66,7 @@ import {
   evictSessionAccountAffinityForConnection,
   getSessionAccountAffinity,
 } from "@/lib/db/sessionAccountAffinity";
+import { dispatchChatWithAffinityEviction } from "./chatDispatch";
 import { getCachedSettings, getCombosCacheVersion } from "@/lib/db/readCache";
 import { getCombos } from "@/lib/db/combos";
 import { resolveModelLockoutSettings } from "@/lib/resilience/modelLockoutSettings";
@@ -148,6 +153,7 @@ import {
   registerCodexQuotaFetcher,
 } from "@omniroute/open-sse/services/codexQuotaFetcher.ts";
 import { registerBailianCodingPlanQuotaFetcher } from "@omniroute/open-sse/services/bailianQuotaFetcher.ts";
+import { registerQwenTokenPlanQuotaFetcher } from "@omniroute/open-sse/services/qwenTokenPlanQuotaFetcher.ts";
 import { registerCrofUsageFetcher } from "@omniroute/open-sse/services/crofUsageFetcher.ts";
 import { registerDeepseekQuotaFetcher } from "@omniroute/open-sse/services/deepseekQuotaFetcher.ts";
 import { registerOpenrouterQuotaFetcher } from "@omniroute/open-sse/services/openrouterQuotaFetcher.ts";
@@ -170,6 +176,11 @@ registerCodexQuotaFetcher();
 // This hooks into the quotaPreflight + quotaMonitor systems so that combos
 // can proactively switch accounts before quota is exhausted.
 registerBailianCodingPlanQuotaFetcher();
+
+// Register the Qwen Cloud / Model Studio personal Token Plan fetcher (#9603).
+// Cookie-authenticated console gateway — 5-hour + weekly sliding windows.
+// Runs before registerGenericQuotaFetchers so the bespoke fetcher wins.
+registerQwenTokenPlanQuotaFetcher();
 
 // Register CrofAI usage fetcher (subscription requests + credits balance).
 // Surfaces usable_requests + credits in the monitor and only blocks (preflight
@@ -510,6 +521,66 @@ async function handleChatImplementation(
   const bypassProviderQuotaPolicy = hasProviderQuotaBypassScope(apiKeyInfo?.scopes);
   telemetry.endPhase();
 
+  // OmniRoute-native `previous_response_id` continuation: reconstruct the
+  // full input server-side before ANY downstream validation/translation
+  // sees this request, so everything after this point (message-shape
+  // guards, token-budget checks, provider translation) treats it exactly
+  // like an ordinary full-history request. This works regardless of
+  // whether the eventually-selected upstream provider itself understands
+  // Responses-API state -- OmniRoute always forwards the full reconstructed
+  // history upstream, exactly as it does today for a non-continued request.
+  // Client<->OmniRoute traffic shrinks to the new delta; OmniRoute<->
+  // provider traffic is unchanged. See src/lib/db/responsesContinuationStore.ts.
+  //
+  // Skipped entirely when the operator has set responsesPreviousResponseIdMode
+  // to "preserve": that mode is the explicit, connection-independent contract
+  // for "never touch previous_response_id, let the upstream resolve it
+  // natively" (see applyResponsesPreviousResponseIdPolicy in chatCore.ts,
+  // which enforces it per-target once a connection is selected). Codex's own
+  // executor relies on an untouched previous_response_id to delegate history
+  // resolution upstream (stripOrphanedCodexFunctionCallOutputs in codex.ts);
+  // reconstructing and deleting the field here would make that downstream
+  // "preserve" enforcement a no-op since the field would already be gone.
+  const settingsForContinuation = await getCachedSettings().catch(
+    () => ({}) as Record<string, unknown>
+  );
+  const previousResponseIdMode = normalizeResponsesPreviousResponseIdMode(
+    (settingsForContinuation as { responsesPreviousResponseIdMode?: unknown })
+      .responsesPreviousResponseIdMode
+  );
+  if (
+    previousResponseIdMode !== "preserve" &&
+    sourceFormat === FORMATS.OPENAI_RESPONSES &&
+    typeof (body as { previous_response_id?: unknown }).previous_response_id === "string"
+  ) {
+    const previousResponseId = (body as { previous_response_id: string }).previous_response_id;
+    const detailedLoggingEnabled = await isDetailedLoggingEnabled();
+    const stored = detailedLoggingEnabled
+      ? resolvePreviousResponseState(previousResponseId, apiKeyInfo?.id ?? null)
+      : null;
+    if (!stored) {
+      // Matches OpenAI's own `previous_response_not_found` contract (missing
+      // or expired server-side state) so a client with the matching retry
+      // behavior -- resend the full request, same turn -- recovers exactly
+      // as it would against the real OpenAI backend.
+      return new Response(
+        JSON.stringify({
+          error: {
+            message: "Previous response not found.",
+            type: "invalid_request_error",
+            code: "previous_response_not_found",
+          },
+        }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    const deltaInput = Array.isArray((body as { input?: unknown }).input)
+      ? (body as { input: unknown[] }).input
+      : [];
+    body = { ...body, input: [...stored.input, ...stored.output, ...deltaInput] };
+    delete (body as { previous_response_id?: unknown }).previous_response_id;
+  }
+
   const admissionRejection = await admissionContext.acquire(apiKeyInfo?.id, request, body);
   if (admissionRejection) return admissionRejection;
   clientRawRequest = chatAdmission.resolveClientRawAfterAdmission(clientRawRequest, () =>
@@ -530,6 +601,7 @@ async function handleChatImplementation(
     log,
     method: request.method,
     model: modelStr,
+    signal: request.signal,
     stream: body?.stream === true,
   });
   if (preCallGuardrails.blocked) {
@@ -1528,42 +1600,41 @@ async function handleSingleModelChat(
       const proxyStartTime = Date.now();
       // 4. Execute chat via core after breaker gate checks (with optional TLS tracking)
       if (telemetry) telemetry.startPhase("connect");
-      const dispatchClientRawRequest = resolveDispatchClientRawRequest(
-        clientRawRequest,
-        runtimeOptions.modelAbortSignal
-      );
-      let execution: Awaited<ReturnType<typeof executeChatWithBreaker>>;
+      let execution: Awaited<ReturnType<typeof dispatchChatWithAffinityEviction>>;
       try {
-        execution = await executeChatWithBreaker({
-          bypassCircuitBreaker: forceLiveComboTest || hasForcedConnection,
-          breaker,
-          body: requestBody,
-          provider,
-          model: effectiveModel,
-          refreshedCredentials,
-          proxyInfo,
-          appliedProxySink,
-          log,
-          clientRawRequest: dispatchClientRawRequest,
-          credentials,
-          apiKeyInfo,
-          userAgent,
-          comboName,
-          comboStrategy,
-          isCombo,
-          comboStepId: runtimeOptions.comboStepId ?? null,
-          comboExecutionKey: runtimeOptions.comboExecutionKey ?? runtimeOptions.comboStepId ?? null,
-          extendedContext,
-          modelApiFormat: apiFormat,
-          modelTargetFormat: targetFormat,
-          providerProfile,
-          cachedSettings: runtimeOptions.cachedSettings,
-          skipUpstreamRetry: runtimeOptions.skipUpstreamRetry ?? false,
-          correlationId: runtimeOptions?.correlationId ?? null,
-          modelPinned: runtimeOptions?.modelPinned ?? false,
-          routingComboId: runtimeOptions?.routingComboId ?? null,
-          sessionAffinityKey: runtimeOptions.sessionAffinityKey ?? null,
-        });
+        execution = await dispatchChatWithAffinityEviction(
+          {
+            bypassCircuitBreaker: forceLiveComboTest || hasForcedConnection,
+            breaker,
+            body: requestBody,
+            provider,
+            model: effectiveModel,
+            refreshedCredentials,
+            proxyInfo,
+            appliedProxySink,
+            log,
+            clientRawRequest,
+            credentials,
+            apiKeyInfo,
+            userAgent,
+            comboName,
+            comboStrategy,
+            isCombo,
+            comboStepId: runtimeOptions.comboStepId ?? null,
+            comboExecutionKey: runtimeOptions.comboExecutionKey ?? runtimeOptions.comboStepId ?? null,
+            extendedContext,
+            modelApiFormat: apiFormat,
+            modelTargetFormat: targetFormat,
+            providerProfile,
+            cachedSettings: runtimeOptions.cachedSettings,
+            skipUpstreamRetry: runtimeOptions.skipUpstreamRetry ?? false,
+            correlationId: runtimeOptions?.correlationId ?? null,
+            modelPinned: runtimeOptions?.modelPinned ?? false,
+            routingComboId: runtimeOptions?.routingComboId ?? null,
+            sessionAffinityKey: runtimeOptions.sessionAffinityKey ?? null,
+          },
+          runtimeOptions
+        );
       } catch (error) {
         releaseOAuthSession();
         throw error;

@@ -605,24 +605,41 @@ export class DefaultExecutor extends BaseExecutor {
 
   /**
    * Downgrade `response_format: { type: "json_schema" }` to `json_object` for
-   * `openai-compatible-*` providers, injecting the JSON schema into the system
-   * prompt instead. DeepSeek / Ollama / local OpenAI-compatible models often
-   * lack native Structured Output and return empty or malformed content when a
-   * `json_schema` response_format is forwarded as-is. Gated on the
-   * `openai-compatible-` provider family so providers with native Structured
-   * Output support keep the native `json_schema` path.
+   * `openai-compatible-*` providers AND `kilocode`, injecting the JSON schema
+   * into the system prompt instead. DeepSeek / Ollama / local OpenAI-compatible
+   * models often lack native Structured Output and return empty or malformed
+   * content when a `json_schema` response_format is forwarded as-is (kilocode's
+   * DeepSeek V4 Flash rejects it with HTTP 400 `Invalid input: response_format`,
+   * verified live 2026-08-15 — same class as #9992's opencode fix). Gated so
+   * providers with native Structured Output support keep the native
+   * `json_schema` path.
    */
   applyJsonSchemaFallback<T>(body: T): T {
-    if (!this.provider?.startsWith?.("openai-compatible-")) return body;
+    const provider = this.provider ?? "";
+    const isOpenAiCompatible = provider.startsWith("openai-compatible-");
+    const isKiloCode = provider === "kilocode";
+    if (!isOpenAiCompatible && !isKiloCode) return body;
     if (!body || typeof body !== "object" || Array.isArray(body)) return body;
 
     const record = body as Record<string, unknown>;
     const rf = record.response_format as
-      { type?: string; json_schema?: { schema?: unknown } } | undefined;
-    if (rf?.type !== "json_schema" || !rf.json_schema?.schema) return body;
+      | { type?: string; json_schema?: { schema?: unknown } }
+      | undefined;
+    if (!rf) return body;
 
-    const schemaJson = JSON.stringify(rf.json_schema.schema, null, 2);
-    const prompt = `You must respond with valid JSON that strictly follows this JSON schema:\n\`\`\`json\n${schemaJson}\n\`\`\`\nRespond ONLY with the JSON object, no other text.`;
+    // openai-compatible-* providers accept json_object natively — only the
+    // json_schema form needs downgrading there. kilocode rejects BOTH forms,
+    // so it enters the strip path below regardless.
+    if (isOpenAiCompatible && rf.type === "json_object") return body;
+
+    const schema = rf.type === "json_schema" ? rf.json_schema?.schema : undefined;
+    if (rf.type === "json_schema" && !schema) return body;
+
+    const schemaJson = schema ? JSON.stringify(schema, null, 2) : null;
+    const prompt =
+      schemaJson !== null
+        ? `You must respond with valid JSON that strictly follows this JSON schema:\n\`\`\`json\n${schemaJson}\n\`\`\`\nRespond ONLY with the JSON object, no other text.`
+        : "You must respond with valid JSON only (a single JSON object), no other text.";
 
     const messages: Array<Record<string, unknown>> = Array.isArray(record.messages)
       ? (record.messages as Array<Record<string, unknown>>).map((m) => ({ ...m }))
@@ -638,6 +655,14 @@ export class DefaultExecutor extends BaseExecutor {
       messages.unshift({ role: "system", content: prompt });
     }
 
+    // kilocode's DeepSeek rejects ANY response_format (verified live 2026-08-15:
+    // both json_schema AND json_object 400 with `param: response_format`) — strip
+    // it entirely and rely on the schema prompt. openai-compatible-* providers
+    // accept json_object, so keep the downgrade there.
+    if (isKiloCode) {
+      const { response_format: _dropped, ...rest } = record;
+      return { ...rest, messages } as T;
+    }
     return { ...record, messages, response_format: { type: "json_object" } } as T;
   }
 

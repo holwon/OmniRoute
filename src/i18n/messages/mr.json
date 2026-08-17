@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "मेसेज, टूल कॉल्स आणि प्रतिसादांमधून API की, टोकन्स, प्रायव्हेट की आणि JWTs काढून टाकते.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "मल्टीमोडल सामग्रीला मजकूरात जोडणे, जेणेकरून ते मजकूर-फक्त मॉडेल्सपर्यंत पोहोचेल. व्हिजन सक्रिय आहे; ऑडिओ AudioBridge सह येतो; व्हिडिओ रोडमॅपवर आहे.",
+    "modalityBridgeIntro": "मल्टिमोडल सामग्री केवळ-मजकूर मॉडेलपर्यंत पोहोचण्यापूर्वी मजकूरात रूपांतरित करा. व्हिजन, ऑडिओ आणि व्हिडिओ ब्रिज उपलब्ध व कॉन्फिगर करता येतात.",
     "modalityBridgeVisionTab": "दृष्टी",
     "modalityBridgeAudioTab": "ऑडिओ",
     "modalityBridgeVideoTab": "व्हिडिओ",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "उन्नत",
     "modalityBridgeTimeoutMs": "टाइमआउट (मिलीसेकंद)",
     "modalityBridgeMaxImages": "प्रत्येक विनंतीसाठी कमाल प्रतिमा",
+    "visionMaxCharsLabel": "कमाल वर्णन अक्षरे",
+    "visionMaxCharsHint": "दृश्य मॉडेलच्या वर्णनाची लांबी मर्यादित करा. 0 = अमर्यादित — तपशील-गडद OCR कार्यांसाठी वाढवा.",
     "modalityBridgeCacheEnabled": "कॅश वर्णनं",
     "modalityBridgeCacheEnabledDesc": "समान प्रतिमांसाठी वर्णनांचे पुनर्वापर करा (SHA-256 कीद, मेमरीमध्ये).",
     "modalityBridgeCacheTtlMinutes": "कॅश TTL (मिनिटे)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "ब्रिज सक्रिय झाला नाही (मॉडेलने स्थानिकरित्या व्हिजनला समर्थन दिले असू शकते किंवा ब्रिज अक्षम आहे)",
     "modalityBridgeTestError": "चाचणी अयशस्वी: {message}",
     "modalityBridgeAudioComingSoon": "ऑडिओ ब्रिज (स्पीच → टेक्स्ट /v1/audio/transcriptions द्वारे) पुढील आवृत्तीत पाठवला जात आहे. त्याचे सेटिंग्ज कीज आधीच राखीव आहेत.",
-    "modalityBridgeVideoComingSoon": "व्हिडिओ ब्रिजिंग (फ्रेम सॅम्पलिंग + कॅप्शनिंग) बॅकलॉगमध्ये आहे — समस्या #9760 पहा.",
     "modalityBridgeMovedTitle": "व्हिजन ब्रिज हलवला",
     "modalityBridgeMovedBody": "व्हिजन ब्रिज सेटिंग्ज आता समर्पित मोडालिटी ब्रिज पृष्ठावर उपलब्ध आहेत.",
     "modalityBridgeMovedCta": "मोडालिटी ब्रिज सेटिंग्ज उघडा",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "ऑडिओ ब्रिज ठीक आहे — {count} क्लिप(स) {model} द्वारे ट्रान्सक्राइब केल्या गेल्या",
     "modalityBridgeAudioTestNoop": "ऑडिओ ब्रिज सक्रिय झाला नाही (लक्ष्य ऑडिओला समर्थन देऊ शकतो, कोणताही STT प्रदाता जोडलेला नाही, किंवा ब्रिज अक्षम आहे)",
     "modalityBridgeAudioTestError": "ऑडिओ चाचणी अयशस्वी: {message}",
+    "modalityBridgeVideoTitle": "व्हिडिओ ब्रिज",
+    "modalityBridgeVideoDesc": "व्हिडिओ फ्रेमचे नमुने घ्या, व्हिजन मॉडेलने त्यांचे वर्णन करा आणि निवडलेल्या मजकूर मॉडेलसह पुढे सुरू ठेवा.",
+    "modalityBridgeVideoRuntimeReady": "रनटाइम तयार आहे",
+    "modalityBridgeVideoRuntimeUnavailable": "रनटाइम उपलब्ध नाही",
+    "modalityBridgeVideoRuntimeInstall": "व्हिडिओ एक्स्ट्रॅक्शन सक्षम करण्यासाठी सर्व्हरच्या PATH मध्ये FFmpeg आणि ffprobe स्थापित करा.",
+    "modalityBridgeVideoEnabled": "व्हिडिओ ब्रिज सक्षम करा",
+    "modalityBridgeVideoEnabledDesc": "लक्ष्य मॉडेल व्हिडिओ प्रक्रिया करू शकत नसल्यास व्हिडिओ भाग वेळचिन्हांकित फ्रेम वर्णनांनी बदला.",
+    "modalityBridgeVideoModel": "फ्रेम वर्णन मॉडेल",
+    "modalityBridgeVideoModelInherited": "व्हिजन ब्रिज मॉडेल वापरा",
+    "modalityBridgeVideoFrameCount": "प्रति व्हिडिओ फ्रेम",
+    "modalityBridgeVideoMaxVideos": "प्रति विनंती कमाल व्हिडिओ",
     "modelRoutingDescriptionPlaceholder": "फ्रंटियर कॉम्बो कडे रूट ओपस मॉडेल्स",
     "cliproxyapiFallbackCodes": "क्लिप्रॉक्सीएपीआय फॉल्बॅक कोड्स",
     "cliproxyapiFallbackDescription": "क्लिप्रॉक्सीएपीआय फॉल्बॅक वर्णन",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "भागीदार लिंक",
     "dismissAriaLabel": "बंद करा"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute आता VS Code Copilot Chat मध्ये चालते",
+    "description": "मोफत OmniCopilot विस्तार स्थापित करा आणि तुम्ही आधीच वापरत असलेल्या Copilot Chat मॉडेल निवडकात प्रत्येक OmniRoute मॉडेल दिसेल.",
+    "cta": "विस्तार मिळवा",
+    "secondaryNote": "Open VSX वर देखील उपलब्ध (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "बंद करा"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "<gateway-alias>/<model> मिरर आयडीज /v1/models वर जाहिरात करा त्या मॉडेलसाठी ज्यांचे कॅनॉनिकल मालकाकडे सक्रिय क्रेडेन्शियल नाही परंतु एक पासथ्रू गेटवे ज्यामध्ये सक्रिय क्रेडेन्शियल आहे त्यांना रूट करते. चेतावणी: जागतिक स्तरावर सक्षम केल्यास सर्व क्लायंटसाठी कॅटलॉग नोंदी जोडते.",
   "radarPage": {
     "title": "रडार कॅटलॉग",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "प्रदाता सेटअप",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "हे पान फक्त localhost किंवा LAN वरून प्रवेशयोग्य आहे (LOCAL_ONLY).",
     "pollErrorStopped": "पोलिंग थांबले: सर्व्हरने विनंती नाकारली (404/403).",
     "pollErrorTransient": "डेटा आणण्यात त्रुटी: आपोआप पुन्हा प्रयत्न करत आहे.",
-    "degraded": "आंशिक डेटा: अनुपलब्ध स्रोत: {sources}",
-    "degraded.source.database": "डेटाबेस",
-    "degraded.source.circuitBreaker": "सर्किट ब्रेकर",
-    "degraded.source.modelLockouts": "मॉडेल लॉकआउट",
-    "degraded.source.count": "कनेक्शन संख्या"
+    "degraded": {
+      "message": "आंशिक डेटा: अनुपलब्ध स्रोत: {sources}",
+      "source": {
+        "database": "डेटाबेस",
+        "circuitBreaker": "सर्किट ब्रेकर",
+        "modelLockouts": "मॉडेल लॉकआउट",
+        "count": "कनेक्शन संख्या"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "डिस्पॅच करण्यापूर्वी विनंत्या नाकारल्या जातात जेव्हा लक्ष्य मॉडेल आवश्यक क्षमतांचा अभाव असतो (दृष्टी, साधने, संरचित आउटपुट, संदर्भ विंडो). कॉम्बो-लेयर सुसंगतता फिल्टरला बायपास करणाऱ्या थेट एकल-प्रदात्याच्या विनंत्यांचे संरक्षण करते.",
-  "capabilityFilter.visionMismatch": "या प्रतिमेच्या विनंतीसाठी प्रदाता दृश्याचे समर्थन करत नाही",
-  "capabilityFilter.toolsMismatch": "प्रदायक साधन कॉलिंगला समर्थन करत नाही",
-  "capabilityFilter.structuredOutputMismatch": "प्रदायक संरचित आउटपुटला समर्थन करत नाही",
-  "capabilityFilter.contextWindowMismatch": "विनंती प्रदाता संदर्भ विंडो ओलांडते",
   "publicSystem": {
     "notFound": {
       "title": "पृष्ठ सापडले नाही",
@@ -13624,5 +13657,49 @@
     "hint": "सक्रिय केल्यास, शोधलेले मॉडेल OmniRoute मध्ये प्रदाता निवडींमध्ये दिसतात.",
     "updateFailed": "अद्यतन करण्यात अयशस्वी (HTTP {status})",
     "networkError": "नेटवर्क त्रुटी — प्रदाता एक्सपोजर सेटिंग अद्यतनित करता येत नाही"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "या प्रतिमेच्या विनंतीसाठी प्रदाता दृश्याचे समर्थन करत नाही",
+    "toolsMismatch": "प्रदायक साधन कॉलिंगला समर्थन करत नाही",
+    "structuredOutputMismatch": "प्रदायक संरचित आउटपुटला समर्थन करत नाही",
+    "contextWindowMismatch": "विनंती प्रदाता संदर्भ विंडो ओलांडते"
   }
 }

@@ -11,6 +11,27 @@ import { guideSettingsSaveSchema } from "@/shared/validation/schemas";
 import { isValidationFailure, validateBody } from "@/shared/validation/helpers";
 import { resolveApiKey, getOrCreateApiKey } from "@/shared/services/apiKeyResolver";
 import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error";
+import { guardCliConfigWrite } from "@/lib/api/cliConfigWriteGuard";
+
+/**
+ * Where each guide tool's config lands, and the host command that writes the
+ * same thing when OmniRoute itself runs in a container.
+ */
+const GUIDE_TOOL_TARGETS: Record<string, { resolve: () => string; hostCommand: string }> = {
+  continue: {
+    resolve: () => path.join(os.homedir(), ".continue", "config.json"),
+    hostCommand: "omniroute setup-continue",
+  },
+  opencode: {
+    resolve: () => getOpenCodeConfigPath(),
+    hostCommand: "omniroute setup-opencode",
+  },
+  hermes: {
+    resolve: () =>
+      getCliPrimaryConfigPath("hermes") || path.join(os.homedir(), ".hermes", "config.yaml"),
+    hostCommand: "omniroute config set hermes",
+  },
+};
 
 /**
  * POST /api/cli-tools/guide-settings/:toolId
@@ -57,6 +78,15 @@ export async function POST(request, { params }) {
   const apiKey = apiKeyId
     ? await resolveApiKey(apiKeyId, validation.data.apiKey)
     : await getOrCreateApiKey();
+
+  const target = GUIDE_TOOL_TARGETS[toolId];
+  if (target) {
+    const refusal = guardCliConfigWrite(target.resolve(), {
+      toolLabel: toolId,
+      hostCommand: target.hostCommand,
+    });
+    if (refusal) return refusal;
+  }
 
   try {
     switch (toolId) {

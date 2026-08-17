@@ -145,7 +145,7 @@ export const RENAMED_MIGRATION_COMPATIBILITY = [
     toName: "windsurf_to_devin_desktop",
   },
   {
-    // 143–145 are reserved for the stacked Radar migration series.
+    // 143 is the API-key cache mode; 144–145 are the stacked Radar caches.
     fromVersion: "143",
     fromName: "windsurf_to_devin_desktop",
     toVersion: "151",
@@ -169,6 +169,15 @@ export const RENAMED_MIGRATION_COMPATIBILITY = [
     fromName: "job_registry",
     toVersion: "146",
     toName: "job_registry",
+  },
+  {
+    // The cumulative Radar branch used 143 before 143_api_key_cache_default_mode
+    // landed on release/v3.8.50. Rehome already-applied Radar rows to the next
+    // free slot so the canonical API-key migration can still run.
+    fromVersion: "143",
+    fromName: "radar_local_model_state",
+    toVersion: "153",
+    toName: "radar_local_model_state",
   },
 ] as const;
 

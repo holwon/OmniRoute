@@ -13,6 +13,10 @@ import {
 } from "../../../shared/constants/managementScopes";
 import { evaluateAccessTokenAuth } from "../accessTokenAuth";
 import { isInternalServiceRequest } from "../../../lib/api/internalServiceAuth";
+import {
+  VIDEO_BRIDGE_BROKER_PATH,
+  isVideoBridgeBrokerTokenRequest,
+} from "../../../lib/guardrails/videoBridgeBrokerAuth";
 import { CLI_TOKEN_HEADER, PEER_IP_HEADER, VIA_PROXY_HEADER } from "../headers";
 import { resolveStampedPeer, resolveStampedViaProxy } from "../peerStamp";
 import {
@@ -239,6 +243,22 @@ export const managementPolicy: RoutePolicy = {
 
     if (isInternalModelSyncRequest(ctx)) {
       return allow({ kind: "management_key", id: "model-sync", label: "internal-model-sync" });
+    }
+
+    // Exact-path, per-process authenticated self-hop used by the public Video
+    // Bridge guardrail. The unconditional LOCAL_ONLY gate above has already
+    // rejected remote peers; this carve-out is deliberately not valid for the
+    // adjacent runtime-status route or any future child path.
+    if (
+      path === VIDEO_BRIDGE_BROKER_PATH &&
+      isLoopbackRequest(ctx) &&
+      isVideoBridgeBrokerTokenRequest(ctx.request as unknown as Request, path)
+    ) {
+      return allow({
+        kind: "management_key",
+        id: "video-bridge-broker",
+        label: "internal-video-bridge-broker",
+      });
     }
 
     if (isLoopbackRequest(ctx) && isInternalServiceRequest(ctx.request as unknown as Request)) {

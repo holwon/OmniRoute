@@ -1,5 +1,6 @@
 import {
   BACKOFF_STEPS_MS,
+  EXECUTOR_CONTRACT_VIOLATION_CODE,
   PROVIDER_PROFILES,
   RateLimitReason,
   HTTP_STATUS,
@@ -14,7 +15,11 @@ import {
   serviceSupervisorCooldown,
   isNimFunctionDegraded,
 } from "../config/errorConfig.ts";
-import { getProviderErrorRuleMatch } from "../config/providerErrorRules.ts";
+import {
+  getProviderErrorRuleMatch,
+  resolveRuleMatchBody,
+  honorsRuleLockScope,
+} from "../config/providerErrorRules.ts";
 import * as rot from "./rotationConfig.ts";
 import { getPassthroughProviders, getProviderCategory } from "../config/providerRegistry.ts";
 import {
@@ -206,6 +211,14 @@ export const CREDITS_EXHAUSTED_SIGNALS = [
   "insufficient balance",
   "insufficient_balance",
   "insufficient account balance",
+  "insufficient credit balance",
+  // Command Code returns 400 "You have insufficient credits to make this
+  // request. Please purchase more credits to continue using the service."
+  // when the account's billing credits run out. Without this signal the
+  // error stays unclassified (errorType=null), so the connection is never
+  // marked credits_exhausted and keeps being re-selected on every request.
+  "insufficient credits",
+  "insufficient credit",
 ];
 
 // T11: Signals that indicate OAuth token is invalid/expired (not permanent deactivation)
@@ -1457,7 +1470,27 @@ export function checkFallbackError(
   /** #6061: the provider-configured cooldown (ms) before backoff scaling, surfaced so the
    * caller can persist an explicit reset window instead of the engine's scaled cooldown. */
   configuredCooldownMs?: number;
+  /** #10334 — the matched ProviderErrorRule's declared lock scope, surfaced so the
+   * persistence layer can honor it instead of re-deriving scope from
+   * hasPerModelQuota(). Populated ONLY when honorsRuleLockScope(provider) is true;
+   * always undefined for every other provider, so existing consumers are unaffected. */
+  ruleScope?: "model" | "provider" | "connection";
 } {
+  // #10360: an executor-result contract violation is OUR bug, not the provider's.
+  // Retrying reproduces it verbatim, and cooling the connection down (or tripping
+  // the provider breaker) punishes a healthy account for an internal defect. Must
+  // run before every other classification — the surfaced status is a plain 500,
+  // which the retryable set below would otherwise treat as a transient upstream
+  // failure and hand a backoff cooldown.
+  if (structuredError?.code === EXECUTOR_CONTRACT_VIOLATION_CODE) {
+    return {
+      shouldFallback: false,
+      cooldownMs: 0,
+      reason: EXECUTOR_CONTRACT_VIOLATION_CODE,
+      skipProviderBreaker: true,
+    };
+  }
+
   const svc = serviceSupervisorCooldown(status, headers);
   if (svc) return svc;
   const rg = rot.gateFor(status, rotation?.account);
@@ -1696,6 +1729,36 @@ export function checkFallbackError(
       return { shouldFallback: false, cooldownMs: 0, reason: RateLimitReason.UNKNOWN };
     }
 
+    // #10334 — agentrouter EXCLUSIVE: consult the provider rules BEFORE the
+    // apikey-FORBIDDEN early-return below, so a recognized 403 body (e.g.
+    // "无权访问模型") carries the rule's declared reason/cooldown/scope instead of
+    // the generic short auth cooldown. Gated on honorsRuleLockScope — for any
+    // other provider this block is a no-op and the early-return stays identical.
+    if (status === HTTP_STATUS.FORBIDDEN && provider && honorsRuleLockScope(provider)) {
+      const forbiddenMatch = getProviderErrorRuleMatch(
+        provider,
+        status,
+        headers,
+        resolveRuleMatchBody(provider, structuredError ?? null, errorStr)
+      );
+      if (forbiddenMatch) {
+        const scaled = getScaledBaseCooldown(
+          forbiddenMatch.reason as RateLimitReasonValue,
+          backoffLevel
+        );
+        const ruleCooldownMs = forbiddenMatch.cooldownMs;
+        return {
+          shouldFallback: true,
+          cooldownMs: ruleCooldownMs ?? scaled.cooldownMs,
+          baseCooldownMs: ruleCooldownMs ?? scaled.baseCooldownMs,
+          configuredCooldownMs: ruleCooldownMs,
+          newBackoffLevel: ruleCooldownMs !== undefined ? 0 : scaled.newBackoffLevel,
+          reason: forbiddenMatch.reason,
+          ruleScope: forbiddenMatch.scope,
+        };
+      }
+    }
+
     if (
       status === HTTP_STATUS.FORBIDDEN &&
       provider &&
@@ -1727,7 +1790,12 @@ export function checkFallbackError(
       // specific configured reasons (e.g. 503 → SERVER_ERROR would be
       // shadowed by 503 → MODEL_CAPACITY).
       const providerMatch = provider
-        ? getProviderErrorRuleMatch(provider, status, headers, structuredError ?? null)
+        ? getProviderErrorRuleMatch(
+            provider,
+            status,
+            headers,
+            resolveRuleMatchBody(provider, structuredError ?? null, errorStr)
+          )
         : null;
       const reason = providerMatch
         ? providerMatch.reason
@@ -1743,6 +1811,8 @@ export function checkFallbackError(
         providerMatch?.cooldownMs !== undefined && providerMatch.cooldownMs > 0
           ? providerMatch.cooldownMs
           : undefined;
+      const ruleScope =
+        providerMatch && honorsRuleLockScope(provider) ? providerMatch.scope : undefined;
       const fallback = buildRetryableFallback(reason);
       if (providerCooldownMs !== undefined) {
         return {
@@ -1750,9 +1820,10 @@ export function checkFallbackError(
           cooldownMs: providerCooldownMs,
           baseCooldownMs: providerCooldownMs,
           configuredCooldownMs: providerCooldownMs,
+          ruleScope,
         };
       }
-      return fallback;
+      return { ...fallback, ruleScope };
     }
     // #6842: non-backoff configured rules (e.g. status_402) previously never
     // consulted providerRuleRegistry, so a provider-specific rule (like
@@ -1760,15 +1831,23 @@ export function checkFallbackError(
     // generic zero-cooldown default. Mirror the backoff branch above so
     // provider rules win on cooldown/reason regardless of `backoff`.
     const providerMatch = provider
-      ? getProviderErrorRuleMatch(provider, status, headers, structuredError ?? null)
+      ? getProviderErrorRuleMatch(
+          provider,
+          status,
+          headers,
+          resolveRuleMatchBody(provider, structuredError ?? null, errorStr)
+        )
       : null;
     const cooldownMs = providerMatch?.cooldownMs ?? configuredRule.cooldownMs ?? 0;
+    const ruleScope =
+      providerMatch && honorsRuleLockScope(provider) ? providerMatch.scope : undefined;
     return {
       shouldFallback: true,
       cooldownMs,
       baseCooldownMs: cooldownMs,
       configuredCooldownMs: cooldownMs,
       reason: providerMatch?.reason ?? configuredRule.reason ?? RateLimitReason.UNKNOWN,
+      ruleScope,
     };
   }
 

@@ -7,36 +7,29 @@ import {
 } from "../utils/reasoningContentInjector.ts";
 import { runWithProxyContext } from "../utils/proxyFetch.ts";
 import { forwardOpencodeClientHeaders } from "../utils/opencodeHeaders.ts";
+import {
+  type AccountProxyConfig,
+  type RotatableAccount,
+  pickAccount as pickRotatableAccount,
+  markCooldown as markAccountCooldown,
+  markSuccess as markAccountSuccess,
+  maskAccountId,
+  isNetworkErrorRotatable,
+} from "./accountRotation.ts";
+import { isNetworkRotationSharedEgressGuardEnabled } from "@/shared/utils/featureFlags";
 
 /**
  * Per-account proxy configuration, persisted by NoAuthAccountCard under
  * `providerSpecificData.accountProxies` (keyed by the account id, which the UI
  * stores in `providerSpecificData.fingerprints`). Same shape mimocode uses.
  */
-export interface OpencodeAccountProxyConfig {
-  fingerprint: string;
-  proxy: {
-    type: string;
-    host: string;
-    port: number;
-    username?: string;
-    password?: string;
-    relayAuth?: string;
-  } | null;
-}
+export type OpencodeAccountProxyConfig = AccountProxyConfig;
 
 /** Runtime rotation/cooldown state for one "OpenCode Free" account. */
-interface OpencodeAccountState {
+interface OpencodeAccountState extends RotatableAccount {
   /** Account id (UI: providerSpecificData.fingerprints[i]); "" for the default direct account. */
   fingerprint: string;
-  cooldownUntil: number;
-  consecutiveFails: number;
-  /** Resolved proxy config for this account (null = direct egress). */
-  proxy: OpencodeAccountProxyConfig["proxy"];
 }
-
-const OPENCODE_COOLDOWN_BASE_MS = 5_000;
-const OPENCODE_COOLDOWN_MAX_MS = 60_000;
 
 const EFFORT_LEVELS = ["low", "medium", "high", "max"] as const;
 
@@ -147,7 +140,10 @@ export class OpencodeExecutor extends BaseExecutor {
   private accounts: OpencodeAccountState[] = [
     { fingerprint: "", cooldownUntil: 0, consecutiveFails: 0, proxy: null },
   ];
-  private nextAccountIdx = 0;
+  // Not `private`: passed as the mutable rotation cursor to the shared
+  // pickAccount() helper, which needs a plain `{ nextAccountIdx }` shape —
+  // TS's private-member nominal check rejects `this` there otherwise.
+  nextAccountIdx = 0;
 
   constructor(provider: string) {
     super(provider, PROVIDERS[provider] || PROVIDERS.openai);
@@ -190,42 +186,17 @@ export class OpencodeExecutor extends BaseExecutor {
     if (this.nextAccountIdx >= this.accounts.length) this.nextAccountIdx = 0;
   }
 
-  private isAccountReady(account: OpencodeAccountState): boolean {
-    return account.cooldownUntil <= Date.now();
-  }
-
   /** Round-robin pick, skipping accounts in cooldown; falls back to the next index. */
   private pickAccount(): OpencodeAccountState {
-    for (let i = 0; i < this.accounts.length; i++) {
-      const idx = (this.nextAccountIdx + i) % this.accounts.length;
-      const acct = this.accounts[idx];
-      if (this.isAccountReady(acct)) {
-        this.nextAccountIdx = (idx + 1) % this.accounts.length;
-        return acct;
-      }
-    }
-    const fallbackIdx = this.nextAccountIdx % this.accounts.length;
-    this.nextAccountIdx = (this.nextAccountIdx + 1) % this.accounts.length;
-    return this.accounts[fallbackIdx];
+    return pickRotatableAccount(this.accounts, this);
   }
 
   private markCooldown(account: OpencodeAccountState): void {
-    account.consecutiveFails++;
-    const backoff = Math.min(
-      OPENCODE_COOLDOWN_BASE_MS * Math.pow(2, account.consecutiveFails - 1),
-      OPENCODE_COOLDOWN_MAX_MS
-    );
-    account.cooldownUntil = Date.now() + backoff + Math.random() * 1000;
+    markAccountCooldown(account);
   }
 
   private markSuccess(account: OpencodeAccountState): void {
-    account.consecutiveFails = 0;
-  }
-
-  /** Mask an account id for logs (UI calls it a fingerprint). */
-  private static maskAccountId(fingerprint: string): string {
-    if (!fingerprint) return "direct";
-    return `${fingerprint.slice(0, 8)}…`;
+    markAccountSuccess(account);
   }
 
   async execute(input: ExecuteInput) {
@@ -267,11 +238,35 @@ export class OpencodeExecutor extends BaseExecutor {
       }
 
       const { log } = input;
-      let lastResult: Awaited<ReturnType<BaseExecutor["execute"]>> | null = null;
+      // This loop only ever dispatches through super.execute() (the HTTP request
+      // path), which always resolves the object-shaped arm of ExecutorExecuteResult
+      // — the bare-Response arm belongs to web/scraping executors only (base.ts:290).
+      type HttpExecuteResult = Extract<
+        Awaited<ReturnType<BaseExecutor["execute"]>>,
+        { response: Response }
+      >;
+      let lastResult: HttpExecuteResult | null = null;
+      let lastSharedEgressError: unknown = null;
+      const sharedEgressGuardEnabled = isNetworkRotationSharedEgressGuardEnabled();
+      // Set once a proxy-less account's network throw reveals the shared
+      // egress is down (see NETWORK_ROTATION_SHARED_EGRESS_GUARD below) —
+      // subsequent proxy-less accounts this request are skipped without a
+      // network call, but proxied accounts (independent egress) are still
+      // tried normally.
+      let sharedEgressDown = false;
 
       for (let attempt = 0; attempt < this.accounts.length; attempt++) {
         const account = this.pickAccount();
-        const masked = OpencodeExecutor.maskAccountId(account.fingerprint);
+        const masked = maskAccountId(account.fingerprint);
+
+        if (sharedEgressGuardEnabled && sharedEgressDown && !account.proxy) {
+          log?.warn?.(
+            "OPENCODE",
+            `skipping account ${masked} (no dedicated proxy, shared egress already down this request)`
+          );
+          continue;
+        }
+
         // #5217 (Gap 2): promoted debug→info so the per-request account/proxy
         // rotation selection is visible in the Console log view at the default
         // APP_LOG_LEVEL=info (users could not see which account/proxy was used).
@@ -287,9 +282,46 @@ export class OpencodeExecutor extends BaseExecutor {
         // Pin egress to this account's proxy for the whole BaseExecutor dispatch
         // (incl. its intra-URL 429 retries). skipUpstreamRetry lets THIS loop own
         // the cross-account 429 fallback instead of BaseExecutor's same-key retry.
-        const result = await runWithProxyContext(account.proxy, () =>
-          super.execute({ ...input, skipUpstreamRetry: true })
-        );
+        let result: HttpExecuteResult;
+        try {
+          // super.execute() here always dispatches the HTTP path (opencode is an
+          // OpenAI-compatible API, never the web/scraping bare-Response arm) —
+          // see base.ts:290-294.
+          result = (await runWithProxyContext(account.proxy, () =>
+            super.execute({ ...input, skipUpstreamRetry: true })
+          )) as HttpExecuteResult;
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : String(err);
+          // A network exception (timeout, connection refused/reset) is only
+          // account-scoped when this account has its OWN egress (a configured
+          // proxy) — that's the case a dead/unreachable proxy justifies rotating
+          // away from. Without a proxy, accounts share the same network egress:
+          // the failure isn't attributable to this account. Never swallowed
+          // silently either way: logged before rotating, skipping, or rethrowing.
+          if (!isNetworkErrorRotatable(account)) {
+            if (sharedEgressGuardEnabled) {
+              this.markCooldown(account);
+              sharedEgressDown = true;
+              lastSharedEgressError = err;
+              log?.warn?.(
+                "OPENCODE",
+                `network error on account ${masked} (no dedicated proxy, shared egress), cooldown applied — trying next available account… (${reason})`
+              );
+              continue;
+            }
+            log?.warn?.(
+              "OPENCODE",
+              `network error on account ${masked} (no dedicated proxy, shared egress) — not rotating (${reason})`
+            );
+            throw err;
+          }
+          this.markCooldown(account);
+          log?.warn?.(
+            "OPENCODE",
+            `network error on account ${masked}, rotating to next… (${reason})`
+          );
+          continue;
+        }
         lastResult = result;
 
         const status = result.response.status;
@@ -301,6 +333,16 @@ export class OpencodeExecutor extends BaseExecutor {
 
         this.markSuccess(account);
         return result;
+      }
+
+      // The loop exhausted without a result. If it's because every remaining
+      // proxy-less account was skipped once the shared egress was known down
+      // (rather than actually tried), propagate that original throw — an
+      // extra direct call here would just be a second doomed attempt against
+      // the same dead path, which is exactly the latency this guard exists
+      // to avoid (see NETWORK_ROTATION_SHARED_EGRESS_GUARD).
+      if (sharedEgressDown && !lastResult && lastSharedEgressError !== null) {
+        throw lastSharedEgressError;
       }
 
       // All accounts returned 429 (or errored) — surface the last response.

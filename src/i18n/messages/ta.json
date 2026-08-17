@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "செய்திகள், கருவி அழைப்புகள் மற்றும் பதில்களில் இருந்து API விசைகள், டோக்கன்கள், தனிப்பட்ட விசைகள் மற்றும் JWT-களை நீக்குகிறது.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "பன்முக உள்ளடக்கத்தை உரை மாதிரிகளுக்கு சென்றடையும்முன் உரையாக மாற்றவும். காட்சி நேரத்தில் உள்ளது; ஒலி AudioBridge உடன் வருகிறது; காணொளி சாலை வரை உள்ளது.",
+    "modalityBridgeIntro": "பல்முறை உள்ளடக்கம் உரை மட்டும் மாதிரிகளை அடைவதற்கு முன் அதை உரையாக மாற்றவும். பார்வை, ஒலி மற்றும் வீடியோ பாலங்கள் கிடைக்கின்றன மற்றும் கட்டமைக்கலாம்.",
     "modalityBridgeVisionTab": "கண்ணோட்டம்",
     "modalityBridgeAudioTab": "ஆடியோ",
     "modalityBridgeVideoTab": "வீடியோ",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "மேம்பட்டது",
     "modalityBridgeTimeoutMs": "காலாவதி (மி.செ)",
     "modalityBridgeMaxImages": "ஒரு கோரிக்கைக்கு அதிகபட்சமாக உள்ள படங்கள்",
+    "visionMaxCharsLabel": "அதிகபட்ச விளக்கம் எழுத்துக்கள்",
+    "visionMaxCharsHint": "கண்ணோட்ட மாதிரியின் விளக்கத்தின் நீளத்தை கட்டுப்படுத்தவும். 0 = எல்லாம் அனுமதிக்கப்பட்டது — விவரமாக நிறைந்த OCR பணிகளுக்காக உயர்த்தவும்.",
     "modalityBridgeCacheEnabled": "கேஷ் விளக்கங்கள்",
     "modalityBridgeCacheEnabledDesc": "ஒரே மாதிரியான படங்களுக்கு (SHA-256 விசையுடன், நினைவகத்தில்) விளக்கங்களை மறுசுழற்சி செய்யவும்.",
     "modalityBridgeCacheTtlMinutes": "கேஷ் TTL (நிமிடங்கள்)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "பிரிட்ஜ் செயல்படுத்தப்படவில்லை (மாதிரி இயல்பாகவே கண்ணோட்டத்தை ஆதரிக்கலாம் அல்லது பிரிட்ஜ் முடக்கப்பட்டுள்ளது)",
     "modalityBridgeTestError": "சோதனை தோல்வி: {message}",
     "modalityBridgeAudioComingSoon": "ஆடியோ பாலம் (உரை → உரை /v1/audio/transcriptions மூலம்) அடுத்த வெளியீட்டில் கப்பல் செய்யப்படுகிறது. அதன் அமைப்புகள் விசைகள் ஏற்கனவே ஒதுக்கப்பட்டுள்ளது.",
-    "modalityBridgeVideoComingSoon": "வீடியோ பாலம் (படம் மாதிரி + தலைப்பு) பின்னணி பட்டியலில் உள்ளது — விவரம் #9760 ஐப் பார்க்கவும்.",
     "modalityBridgeMovedTitle": "விசன் ப்ரிட்ஜ் நகர்ந்தது",
     "modalityBridgeMovedBody": "Vision Bridge அமைப்புகள் தற்போது தனிப்பட்ட Modality Bridge பக்கத்தில் உள்ளன.",
     "modalityBridgeMovedCta": "மோடாலிட்டி பாலம் அமைப்புகளை திறக்கவும்",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "ஆடியோ பாலம் சரி — {count} கிளிப்(கள்) {model} மூலம் உரைமாற்றம் செய்யப்பட்டது",
     "modalityBridgeAudioTestNoop": "ஆடியோ பாலம் செயல்படுத்தப்படவில்லை (இலக்கு ஆடியோவை ஆதரிக்கலாம், STT வழங்குநர் இணைக்கப்படவில்லை, அல்லது பாலம் முடக்கப்பட்டுள்ளது)",
     "modalityBridgeAudioTestError": "ஒலி சோதனை தோல்வியடைந்தது: {message}",
+    "modalityBridgeVideoTitle": "வீடியோ பாலம்",
+    "modalityBridgeVideoDesc": "வீடியோ சட்டகங்களை மாதிரியாக எடுத்து, பார்வை மாதிரியால் அவற்றை விவரித்து, தேர்ந்தெடுத்த உரை மாதிரியுடன் தொடரவும்.",
+    "modalityBridgeVideoRuntimeReady": "இயக்கச்சூழல் தயாராக உள்ளது",
+    "modalityBridgeVideoRuntimeUnavailable": "இயக்கச்சூழல் கிடைக்கவில்லை",
+    "modalityBridgeVideoRuntimeInstall": "வீடியோ பிரித்தெடுப்பைச் செயல்படுத்த சேவையகத்தின் PATH இல் FFmpeg மற்றும் ffprobe ஐ நிறுவவும்.",
+    "modalityBridgeVideoEnabled": "வீடியோ பாலத்தைச் செயல்படுத்து",
+    "modalityBridgeVideoEnabledDesc": "இலக்கு மாதிரி வீடியோவைச் செயலாக்க முடியாதபோது, வீடியோ பகுதிகளை நேரமுத்திரையிட்ட சட்டக விளக்கங்களால் மாற்றவும்.",
+    "modalityBridgeVideoModel": "சட்டக விளக்க மாதிரி",
+    "modalityBridgeVideoModelInherited": "பார்வை பால மாதிரியைப் பயன்படுத்து",
+    "modalityBridgeVideoFrameCount": "ஒரு வீடியோவிற்கான சட்டகங்கள்",
+    "modalityBridgeVideoMaxVideos": "ஒரு கோரிக்கைக்கான அதிகபட்ச வீடியோக்கள்",
     "modelRoutingDescriptionPlaceholder": "பாதை ஒபஸ் மாதிரிகளை முன்மாதிரி கூட்டத்திற்கு வழி நடத்தவும்",
     "cliproxyapiFallbackCodes": "Cliproxyapi மாற்று குறியீடுகள்",
     "cliproxyapiFallbackDescription": "கிளிப்ரோக்ஸி ஏபிஐ மாற்று விளக்கம்",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "பங்குதாரர் இணைப்பு",
     "dismissAriaLabel": "நிராகரி"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute இப்போது VS Code Copilot Chat-க்குள் இயங்குகிறது",
+    "description": "இலவச OmniCopilot நீட்டிப்பை நிறுவவும், நீங்கள் ஏற்கெனவே பயன்படுத்தும் Copilot Chat மாடல் தேர்வியில் ஒவ்வொரு OmniRoute மாடலும் நேரடியாகத் தோன்றும்.",
+    "cta": "நீட்டிப்பைப் பெறுங்கள்",
+    "secondaryNote": "Open VSX (Cursor, Windsurf, VSCodium…) இலும் கிடைக்கிறது",
+    "dismissAriaLabel": "நிராகரி"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "/gateway-alias/<model> மின்னூட்ட அடையாளங்களை /v1/models இல் விளம்பரம் செய்கிறது, அதன் கானோனிக்கல் உரிமையாளருக்கு செயல்பாட்டில் உள்ள சான்றிதழ் இல்லை ஆனால் ஒரு பாஸ்த்ரூ கேட்வே செயல்பாட்டில் உள்ள சான்றிதழ் அவற்றை வழிநடத்துகிறது. எச்சரிக்கை: உலகளாவியமாக செயல்படுத்தப்படும் போது அனைத்து கிளையன்டுகளுக்கான பட்டியல் பதிவுகளைச் சேர்க்கிறது.",
   "radarPage": {
     "title": "ரேடார் பட்டியல்",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "வழங்குநர் அமைப்பு",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "இந்தப் பக்கம் localhost அல்லது LAN இலிருந்து மட்டுமே அணுகக்கூடியது (LOCAL_ONLY).",
     "pollErrorStopped": "வாக்கெடுப்பு நிறுத்தப்பட்டது: சேவையகம் கோரிக்கையை நிராகரித்தது (404/403).",
     "pollErrorTransient": "தரவைப் பெறுவதில் பிழை: தானாக மீண்டும் முயற்சிக்கிறது.",
-    "degraded": "பகுதி தரவு: கிடைக்காத மூலங்கள்: {sources}",
-    "degraded.source.database": "தரவுத்தளம்",
-    "degraded.source.circuitBreaker": "சுற்று பிரேக்கர்",
-    "degraded.source.modelLockouts": "மாதிரி பூட்டுகள்",
-    "degraded.source.count": "இணைப்புகளின் எண்ணிக்கை"
+    "degraded": {
+      "message": "பகுதி தரவு: கிடைக்காத மூலங்கள்: {sources}",
+      "source": {
+        "database": "தரவுத்தளம்",
+        "circuitBreaker": "சுற்று பிரேக்கர்",
+        "modelLockouts": "மாதிரி பூட்டுகள்",
+        "count": "இணைப்புகளின் எண்ணிக்கை"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "விருப்பமான மாதிரி தேவையான திறன்களை (காணல், கருவிகள், கட்டமைக்கப்பட்ட வெளியீடு, சூழல் ஜன்னல்) இன்றி இருந்தால், அனுப்புவதற்கு முன் கோரிக்கைகளை நிராகரிக்கவும். கம்போ-லேயர் ஒத்திசைவு வடிகட்டியை தவிர்க்கும் நேரடி ஒற்றை வழங்குநர் கோரிக்கைகளை பாதுகாக்கிறது.",
-  "capabilityFilter.visionMismatch": "இந்த படக் கோரிக்கைக்கு வழங்குநர் கண்ணோட்டத்தை ஆதரிக்கவில்லை",
-  "capabilityFilter.toolsMismatch": "சேவையாளர் கருவி அழைப்பை ஆதரிக்கவில்லை",
-  "capabilityFilter.structuredOutputMismatch": "சேவையாளர் கட்டமைக்கப்பட்ட வெளியீட்டை ஆதரிக்கவில்லை",
-  "capabilityFilter.contextWindowMismatch": "விண்ணப்பம் வழங்குநர் சூழல் ஜன்னலை மீறுகிறது",
   "publicSystem": {
     "notFound": {
       "title": "பக்கம் கிடைக்கவில்லை",
@@ -13624,5 +13657,49 @@
     "hint": "இது செயல்படுத்தப்பட்டால், கண்டறியப்பட்ட மாதிரிகள் OmniRoute இல் வழங்குநர் தேர்வுகளில் தோன்றும்.",
     "updateFailed": "புதுப்பிக்க முடியவில்லை (HTTP {status})",
     "networkError": "நெட்வொர்க் பிழை — வழங்குநர் வெளிப்பாடு அமைப்பை புதுப்பிக்க முடியவில்லை"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "இந்த படக் கோரிக்கைக்கு வழங்குநர் கண்ணோட்டத்தை ஆதரிக்கவில்லை",
+    "toolsMismatch": "சேவையாளர் கருவி அழைப்பை ஆதரிக்கவில்லை",
+    "structuredOutputMismatch": "சேவையாளர் கட்டமைக்கப்பட்ட வெளியீட்டை ஆதரிக்கவில்லை",
+    "contextWindowMismatch": "விண்ணப்பம் வழங்குநர் சூழல் ஜன்னலை மீறுகிறது"
   }
 }

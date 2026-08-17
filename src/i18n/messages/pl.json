@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Usuwa klucze API, tokeny, klucze prywatne i tokeny JWT z wiadomości, wywołań narzędzi oraz odpowiedzi.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Mostkuj treści multimodalne do tekstu, zanim dotrą do modeli tylko tekstowych. Wizja jest na żywo; Audio przychodzi z AudioBridge; Wideo jest w planach.",
+    "modalityBridgeIntro": "Przekształć treści multimodalne w tekst, zanim trafią do modeli obsługujących wyłącznie tekst. Mosty obrazu, dźwięku i wideo są dostępne i konfigurowalne.",
     "modalityBridgeVisionTab": "Wizja",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Wideo",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Zaawansowane",
     "modalityBridgeTimeoutMs": "Limit Czasu (ms)",
     "modalityBridgeMaxImages": "Maksymalna liczba obrazów na żądanie",
+    "visionMaxCharsLabel": "Maksymalna liczba znaków w opisie",
+    "visionMaxCharsHint": "Ogranicz długość opisu modelu wizji. 0 = nieograniczone — zwiększ dla zadań OCR z dużą ilością szczegółów.",
     "modalityBridgeCacheEnabled": "Opisy pamięci podręcznej",
     "modalityBridgeCacheEnabledDesc": "Wykorzystaj opisy dla identycznych obrazów (kluczowane SHA-256, w pamięci).",
     "modalityBridgeCacheTtlMinutes": "Czas życia pamięci podręcznej (minuty)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Most nie został aktywowany (model może obsługiwać wizję natywnie lub most jest wyłączony)",
     "modalityBridgeTestError": "Test nie powiódł się: {message}",
     "modalityBridgeAudioComingSoon": "Mostek audio (mowa → tekst za pomocą /v1/audio/transcriptions) zostanie wydany w następnej wersji. Klucze jego ustawień są już zarezerwowane.",
-    "modalityBridgeVideoComingSoon": "Mostkowanie wideo (próbkowanie klatek + napisy) jest na liście zadań — zobacz problem #9760.",
     "modalityBridgeMovedTitle": "Mostek Wizji przeniesiony",
     "modalityBridgeMovedBody": "Ustawienia Vision Bridge są teraz dostępne na dedykowanej stronie Modality Bridge.",
     "modalityBridgeMovedCta": "Otwórz ustawienia Mostka Modalności",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Most Audio OK — {count} klip(y) przetłumaczone przez {model}",
     "modalityBridgeAudioTestNoop": "Mostek audio nie został aktywowany (docelowy może obsługiwać audio, żaden dostawca STT nie jest podłączony lub mostek jest wyłączony)",
     "modalityBridgeAudioTestError": "Test audio nie powiódł się: {message}",
+    "modalityBridgeVideoTitle": "Most wideo",
+    "modalityBridgeVideoDesc": "Pobierz próbki klatek wideo, opisz je modelem wizyjnym i kontynuuj za pomocą wybranego modelu tekstowego.",
+    "modalityBridgeVideoRuntimeReady": "Środowisko uruchomieniowe jest gotowe",
+    "modalityBridgeVideoRuntimeUnavailable": "Środowisko uruchomieniowe jest niedostępne",
+    "modalityBridgeVideoRuntimeInstall": "Zainstaluj FFmpeg i ffprobe w PATH serwera, aby włączyć wyodrębnianie wideo.",
+    "modalityBridgeVideoEnabled": "Włącz Most wideo",
+    "modalityBridgeVideoEnabledDesc": "Gdy model docelowy nie obsługuje wideo, zastępuj jego części opisami klatek ze znacznikami czasu.",
+    "modalityBridgeVideoModel": "Model opisu klatek",
+    "modalityBridgeVideoModelInherited": "Dziedzicz model z Mostu wizyjnego",
+    "modalityBridgeVideoFrameCount": "Klatki na wideo",
+    "modalityBridgeVideoMaxVideos": "Maksymalna liczba filmów na żądanie",
     "modelRoutingDescriptionPlaceholder": "Przypisz modele Opus do kombinacji frontier",
     "cliproxyapiFallbackCodes": "Kody zapasowe Cliproxyapi",
     "cliproxyapiFallbackDescription": "Opis zapasowy Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Link partnerski",
     "dismissAriaLabel": "Odrzuć"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute działa teraz w VS Code Copilot Chat",
+    "description": "Zainstaluj darmowe rozszerzenie OmniCopilot, a każdy model OmniRoute pojawi się od razu w selektorze modeli Copilot Chat, którego już używasz.",
+    "cta": "Pobierz rozszerzenie",
+    "secondaryNote": "Dostępne również na Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Odrzuć"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Reklamuj identyfikatory luster <gateway-alias>/<model> na /v1/models dla modeli, których kanoniczny właściciel nie ma aktywnego poświadczenia, ale brama passthrough z aktywnym poświadczeniem je kieruje. Uwaga: dodaje wpisy katalogu dla wszystkich klientów, gdy jest włączone globalnie.",
   "radarPage": {
     "title": "Katalog Radar",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Konfiguracja dostawcy",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Ta strona jest dostępna tylko z localhost lub LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Odpytywanie zatrzymane: serwer odrzucił żądanie (404/403).",
     "pollErrorTransient": "Błąd pobierania danych: automatyczne ponowienie.",
-    "degraded": "Dane częściowe: niedostępne źródła: {sources}",
-    "degraded.source.database": "Baza Danych",
-    "degraded.source.circuitBreaker": "Wyłącznik",
-    "degraded.source.modelLockouts": "Blokady Modelu",
-    "degraded.source.count": "Liczba Połączeń"
+    "degraded": {
+      "message": "Dane częściowe: niedostępne źródła: {sources}",
+      "source": {
+        "database": "Baza Danych",
+        "circuitBreaker": "Wyłącznik",
+        "modelLockouts": "Blokady Modelu",
+        "count": "Liczba Połączeń"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Odrzuć żądania przed wysyłką, gdy docelowy model nie ma wymaganych możliwości (wizja, narzędzia, strukturalne wyjście, okno kontekstowe). Chroni bezpośrednie żądania od pojedynczego dostawcy, które omijają filtr zgodności warstwy kombinacyjnej.",
-  "capabilityFilter.visionMismatch": "Dostawca nie obsługuje wizji dla tego żądania obrazu",
-  "capabilityFilter.toolsMismatch": "Dostawca nie obsługuje wywoływania narzędzi",
-  "capabilityFilter.structuredOutputMismatch": "Dostawca nie obsługuje strukturalnego wyjścia",
-  "capabilityFilter.contextWindowMismatch": "Żądanie przekracza okno kontekstu dostawcy",
   "publicSystem": {
     "notFound": {
       "title": "Nie znaleziono strony",
@@ -13624,5 +13657,49 @@
     "hint": "Gdy jest włączone, odkryte modele pojawiają się w wyborach dostawcy w całym OmniRoute.",
     "updateFailed": "Nie udało się zaktualizować (HTTP {status})",
     "networkError": "Błąd sieci — nie można zaktualizować ustawienia ekspozycji dostawcy"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Dostawca nie obsługuje wizji dla tego żądania obrazu",
+    "toolsMismatch": "Dostawca nie obsługuje wywoływania narzędzi",
+    "structuredOutputMismatch": "Dostawca nie obsługuje strukturalnego wyjścia",
+    "contextWindowMismatch": "Żądanie przekracza okno kontekstu dostawcy"
   }
 }

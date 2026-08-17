@@ -22,7 +22,7 @@ const ROUTES = [
 
 for (const route of ROUTES) {
   test(`${route.name} early-heartbeat gate uses the real stream resolver`, () => {
-    const escapedBodyExpression = route.bodyExpression.replace(/[?.]/g, "\\$&");
+    const escapedBodyExpression = route.bodyExpression.replace(/[.?\\]/g, "\\$&");
     assert.match(
       route.source,
       new RegExp(

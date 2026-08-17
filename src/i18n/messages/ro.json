@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Elimină cheile API, tokenurile, cheile private și JWT-urile din mesaje, apeluri de instrumente și răspunsuri.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Puntează conținutul multimodal la text înainte de a ajunge la modelele doar text. Viziunea este activă; Audio sosește cu AudioBridge; Video este pe lista de priorități.",
+    "modalityBridgeIntro": "Transformați conținutul multimodal în text înainte să ajungă la modele care procesează doar text. Punțile pentru imagine, audio și video sunt disponibile și configurabile.",
     "modalityBridgeVisionTab": "Viziune",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Avansat",
     "modalityBridgeTimeoutMs": "Timp de expirare (ms)",
     "modalityBridgeMaxImages": "Maxim de imagini pe cerere",
+    "visionMaxCharsLabel": "Max caractere descriere",
+    "visionMaxCharsHint": "Limitați lungimea descrierii modelului de viziune. 0 = nelimitat — creșteți pentru sarcini OCR bogate în detalii.",
     "modalityBridgeCacheEnabled": "Descrieri cache",
     "modalityBridgeCacheEnabledDesc": "Reutilizați descrierile pentru imagini identice (cheie SHA-256, în memorie).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minute)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Podul nu s-a activat (modelul poate suporta viziunea în mod nativ sau podul este dezactivat)",
     "modalityBridgeTestError": "Test eșuat: {message}",
     "modalityBridgeAudioComingSoon": "Puntea audio (vorbire → text prin /v1/audio/transcriptions) va fi inclusă în următoarea versiune. Cheile sale de setări sunt deja rezervate.",
-    "modalityBridgeVideoComingSoon": "Video bridging (frame sampling + captioning) este pe lista de așteptare — vezi problema #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge mutat",
     "modalityBridgeMovedBody": "Setările Vision Bridge sunt acum disponibile pe pagina dedicată Modality Bridge.",
     "modalityBridgeMovedCta": "Deschide setările Modality Bridge",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clip-uri transcrise de {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge nu s-a activat (ținta poate suporta audio, nu este conectat niciun furnizor STT sau podul este dezactivat)",
     "modalityBridgeAudioTestError": "Testul audio a eșuat: {message}",
+    "modalityBridgeVideoTitle": "Punte video",
+    "modalityBridgeVideoDesc": "Eșantionați cadre video, descrieți-le cu un model vizual și continuați cu modelul text ales.",
+    "modalityBridgeVideoRuntimeReady": "Mediul de execuție este pregătit",
+    "modalityBridgeVideoRuntimeUnavailable": "Mediul de execuție nu este disponibil",
+    "modalityBridgeVideoRuntimeInstall": "Instalați FFmpeg și ffprobe în PATH-ul serverului pentru a activa extragerea video.",
+    "modalityBridgeVideoEnabled": "Activați Punte video",
+    "modalityBridgeVideoEnabledDesc": "Înlocuiți părțile video cu descrieri de cadre cu marcaje temporale atunci când modelul țintă nu poate procesa videoclipuri.",
+    "modalityBridgeVideoModel": "Model de descriere a cadrelor",
+    "modalityBridgeVideoModelInherited": "Moșteniți modelul de la Puntea vizuală",
+    "modalityBridgeVideoFrameCount": "Cadre per videoclip",
+    "modalityBridgeVideoMaxVideos": "Număr maxim de videoclipuri per solicitare",
     "modelRoutingDescriptionPlaceholder": "Rutează modelele Opus către combinația frontieră",
     "cliproxyapiFallbackCodes": "Coduri de rezervă Cliproxyapi",
     "cliproxyapiFallbackDescription": "Descriere fallback Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Link de partener",
     "dismissAriaLabel": "Închide"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute rulează acum în VS Code Copilot Chat",
+    "description": "Instalează extensia gratuită OmniCopilot și fiecare model OmniRoute apare direct în selectorul de modele din Copilot Chat pe care îl folosești deja.",
+    "cta": "Obține extensia",
+    "secondaryNote": "Disponibil și pe Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Închide"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Publica ID-urile oglinzii <gateway-alias>/<model> pe /v1/models pentru modelele al căror proprietar canonical nu are un acreditiv activ, dar un gateway passthrough cu un acreditiv activ le rotește. Atenție: adaugă intrări în catalog pentru toți clienții când este activat global.",
   "radarPage": {
     "title": "Catalog Radar",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Configurare Furnizor",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Această pagină este accesibilă doar din localhost sau LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Interogare oprită: serverul a respins cererea (404/403).",
     "pollErrorTransient": "Eroare la preluarea datelor: reîncercare automată.",
-    "degraded": "Date parțiale: surse indisponibile: {sources}",
-    "degraded.source.database": "Bază de Date",
-    "degraded.source.circuitBreaker": "Întrerupător de Circuit",
-    "degraded.source.modelLockouts": "Blocaje Model",
-    "degraded.source.count": "Număr de Conexiuni"
+    "degraded": {
+      "message": "Date parțiale: surse indisponibile: {sources}",
+      "source": {
+        "database": "Bază de Date",
+        "circuitBreaker": "Întrerupător de Circuit",
+        "modelLockouts": "Blocaje Model",
+        "count": "Număr de Conexiuni"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Respinge cererile înainte de expediere atunci când modelul țintă nu are capabilitățile necesare (viziune, instrumente, ieșire structurată, fereastră de context). Protejează cererile directe de un singur furnizor care ocolesc filtrul de compatibilitate al stratului combinat.",
-  "capabilityFilter.visionMismatch": "Furnizorul nu suportă viziunea pentru această cerere de imagine",
-  "capabilityFilter.toolsMismatch": "Furnizorul nu suportă apelarea instrumentului",
-  "capabilityFilter.structuredOutputMismatch": "Furnizorul nu suportă ieșirea structurată",
-  "capabilityFilter.contextWindowMismatch": "Cererea depășește fereastra de context a furnizorului",
   "publicSystem": {
     "notFound": {
       "title": "Pagina nu a fost găsită",
@@ -13624,5 +13657,49 @@
     "hint": "Când este activat, modelele descoperite apar în selecțiile furnizorului din OmniRoute.",
     "updateFailed": "Actualizarea a eșuat (HTTP {status})",
     "networkError": "Eroare de rețea — nu s-a putut actualiza setarea de expunere a furnizorului"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Furnizorul nu suportă viziunea pentru această cerere de imagine",
+    "toolsMismatch": "Furnizorul nu suportă apelarea instrumentului",
+    "structuredOutputMismatch": "Furnizorul nu suportă ieșirea structurată",
+    "contextWindowMismatch": "Cererea depășește fereastra de context a furnizorului"
   }
 }

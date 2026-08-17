@@ -1,4 +1,4 @@
-import { describe, it, before, beforeEach, after } from "node:test";
+import { describe, it, beforeEach, after } from "node:test";
 import assert from "node:assert/strict";
 import os from "node:os";
 import path from "node:path";
@@ -30,7 +30,7 @@ const {
   isControlPlaneProxyDirectFallbackEnabled,
 } = await import("../../src/shared/utils/featureFlags.ts");
 
-const EXPECTED_FEATURE_FLAG_COUNT = 47;
+const EXPECTED_FEATURE_FLAG_COUNT = 48;
 
 // ──────────────────────────────────────────────────────
 // Test group 1 — Flag definitions registry
@@ -159,6 +159,18 @@ describe("featureFlagDefinitions", () => {
     assert.strictEqual(def.defaultValue, "false");
     assert.strictEqual(def.requiresRestart, false);
     assert.strictEqual(def.warningLevel, "danger");
+  });
+
+  it("defines network rotation shared-egress guard as a network boolean flag enabled by default", () => {
+    const def = FEATURE_FLAG_DEFINITIONS.find(
+      (d) => d.key === "NETWORK_ROTATION_SHARED_EGRESS_GUARD"
+    );
+    assert.ok(def, "NETWORK_ROTATION_SHARED_EGRESS_GUARD should exist");
+    assert.strictEqual(def.category, "network");
+    assert.strictEqual(def.type, "boolean");
+    assert.strictEqual(def.defaultValue, "true");
+    assert.strictEqual(def.requiresRestart, false);
+    assert.strictEqual(def.warningLevel, "info");
   });
 
   it("defines remote audio provider nodes as a network boolean flag disabled by default", () => {

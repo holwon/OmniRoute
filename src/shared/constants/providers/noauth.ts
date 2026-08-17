@@ -157,6 +157,24 @@ export const NOAUTH_PROVIDERS = {
       text: "Augment (Auggie CLI) requires the `auggie` binary installed and authenticated locally (`auggie login`). OmniRoute spawns it as a subprocess and never sees or stores your Augment credentials.",
     },
   },
+  zcode: {
+    id: "zcode",
+    alias: "zc",
+    name: "ZCode (GLM Coding Plan)",
+    icon: "terminal",
+    color: "#3B82F6",
+    textIcon: "ZC",
+    website: "https://zcode.z.ai",
+    noAuth: true,
+    hasFree: false,
+    serviceKinds: ["llm"],
+    isLocalCli: true,
+    authHint:
+      "No API key stored by OmniRoute. The local ZCode app-server uses the existing builtin:zai-coding-plan login.",
+    notice: {
+      text: "ZCode runs locally through its native app-server. OmniRoute never receives or stores the Z.ai credential.",
+    },
+  },
   aihorde: {
     id: "aihorde",
     alias: "horde",

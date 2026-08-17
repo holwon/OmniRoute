@@ -34,6 +34,12 @@ const EXPECTED_LEADING_MODEL_ORDER = [
   "gemini-3.5-flash-extra-low",
 ] as const;
 
+const EXPECTED_ANTIGRAVITY_LEADING_MODEL_ORDER = [
+  "gemini-3.7-flash-high",
+  "gemini-3.7-flash-medium",
+  ...EXPECTED_LEADING_MODEL_ORDER,
+] as const;
+
 const ACTIVE_FLASH_MODEL_IDS = [
   "gemini-3-flash-agent",
   "gemini-3.5-flash-low",
@@ -46,15 +52,15 @@ const CURRENT_36_FLASH_MODEL_IDS = [
   "gemini-3.6-flash-low",
 ] as const;
 
-test("Antigravity and AGY place the live Gemini 3.6 default tiers first", () => {
-  for (const [provider, models] of [
-    ["antigravity", ANTIGRAVITY_PUBLIC_MODELS],
-    ["agy", AGY_PUBLIC_MODELS],
+test("Antigravity and AGY place their live Gemini Flash tiers first", () => {
+  for (const [provider, models, expectedOrder] of [
+    ["antigravity", ANTIGRAVITY_PUBLIC_MODELS, EXPECTED_ANTIGRAVITY_LEADING_MODEL_ORDER],
+    ["agy", AGY_PUBLIC_MODELS, EXPECTED_LEADING_MODEL_ORDER],
   ] as const) {
     assert.deepEqual(
-      models.slice(0, EXPECTED_LEADING_MODEL_ORDER.length).map((model) => model.id),
-      EXPECTED_LEADING_MODEL_ORDER,
-      `${provider} public catalog must place the live Gemini 3.6 default tiers first`
+      models.slice(0, expectedOrder.length).map((model) => model.id),
+      expectedOrder,
+      `${provider} public catalog must place its live Gemini Flash tiers first`
     );
   }
 });

@@ -30,6 +30,7 @@ export interface SearchProviderConfig {
    * credentialed provider is available, or when requested explicitly by id.
    */
   fallbackOnly?: boolean;
+  disabled?: boolean;
 }
 
 export const SEARCH_PROVIDERS: Record<string, SearchProviderConfig> = {

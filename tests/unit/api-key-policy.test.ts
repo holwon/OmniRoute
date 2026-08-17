@@ -607,6 +607,80 @@ test("enforceApiKeyPolicy enforces combo allowlists separately from model allowl
   assert.equal(mapped.rejection, null);
 });
 
+test("new API keys allow all Combos explicitly", async () => {
+  const key = await apiKeysDb.createApiKey("Explicit Combo Default", "machine-607");
+  const stored = await apiKeysDb.getApiKeyMetadata(key.key);
+
+  assert.deepEqual(stored?.allowedCombos, ["combo/*"]);
+});
+
+test("enforceApiKeyPolicy treats combo wildcard, empty list, and names as distinct access rules", async () => {
+  const allowAllKey = await createKeyWithPolicy({ allowedCombos: ["combo/*"] });
+  const denyAllKey = await createKeyWithPolicy({ allowedCombos: [] });
+  const allowNamedKey = await createKeyWithPolicy({ allowedCombos: ["fast-chat"] });
+  await combosDb.createCombo({
+    name: "fast-chat",
+    strategy: "priority",
+    models: ["openai/gpt-4.1"],
+  });
+  await combosDb.createCombo({
+    name: "slow-chat",
+    strategy: "priority",
+    models: ["anthropic/claude-3-5-sonnet"],
+  });
+  const policy = await loadPolicy("combo-access-modes");
+
+  const allowAll = await policy.enforceApiKeyPolicy(
+    makePolicyRequest(allowAllKey.key),
+    "combo/slow-chat"
+  );
+  assert.equal(allowAll.rejection, null);
+
+  const denyAll = await policy.enforceApiKeyPolicy(
+    makePolicyRequest(denyAllKey.key),
+    "combo/fast-chat"
+  );
+  assert.equal(denyAll.rejection.status, 403);
+
+  const allowNamed = await policy.enforceApiKeyPolicy(
+    makePolicyRequest(allowNamedKey.key),
+    "combo/fast-chat"
+  );
+  assert.equal(allowNamed.rejection, null);
+
+  const denyOther = await policy.enforceApiKeyPolicy(
+    makePolicyRequest(allowNamedKey.key),
+    "combo/slow-chat"
+  );
+  assert.equal(denyOther.rejection.status, 403);
+
+  const directModel = await policy.enforceApiKeyPolicy(
+    makePolicyRequest(denyAllKey.key),
+    "openai/gpt-4.1"
+  );
+  assert.equal(directModel.rejection, null);
+
+  const routingRequest = makePolicyRequest(denyAllKey.key);
+  const routingCases = [
+    { key: allowAllKey, model: "combo/slow-chat", status: null },
+    { key: denyAllKey, model: "combo/fast-chat", status: 403 },
+    { key: allowNamedKey, model: "combo/fast-chat", status: null },
+    { key: allowNamedKey, model: "combo/slow-chat", status: 403 },
+    { key: denyAllKey, model: "openai/gpt-4.1", status: null },
+  ];
+  for (const routingCase of routingCases) {
+    const metadata = await apiKeysDb.getApiKeyMetadata(routingCase.key.key);
+    assert.ok(metadata);
+    const rejection = await policy.validateApiKeyRoutingTarget(
+      routingRequest,
+      routingCase.key.key,
+      metadata,
+      routingCase.model
+    );
+    assert.equal(rejection?.status ?? null, routingCase.status);
+  }
+});
+
 test("enforceApiKeyPolicy applies configured throttle delay", async () => {
   const delayedKey = await createKeyWithPolicy({ throttleDelayMs: 25 });
   const policy = await loadPolicy("throttle-delay");

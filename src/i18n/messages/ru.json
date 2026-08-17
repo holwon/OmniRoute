@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Очищает API-ключи, токены, приватные ключи и JWT из сообщений, вызовов инструментов и ответов.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Соедините мультимодальный контент с текстом до того, как он достигнет моделей только для текста. Визуальный контент доступен; Аудио поступает с AudioBridge; Видео в планах.",
+    "modalityBridgeIntro": "Преобразуйте мультимодальный контент в текст до его передачи моделям, работающим только с текстом. Мосты для изображений, аудио и видео доступны и настраиваются.",
     "modalityBridgeVisionTab": "Зрение",
     "modalityBridgeAudioTab": "Аудио",
     "modalityBridgeVideoTab": "Видео",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Расширенный",
     "modalityBridgeTimeoutMs": "Таймаут (мс)",
     "modalityBridgeMaxImages": "Максимальное количество изображений на запрос",
+    "visionMaxCharsLabel": "Максимальное количество символов в описании",
+    "visionMaxCharsHint": "Ограничьте длину описания модели зрения. 0 = неограниченно — увеличьте для задач OCR с большим количеством деталей.",
     "modalityBridgeCacheEnabled": "Описание кэша",
     "modalityBridgeCacheEnabledDesc": "Повторное использование описаний для идентичных изображений (с ключом SHA-256, в памяти).",
     "modalityBridgeCacheTtlMinutes": "Кэш TTL (минуты)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Мост не активирован (модель может поддерживать визуализацию нативно или мост отключен)",
     "modalityBridgeTestError": "Тест не пройден: {message}",
     "modalityBridgeAudioComingSoon": "Аудио мост (речь → текст через /v1/audio/transcriptions) будет включен в следующий релиз. Ключи его настроек уже зарезервированы.",
-    "modalityBridgeVideoComingSoon": "Видеомост (выборка кадров + субтитры) находится в очереди — см. задачу #9760.",
     "modalityBridgeMovedTitle": "Мост Видения перемещен",
     "modalityBridgeMovedBody": "Настройки Vision Bridge теперь находятся на отдельной странице Modality Bridge.",
     "modalityBridgeMovedCta": "Открыть настройки моста модальности",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Аудио мост ОК — {count} клип(ов) транскрибировано {model}",
     "modalityBridgeAudioTestNoop": "Аудио мост не активирован (цель может поддерживать аудио, провайдер STT не подключен или мост отключен)",
     "modalityBridgeAudioTestError": "Тест аудио не удался: {message}",
+    "modalityBridgeVideoTitle": "Видеомост",
+    "modalityBridgeVideoDesc": "Возьмите образцы кадров видео, опишите их с помощью модели компьютерного зрения и продолжите работу с выбранной текстовой моделью.",
+    "modalityBridgeVideoRuntimeReady": "Среда выполнения готова",
+    "modalityBridgeVideoRuntimeUnavailable": "Среда выполнения недоступна",
+    "modalityBridgeVideoRuntimeInstall": "Установите FFmpeg и ffprobe в PATH сервера, чтобы включить извлечение видео.",
+    "modalityBridgeVideoEnabled": "Включить Видеомост",
+    "modalityBridgeVideoEnabledDesc": "Если целевая модель не обрабатывает видео, заменяйте его части описаниями кадров с временными метками.",
+    "modalityBridgeVideoModel": "Модель описания кадров",
+    "modalityBridgeVideoModelInherited": "Использовать модель Моста зрения",
+    "modalityBridgeVideoFrameCount": "Кадров на видео",
+    "modalityBridgeVideoMaxVideos": "Максимум видео на запрос",
     "modelRoutingDescriptionPlaceholder": "Маршрут моделей Opus к комбинации frontier",
     "cliproxyapiFallbackCodes": "Коды резервного копирования Cliproxyapi",
     "cliproxyapiFallbackDescription": "Описание резервного копирования Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Партнерская ссылка",
     "dismissAriaLabel": "Закрыть"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute теперь работает внутри VS Code Copilot Chat",
+    "description": "Установите бесплатное расширение OmniCopilot, и каждая модель OmniRoute появится прямо в выборе моделей Copilot Chat, которым вы уже пользуетесь.",
+    "cta": "Получить расширение",
+    "secondaryNote": "Также доступно на Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Закрыть"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Рекламируйте <gateway-alias>/<model> идентификаторы зеркал на /v1/models для моделей, у которых канонический владелец не имеет активной учетной записи, но шлюз с пропуском с активной учетной записью маршрутизирует их. Внимание: добавляет записи каталога для всех клиентов при глобальном включении.",
   "radarPage": {
     "title": "Каталог Радар",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Настройка провайдера",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Эта страница доступна только с localhost или LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Опрос остановлен: сервер отклонил запрос (404/403).",
     "pollErrorTransient": "Ошибка получения данных: автоматический повтор.",
-    "degraded": "Частичные данные: недоступные источники: {sources}",
-    "degraded.source.database": "База Данных",
-    "degraded.source.circuitBreaker": "Автомат Защиты",
-    "degraded.source.modelLockouts": "Блокировки Модели",
-    "degraded.source.count": "Количество Соединений"
+    "degraded": {
+      "message": "Частичные данные: недоступные источники: {sources}",
+      "source": {
+        "database": "База Данных",
+        "circuitBreaker": "Автомат Защиты",
+        "modelLockouts": "Блокировки Модели",
+        "count": "Количество Соединений"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Отклонять запросы перед отправкой, когда целевая модель не имеет необходимых возможностей (визуализация, инструменты, структурированный вывод, контекстное окно). Защищает прямые запросы от единственного поставщика, которые обходят фильтр совместимости комбинированного слоя.",
-  "capabilityFilter.visionMismatch": "Поставщик не поддерживает визуализацию для этого запроса изображения",
-  "capabilityFilter.toolsMismatch": "Провайдер не поддерживает вызов инструмента",
-  "capabilityFilter.structuredOutputMismatch": "Поставщик не поддерживает структурированный вывод",
-  "capabilityFilter.contextWindowMismatch": "Запрос превышает контекстное окно провайдера",
   "publicSystem": {
     "notFound": {
       "title": "Страница не найдена",
@@ -13624,5 +13657,49 @@
     "hint": "Когда включено, обнаруженные модели появляются в выборках провайдеров по всему OmniRoute.",
     "updateFailed": "Не удалось обновить (HTTP {status})",
     "networkError": "Ошибка сети — не удалось обновить настройки экспозиции провайдера"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Поставщик не поддерживает визуализацию для этого запроса изображения",
+    "toolsMismatch": "Провайдер не поддерживает вызов инструмента",
+    "structuredOutputMismatch": "Поставщик не поддерживает структурированный вывод",
+    "contextWindowMismatch": "Запрос превышает контекстное окно провайдера"
   }
 }

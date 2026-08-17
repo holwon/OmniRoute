@@ -142,6 +142,10 @@ export const PACK_ARTIFACT_ROOT_ALLOWED_EXACT_PATHS: string[] = [
   "scripts/build/fixPlaywrightAndroid.mjs",
   // #5227: imported at runtime by bin/cli/commands/serve.mjs (heap auto-calibration).
   "scripts/build/runtime-env.mjs",
+  // #10382: imported at runtime by bin/cli/commands/packs.mjs (optional ML/browser
+  // runtime pack management) — shipped via package.json "files", so must be allowed.
+  "scripts/packs/optionalPackInstaller.mjs",
+  "scripts/packs/optionalPackManifest.mjs",
   "scripts/build/sync-env.mjs",
   "scripts/dev/responses-ws-proxy.mjs",
   "scripts/dev/sync-env.mjs",
@@ -215,6 +219,10 @@ export const PACK_ARTIFACT_REQUIRED_PATHS: string[] = [
   "scripts/build/colocateOptionals.mjs",
   "scripts/build/fixTlsClientNodeBinary.mjs",
   "scripts/build/runtime-env.mjs",
+  // #10382: runtime imports of bin/cli/commands/packs.mjs (optional packs CLI) —
+  // listed REQUIRED so their absence from the tarball fails loudly.
+  "scripts/packs/optionalPackInstaller.mjs",
+  "scripts/packs/optionalPackManifest.mjs",
   "src/shared/utils/nodeRuntimeSupport.ts",
 ];
 

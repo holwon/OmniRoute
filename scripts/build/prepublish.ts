@@ -471,24 +471,66 @@ if (existsSync(opencodePluginSrc) && existsSync(join(opencodePluginSrc, "package
       // needs the plugin's own devDependencies (typescript, @opencode-ai/plugin
       // types). Without this install a fresh CI publish fails at this step.
       if (!existsSync(join(opencodePluginSrc, "node_modules"))) {
+        // The plugin's node_modules is gitignored, so a fresh CI checkout
+        // ALWAYS installs here. The registry CDN is intermittently flaky
+        // (onnxruntime-class ETIMEDOUTs to the Microsoft CDN have repeatedly
+        // stalled CI npm steps for 20+ minutes), and npm's unbounded fetch
+        // retries turn a stalled connection into a hang that eats the whole
+        // job budget. Bound the fetch and retry the install a few times:
+        // transient network failures fail fast and recover instead of hanging.
         const npmEntry = resolveBundledNpmEntry("npm-cli.js");
-        if (npmEntry) {
-          execFileSync(process.execPath, [npmEntry, "install", "--no-audit", "--no-fund"], {
-            cwd: opencodePluginSrc,
-            stdio: "inherit",
-          });
-        } else if (process.platform !== "win32") {
-          // No bundled npm entry found (non-standard Node layout). Plain `npm` is
-          // safe here — the .cmd-shim hazard #8858 guards against is Windows-only.
-          execFileSync("npm", ["install", "--no-audit", "--no-fund"], {
-            cwd: opencodePluginSrc,
-            stdio: "inherit",
-          });
-        } else {
-          throw new Error(
-            "npm-cli.js not found next to the running Node binary; cannot install the plugin dependencies without falling back to a .cmd shim."
-          );
+        const installArgs = [
+          "install",
+          "--no-audit",
+          "--no-fund",
+          "--fetch-retries=2",
+          "--fetch-retry-mintimeout=2000",
+          "--fetch-retry-maxtimeout=30000",
+          "--fetch-timeout=60000",
+        ];
+        const runPluginInstall = () => {
+          if (npmEntry) {
+            execFileSync(process.execPath, [npmEntry, ...installArgs], {
+              cwd: opencodePluginSrc,
+              stdio: "inherit",
+            });
+          } else if (process.platform !== "win32") {
+            // No bundled npm entry found (non-standard Node layout). Plain `npm` is
+            // safe here — the .cmd-shim hazard #8858 guards against is Windows-only.
+            execFileSync("npm", installArgs, {
+              cwd: opencodePluginSrc,
+              stdio: "inherit",
+            });
+          } else {
+            throw new Error(
+              "npm-cli.js not found next to the running Node binary; cannot install the plugin dependencies without falling back to a .cmd shim."
+            );
+          }
+        };
+        const sleepSync = (ms: number) =>
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+        let installError: any = null;
+        for (let attempt = 1; attempt <= 3; attempt++) {
+          try {
+            if (attempt > 1) {
+              console.log(
+                `  🔄 @omniroute/opencode-plugin npm install retry (attempt ${attempt}/3)`
+              );
+            }
+            runPluginInstall();
+            installError = null;
+            break;
+          } catch (err: any) {
+            installError = err;
+            if (attempt < 3) {
+              console.warn(
+                `  ⚠️  plugin npm install failed (attempt ${attempt}/3): ${err?.message ?? String(err)} — retrying in 10s`
+              );
+              sleepSync(10_000);
+            }
+          }
         }
+        if (installError) throw installError;
       }
       runBuildTool("tsup", "tsup", [], {
         cwd: opencodePluginSrc,

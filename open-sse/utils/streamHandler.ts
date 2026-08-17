@@ -210,6 +210,14 @@ function hasClientTerminalSseMarker(text: string, clientResponseFormat?: string 
     );
   }
 
+  // OpenAI chat completions: some providers omit `data: [DONE]` (already
+  // matched above) and terminate with a finish_reason chunk instead. A
+  // non-null finish_reason value is that terminal signal — a bare
+  // `finish_reason: null` delta chunk must NOT count (#10443).
+  if (clientResponseFormat === FORMATS.OPENAI) {
+    return /"finish_reason"\s*:\s*"[^"]+"/.test(text);
+  }
+
   return false;
 }
 
@@ -516,8 +524,22 @@ function resolveSilentCloseReason(input: {
 }): string | null {
   if (!input.bytesWereForwarded) return null;
 
-  if (!input.clientTerminalSeen && input.clientResponseFormat === FORMATS.CLAUDE) {
-    return "Upstream stream ended without a terminal marker";
+  if (!input.clientTerminalSeen) {
+    if (input.clientResponseFormat === FORMATS.CLAUDE) {
+      return "Upstream stream ended without a terminal marker";
+    }
+    // #10443: every known path that produces OpenAI chat chunks emits a
+    // terminal — the response translators (gemini/claude/kiro/cursor-to-openai)
+    // all emit a finish_reason chunk, the non-standard executors (kiro, cursor,
+    // nlpcloud, poe-web, copilot-m365-web, chatgpt-web, chipotle, gitlab)
+    // enqueue `data: [DONE]` themselves, and standard OpenAI-compatible
+    // upstreams end with finish_reason + [DONE] per spec. So a close that
+    // forwarded content but no terminal marker is an upstream drop, not a
+    // legitimate end. Guard on sawContent() so the #8649 empty-content
+    // verdict below keeps its more precise shape for content-free closes.
+    if (input.clientResponseFormat === FORMATS.OPENAI && input.contentWatcher.sawContent()) {
+      return "Upstream stream ended without a terminal marker";
+    }
   }
 
   const watcher = input.contentWatcher;

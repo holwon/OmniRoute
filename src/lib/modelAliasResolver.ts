@@ -9,6 +9,7 @@
  * `src/lib/modelAliasSeed.ts`.
  */
 import { getModelAliases } from "@/lib/db/models/aliases";
+import { DEFAULT_MODEL_ALIAS_SEED } from "@/lib/modelAliasSeed";
 
 let cachedAliases: Record<string, unknown> | null = null;
 let lastFetch = 0;
@@ -25,17 +26,22 @@ async function loadAliases(): Promise<Record<string, unknown>> {
 }
 
 /**
- * Resolve a model alias to its target provider model ID.
+ * Resolve a model alias to its target provider model ID, falling back to the
+ * static DEFAULT_MODEL_ALIAS_SEED when the alias is not in the database.
  * If the alias maps to an array, returns the first element.
  * If no alias is found, returns the original model name unchanged.
+ *
+ * Named distinctly from `resolveModelAlias` (modelDeprecation.ts /
+ * modelSpecs.ts, sync string→string) to avoid export collisions when both
+ * modules are imported together.
  */
-export async function resolveModelAlias(
+export async function resolveModelAliasWithSeedFallback(
   model: string | null | undefined
 ): Promise<string | null | undefined> {
   if (!model) return model;
 
   const aliases = await loadAliases();
-  const target = aliases[model];
+  const target = aliases[model] ?? (DEFAULT_MODEL_ALIAS_SEED as Record<string, unknown>)[model];
 
   if (target === undefined) return model;
 
@@ -58,11 +64,11 @@ export async function resolveModelAlias(
  * Resolve model alias on a parsed request body in-place.
  * Mutates `body.model` if an alias is found.
  */
-export async function resolveModelAliasOnBody(
+export async function resolveModelAliasWithSeedFallbackOnBody(
   body: Record<string, unknown> | null | undefined
 ): Promise<void> {
   if (!body || typeof body !== "object") return;
-  body.model = await resolveModelAlias(body.model as string | null | undefined);
+  body.model = await resolveModelAliasWithSeedFallback(body.model as string | null | undefined);
 }
 
 /**

@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "מנקה מפתחות API, טוקנים, מפתחות פרטיים ו-JWT מהודעות, קריאות לכלים ותגובות.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "גשר תוכן מולטימדלי לטקסט לפני שהוא מגיע למודלים טקסט-בלעדיים. הוויז'ן פעיל; האודיו מגיע עם ה-AudioBridge; הווידאו נמצא על המפת דרכים.",
+    "modalityBridgeIntro": "המירו תוכן רב־אופני לטקסט לפני שהוא מגיע למודלים שתומכים בטקסט בלבד. גשרי הראייה, השמע והווידאו זמינים וניתנים להגדרה.",
     "modalityBridgeVisionTab": "חזון",
     "modalityBridgeAudioTab": "אודיו",
     "modalityBridgeVideoTab": "וידאו",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "מתקדם",
     "modalityBridgeTimeoutMs": "זמן פסק (מילישניות)",
     "modalityBridgeMaxImages": "מקסימום תמונות לכל בקשה",
+    "visionMaxCharsLabel": "מקסימום תווים לתיאור",
+    "visionMaxCharsHint": "קבע את אורך התיאור של מודל הראייה. 0 = ללא הגבלה — הגדל עבור משימות OCR עשירות בפרטים.",
     "modalityBridgeCacheEnabled": "תיאורי מטמון",
     "modalityBridgeCacheEnabledDesc": "שימוש חוזר בתיאורים עבור תמונות זהות (מפתח SHA-256, בזיכרון).",
     "modalityBridgeCacheTtlMinutes": "TTL במטמון (דקות)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "הגשר לא הופעל (המודל עשוי לתמוך בראייה באופן מקורי או שהגשר מושבת)",
     "modalityBridgeTestError": "המבחן נכשל: {message}",
     "modalityBridgeAudioComingSoon": "הגשר האודיו (דיבור → טקסט דרך /v1/audio/transcriptions) יושק בגרסה הבאה. מפתחות ההגדרות שלו כבר שמורים.",
-    "modalityBridgeVideoComingSoon": "חיבור וידאו (דגימת פריימים + כתוביות) נמצא ברשימת המטלות — ראה בעיה #9760.",
     "modalityBridgeMovedTitle": "הגשר של Vision הוזז",
     "modalityBridgeMovedBody": "הגדרות Vision Bridge עכשיו חיות בדף Modality Bridge המוקדש.",
     "modalityBridgeMovedCta": "פתח את הגדרות גשר המודאליות",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "גשר שמע בסדר — {count} קליפ(ים) שהוקלטו על ידי {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge לא הופעל (ייתכן שהיעד תומך באודיו, אין ספק STT מחובר, או שהגשר מושבת)",
     "modalityBridgeAudioTestError": "בדיקת שמע נכשלה: {message}",
+    "modalityBridgeVideoTitle": "גשר וידאו",
+    "modalityBridgeVideoDesc": "דגמו פריימים מהווידאו, תארו אותם באמצעות מודל ראייה והמשיכו עם מודל הטקסט שנבחר.",
+    "modalityBridgeVideoRuntimeReady": "סביבת הריצה מוכנה",
+    "modalityBridgeVideoRuntimeUnavailable": "סביבת הריצה אינה זמינה",
+    "modalityBridgeVideoRuntimeInstall": "התקינו את FFmpeg ואת ffprobe ב-PATH של השרת כדי לאפשר חילוץ וידאו.",
+    "modalityBridgeVideoEnabled": "הפעלת גשר וידאו",
+    "modalityBridgeVideoEnabledDesc": "החליפו חלקי וידאו בתיאורי פריימים עם חותמות זמן כאשר מודל היעד אינו יכול לעבד וידאו.",
+    "modalityBridgeVideoModel": "מודל לתיאור פריימים",
+    "modalityBridgeVideoModelInherited": "שימוש במודל של גשר הראייה",
+    "modalityBridgeVideoFrameCount": "פריימים לכל וידאו",
+    "modalityBridgeVideoMaxVideos": "מספר מרבי של סרטונים לבקשה",
     "modelRoutingDescriptionPlaceholder": "נתב מודלים של Opus לקומבו של frontier",
     "cliproxyapiFallbackCodes": "קודי גיבוי של Cliproxyapi",
     "cliproxyapiFallbackDescription": "תיאור גיבוי של Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "קישור שותף",
     "dismissAriaLabel": "התעלם"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute פועל כעת ישירות בתוך VS Code Copilot Chat",
+    "description": "התקינו את התוסף החינמי OmniCopilot וכל מודלי OmniRoute יופיעו ישירות בבורר המודלים של Copilot Chat שאתם כבר משתמשים בו.",
+    "cta": "קבלו את התוסף",
+    "secondaryNote": "זמין גם ב-Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "התעלם"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "פרסם את מזהי המראה של <gateway-alias>/<model> ב-/v1/models עבור מודלים שבעליהם הקנוניים אין להם אישור פעיל אך שער העברת נתונים עם אישור פעיל מנתב אותם. אזהרה: מוסיף רשומות קטלוג לכל הלקוחות כאשר זה מופעל באופן גלובלי.",
   "radarPage": {
     "title": "קטלוג רדאר",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "הגדרת ספק",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "דף זה נגיש רק מ-localhost או רשת מקומית (LOCAL_ONLY).",
     "pollErrorStopped": "הסקר הופסק: השרת דחה את הבקשה (404/403).",
     "pollErrorTransient": "שגיאה באחזור נתונים: ניסיון חוזר אוטומטי.",
-    "degraded": "נתונים חלקיים: מקורות לא זמינים: {sources}",
-    "degraded.source.database": "מסד נתונים",
-    "degraded.source.circuitBreaker": "נתיק מעגל",
-    "degraded.source.modelLockouts": "נעילות מודל",
-    "degraded.source.count": "מספר חיבורים"
+    "degraded": {
+      "message": "נתונים חלקיים: מקורות לא זמינים: {sources}",
+      "source": {
+        "database": "מסד נתונים",
+        "circuitBreaker": "נתיק מעגל",
+        "modelLockouts": "נעילות מודל",
+        "count": "מספר חיבורים"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "דחה בקשות לפני שליחה כאשר המודל המטרה חסר יכולות נדרשות (חזון, כלים, פלט מובנה, חלון הקשר). מגן על בקשות ישירות מספק אחד שעוקפות את מסנן ההתאמה של שכבת הקומבו.",
-  "capabilityFilter.visionMismatch": "הספק אינו תומך בראייה עבור בקשה זו של תמונה",
-  "capabilityFilter.toolsMismatch": "הספק אינו תומך בקריאת כלים",
-  "capabilityFilter.structuredOutputMismatch": "הספק אינו תומך בפלט מובנה",
-  "capabilityFilter.contextWindowMismatch": "הבקשה חורגת מגבול ההקשר של הספק",
   "publicSystem": {
     "notFound": {
       "title": "העמוד לא נמצא",
@@ -13624,5 +13657,49 @@
     "hint": "כאשר זה מופעל, מודלים שהתגלו מופיעים בבחירות ספקים ברחבי OmniRoute.",
     "updateFailed": "נכשל בעדכון (HTTP {status})",
     "networkError": "שגיאת רשת — לא ניתן לעדכן את הגדרת החשיפה של הספק"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "הספק אינו תומך בראייה עבור בקשה זו של תמונה",
+    "toolsMismatch": "הספק אינו תומך בקריאת כלים",
+    "structuredOutputMismatch": "הספק אינו תומך בפלט מובנה",
+    "contextWindowMismatch": "הבקשה חורגת מגבול ההקשר של הספק"
   }
 }

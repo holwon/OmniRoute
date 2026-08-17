@@ -1,7 +1,7 @@
 ---
 title: "Monitoring & Observability Guide"
-version: 3.8.40
-lastUpdated: 2026-06-28
+version: 3.8.50
+lastUpdated: 2026-08-13
 ---
 
 # Monitoring & Observability Guide
@@ -103,9 +103,29 @@ Per-combo:
 
 ## Health Check API
 
-> **Note:** Only `GET /api/monitoring/health` is exposed as a REST endpoint. All other monitoring data (provider health, autopilot issues, quota monitors, token health, latency) is accessed via the **MCP tool** `observability_snapshot` or the **dashboard** pages — there are no dedicated REST routes for these.
+OmniRoute exposes **two** HTTP health surfaces. They are not interchangeable for orchestrators.
 
-### System Health
+| Path | Purpose | Weight | Use for |
+| --- | --- | --- | --- |
+| `GET /healthz` | Lifecycle liveness/readiness (`ok` / `starting` / `stopping`) | Trivial (phase flag only) | Kubernetes **readiness**; soft **liveness** if you must use HTTP |
+| `GET /api/monitoring/health` | Deep system + provider summary (DB, heap, catalog counts, …) | Heavy (sync DB / monitoring work) | Dashboards, blackbox deep checks, Docker’s built-in healthcheck |
+
+> **Note:** Provider health matrices, autopilot issues, quota monitors, token health, and latency detail beyond `/api/monitoring/health` are available via the **MCP tool** `observability_snapshot` or the **dashboard** pages — there are no dedicated REST routes for those.
+
+Both routes run on the **same Node event loop** as request handling. A CPU-bound path (large `GET /v1/models` catalog work, long-context compression / token counting) can delay **all** HTTP handlers, including `/healthz`. Event-loop busy ≠ process dead. Prefer fixing the hog; probe tuning only reduces false kills.
+
+### Lightweight orchestrator probe
+
+```bash
+GET /healthz
+# or HEAD /healthz
+```
+
+- **200** + body `ok` when the server lifecycle phase is ready
+- **503** + `starting` / `stopping` during boot or shutdown
+- Implementation: `src/app/healthz/route.ts` (no DB ping)
+
+### System Health (deep)
 
 ```bash
 GET /api/monitoring/health
@@ -134,6 +154,48 @@ Response:
   }
 }
 ```
+
+### Kubernetes probe recommendations
+
+OmniRoute is a **single Node process** (one event loop). Stock Docker `HEALTHCHECK` targets `/api/monitoring/health` — that is **too heavy** for kubelet liveness intervals.
+
+| Probe | Recommended target | Notes |
+| --- | --- | --- |
+| **Startup** | HTTP `GET /healthz` with a long `failureThreshold` (or large `startPeriod`) | Cold start + SQLite migration can exceed a few seconds |
+| **Readiness** | HTTP `GET /healthz` | Remove endpoints while starting/stopping; still flaps if the loop is CPU-blocked |
+| **Liveness** | **TCP** on the main service port (`PORT`, default `20128`), **or** HTTP `/healthz` with soft thresholds | Do **not** kill the pod on short event-loop stalls; busy ≠ dead |
+| **Deep health** | `GET /api/monitoring/health` from an external checker | Not for kubelet `livenessProbe` / tight `readinessProbe` |
+
+Example shape (adjust thresholds to your cold-start and compression load):
+
+```yaml
+ports:
+  - name: http
+    containerPort: 20128
+startupProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  failureThreshold: 30
+  periodSeconds: 5
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: http
+  periodSeconds: 5
+  timeoutSeconds: 2
+  failureThreshold: 6
+livenessProbe:
+  tcpSocket:
+    port: http
+  periodSeconds: 10
+  timeoutSeconds: 3
+  failureThreshold: 6
+```
+
+**Do not** point kubelet **liveness** at `/api/monitoring/health`. That path does real DB/monitoring work and will false-positive under load.
+
+Related: [#10052](https://github.com/diegosouzapw/OmniRoute/issues/10052) (probes while the event loop is busy), [#9685](https://github.com/diegosouzapw/OmniRoute/issues/9685) / [#10055](https://github.com/diegosouzapw/OmniRoute/pull/10055) (catalog pricing hog), [#10117](https://github.com/diegosouzapw/OmniRoute/issues/10117) (compression token-count hog).
 
 ### Provider Health
 

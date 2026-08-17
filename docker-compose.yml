@@ -247,7 +247,7 @@ services:
   # fall back to the chatCore path with zero code changes. See
   # docs/architecture/cluster-decisions.md for the activation plan.
   bifrost:
-    image: ghcr.io/maximhq/bifrost:1.5.21
+    image: ghcr.io/maximhq/bifrost:v1.6.11
     container_name: omniroute-bifrost
     restart: unless-stopped
     ports:
@@ -266,9 +266,12 @@ services:
       - bifrost
 
   # ── Profile: cliproxyapi (CLIProxyAPI as sidecar) ─────────────────
+  # Official pre-built image lives on Docker Hub (eceasy/cli-proxy-api);
+  # ghcr.io/router-for-me/* is not publicly pullable. v6.9.7 is the pinned
+  # version the sidecar integration (port 8317, /v1/models healthcheck) targets.
   cliproxyapi:
     container_name: cliproxyapi
-    image: ghcr.io/router-for-me/cliproxyapi:v6.9.7
+    image: docker.io/eceasy/cli-proxy-api:v6.9.7
     restart: unless-stopped
     ports:
       - "${CLIPROXYAPI_PORT:-8317}:${CLIPROXYAPI_PORT:-8317}"

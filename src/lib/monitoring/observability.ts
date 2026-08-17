@@ -126,6 +126,8 @@ interface BuildTelemetryPayloadOptions {
 
 interface BuildHealthPayloadOptions {
   appVersion: string;
+  /** #10427: git SHA the running artifact was built from, so a deploy is auditable over HTTP. */
+  buildSha?: string | null;
   catalogCount?: number;
   settings: { setupComplete?: boolean } | null | undefined;
   connections: Array<{ provider?: string; isActive?: boolean | null; rateLimitedUntil?: unknown }>;
@@ -288,10 +290,14 @@ export function buildHealthPayload({
   activeSessionsByKey = {},
   credentialHealth,
   adaptiveAdmission = null,
+  buildSha = null,
 }: BuildHealthPayloadOptions) {
   const timestamp = new Date().toISOString();
   const system = {
     version: appVersion,
+    // #10427: identifying a bad deploy previously required SSH + grepping compiled chunks.
+    // Absent/empty when unknown (dev runs) — never a fabricated value.
+    ...(buildSha ? { buildSha } : {}),
     nodeVersion: process.version,
     uptime: process.uptime(),
     memoryUsage: process.memoryUsage(),

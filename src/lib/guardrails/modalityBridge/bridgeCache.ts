@@ -27,12 +27,22 @@ export interface BridgeCacheOptions {
   now?: () => number;
 }
 
+export interface BridgeCacheEntry {
+  value: string;
+  /** Actual successful producer, which may differ from the routing-plan model after fallback. */
+  producerModel?: string;
+}
+
 export class BridgeCache {
-  private readonly entries = new Map<string, { value: string; expiresAt: number }>();
+  private readonly entries = new Map<string, { entry: BridgeCacheEntry; expiresAt: number }>();
 
   constructor(private readonly opts: BridgeCacheOptions) {}
 
   get(key: string): string | undefined {
+    return this.getEntry(key)?.value;
+  }
+
+  getEntry(key: string): BridgeCacheEntry | undefined {
     const hit = this.entries.get(key);
     if (!hit) return undefined;
     const now = (this.opts.now ?? Date.now)();
@@ -43,13 +53,17 @@ export class BridgeCache {
     // Map preserves insertion order — re-insert to mark as most-recently-used.
     this.entries.delete(key);
     this.entries.set(key, hit);
-    return hit.value;
+    return hit.entry;
   }
 
   set(key: string, value: string): void {
+    this.setEntry(key, { value });
+  }
+
+  setEntry(key: string, entry: BridgeCacheEntry): void {
     const now = (this.opts.now ?? Date.now)();
     this.entries.delete(key);
-    this.entries.set(key, { value, expiresAt: now + this.opts.ttlMs });
+    this.entries.set(key, { entry, expiresAt: now + this.opts.ttlMs });
     while (this.entries.size > this.opts.maxEntries) {
       const oldest = this.entries.keys().next().value;
       if (oldest === undefined) break;

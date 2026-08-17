@@ -6,7 +6,7 @@ import { xaiOauth, decodeXaiIdTokenIdentity } from "../../src/lib/oauth/provider
 import { XAI_OAUTH_CONFIG } from "../../src/lib/oauth/constants/oauth.ts";
 import { getExecutor, hasSpecializedExecutor } from "../../open-sse/executors/index.ts";
 import { XaiExecutor } from "../../open-sse/executors/xai.ts";
-import { xai_oauthProvider } from "../../open-sse/config/providers/registry/xai-oauth/index.ts";
+import { xai_oauthProvider } from "../../open-sse/config/providers/registry/xai/index.ts";
 
 const originalFetch = globalThis.fetch;
 

@@ -27,13 +27,21 @@ import { createProxyDispatcher } from "../utils/proxyDispatcher.ts";
 import { RATE_LIMIT_TEXT_PATTERNS } from "../services/accountFallback.ts";
 import { buildErrorBody, sanitizeErrorMessage } from "../utils/error.ts";
 import { fetch as undiciFetch, type Dispatcher } from "undici";
+import {
+  type AccountProxyConfig as SharedAccountProxyConfig,
+  type RotatableAccount,
+  pickAccount as pickRotatableAccount,
+  markCooldown as markAccountCooldown,
+  markSuccess as markAccountSuccess,
+  maskAccountId,
+  isNetworkErrorRotatable,
+} from "./accountRotation.ts";
+import { isNetworkRotationSharedEgressGuardEnabled } from "@/shared/utils/featureFlags";
 
 const BOOTSTRAP_PATH = "/api/free-ai/bootstrap";
 const CHAT_PATH = "/api/free-ai/openai/chat";
 const JWT_REFRESH_BUFFER_MS = 5 * 60 * 1000;
 const BOOTSTRAP_TIMEOUT_MS = 15_000;
-const COOLDOWN_BASE_MS = 5_000;
-const COOLDOWN_MAX_MS = 60_000;
 
 const MIMO_SOURCE = "mimocode-cli-free";
 
@@ -82,24 +90,12 @@ const USER_AGENTS = [
 // ── Account State ──────────────────────────────────────────────────────────
 
 /** Per-account proxy configuration, passed through providerSpecificData.accountProxies. */
-export interface AccountProxyConfig {
-  fingerprint: string;
-  proxy: {
-    type: string;
-    host: string;
-    port: number;
-    username?: string;
-    password?: string;
-    relayAuth?: string;
-  } | null;
-}
+export type AccountProxyConfig = SharedAccountProxyConfig;
 
-interface AccountState {
+interface AccountState extends RotatableAccount {
   fingerprint: string;
   jwt: string;
   expiresAt: number;
-  cooldownUntil: number;
-  consecutiveFails: number;
   /**
    * #3837/#5521: the account's resolved proxy, or `null` when none is configured.
    * Always present (never `undefined`) so callers can read `acct.proxy` directly —
@@ -223,7 +219,10 @@ function rewriteModelName(model: string): string {
 
 export class MimocodeExecutor extends BaseExecutor {
   private accounts: AccountState[] = [];
-  private nextAccountIdx = 0;
+  // Not `private`: passed as the mutable rotation cursor to the shared
+  // pickAccount() helper, which needs a plain `{ nextAccountIdx }` shape —
+  // TS's private-member nominal check rejects `this` there otherwise.
+  nextAccountIdx = 0;
   private baseUrl: string;
   private proxyUrlMap = new Map<string, string>();
   private static encoder = new TextEncoder();
@@ -342,30 +341,15 @@ export class MimocodeExecutor extends BaseExecutor {
   }
 
   private pickAccount(): AccountState {
-    for (let i = 0; i < this.accounts.length; i++) {
-      const idx = (this.nextAccountIdx + i) % this.accounts.length;
-      const acct = this.accounts[idx];
-      if (isAccountReady(acct)) {
-        this.nextAccountIdx = (idx + 1) % this.accounts.length;
-        return acct;
-      }
-    }
-    const fallbackIdx = this.nextAccountIdx % this.accounts.length;
-    this.nextAccountIdx = (this.nextAccountIdx + 1) % this.accounts.length;
-    return this.accounts[fallbackIdx];
+    return pickRotatableAccount(this.accounts, this, isAccountReady);
   }
 
   private markCooldown(account: AccountState): void {
-    account.consecutiveFails++;
-    const backoff = Math.min(
-      COOLDOWN_BASE_MS * Math.pow(2, account.consecutiveFails - 1),
-      COOLDOWN_MAX_MS
-    );
-    account.cooldownUntil = Date.now() + backoff + Math.random() * 1000;
+    markAccountCooldown(account);
   }
 
   private markSuccess(account: AccountState): void {
-    account.consecutiveFails = 0;
+    markAccountSuccess(account);
   }
 
   /**
@@ -592,9 +576,25 @@ export class MimocodeExecutor extends BaseExecutor {
 
     this.syncAccountsFromCredentials(input.credentials);
 
+    const sharedEgressGuardEnabled = isNetworkRotationSharedEgressGuardEnabled();
+    // Set once a proxy-less account's network throw reveals the shared egress
+    // is down — subsequent proxy-less accounts this request are skipped
+    // without a network call, but proxied accounts (independent egress) are
+    // still tried normally. See NETWORK_ROTATION_SHARED_EGRESS_GUARD.
+    let sharedEgressDown = false;
+
     // Try each account, skip cooldown ones
     for (let attempt = 0; attempt < this.accounts.length; attempt++) {
       const account = this.pickAccount();
+
+      if (sharedEgressGuardEnabled && sharedEgressDown && !account.proxy) {
+        log?.warn?.(
+          "MIMOCODE",
+          `skipping account ${maskAccountId(account.fingerprint)} (no dedicated proxy, shared egress already down this request)`
+        );
+        continue;
+      }
+
       try {
         const headers = this.buildHeaders(input.credentials, stream);
         const resp = await this.fetchWithAuthRetry(url, headers, reqBody, signal, account, log);
@@ -623,16 +623,60 @@ export class MimocodeExecutor extends BaseExecutor {
           transformedBody: reqBody,
         };
       } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        const masked = maskAccountId(account.fingerprint);
+
+        // Mirrors OpencodeExecutor's rotation guard: a network exception is only account-scoped
+        // when this account has its OWN egress (a configured proxy). Without
+        // one, accounts share the default egress — the failure isn't
+        // attributable to this account, and trying the next one would just
+        // retry the same outage while poisoning its cooldown for a cause
+        // that isn't theirs. Fail fast instead of exhausting every account.
+        if (!isNetworkErrorRotatable(account)) {
+          if (sharedEgressGuardEnabled) {
+            this.markCooldown(account);
+            sharedEgressDown = true;
+            log?.warn?.(
+              "MIMOCODE",
+              `network error on account ${masked} (no dedicated proxy, shared egress), cooldown applied — trying next available account… (${msg})`
+            );
+            continue;
+          }
+          log?.warn?.(
+            "MIMOCODE",
+            `network error on account ${masked} (no dedicated proxy, shared egress) — not rotating (${msg})`
+          );
+          return {
+            response: new Response(
+              encoder.encode(
+                JSON.stringify(
+                  buildErrorBody(502, msg, undefined, {
+                    type: "upstream_error",
+                    code: "EXECUTOR_ERROR",
+                  })
+                )
+              ),
+              { status: 502, headers: { "Content-Type": "application/json" } }
+            ),
+            url,
+            headers: this.buildHeaders(input.credentials, stream),
+            transformedBody: body,
+          };
+        }
+
         this.markCooldown(account);
+        log?.warn?.("MIMOCODE", `network error on account ${masked}, rotating to next… (${msg})`);
         if (attempt === this.accounts.length - 1) {
-          const msg = err instanceof Error ? err.message : String(err);
           log?.error?.("MIMOCODE", `Executor error: ${msg}`);
           return {
             response: new Response(
               encoder.encode(
-                JSON.stringify({
-                  error: { message: msg, type: "upstream_error", code: "EXECUTOR_ERROR" },
-                })
+                JSON.stringify(
+                  buildErrorBody(502, msg, undefined, {
+                    type: "upstream_error",
+                    code: "EXECUTOR_ERROR",
+                  })
+                )
               ),
               { status: 502, headers: { "Content-Type": "application/json" } }
             ),

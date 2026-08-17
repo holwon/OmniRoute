@@ -11,6 +11,7 @@ export interface ApiModel {
   fullModel?: string;
   type?: string;
   subtype?: string;
+  supportsVision?: boolean;
 }
 
 export interface ModelSelectFieldProps {

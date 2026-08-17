@@ -96,6 +96,7 @@ export * from "./db/compressionContextBudget";
 export * from "./db/compressionRunTelemetry";
 export * from "./db/jobRegistryDb";
 export * from "./db/modelContextOverrides";
+export * from "./db/responsesContinuationStore";
 
 export {
   getApiKeys,
@@ -819,6 +820,26 @@ export {
   getRadarSettings,
   setRadarOptIn,
   setRadarKey,
+  getRadarReferralsCache,
+  setRadarReferralsCache,
+  getRadarOffersCache,
+  setRadarOffersCache,
+  getRadarIntelCache,
+  setRadarIntelCache,
+  listRadarLocalModelState,
+  setRadarLocalModelOverride,
+  clearRadarLocalModelOverride,
+  setRadarModelTombstone,
+  getRadarLocalMergeState,
 } from "./db/radar";
-export type { RadarCache, RadarSettings } from "./db/radar";
+export type {
+  RadarCache,
+  RadarSettings,
+  RadarReferralsCache,
+  RadarOffersCache,
+  RadarIntelCache,
+  RadarLocalModelState,
+  RadarLocalModelOverridePatch,
+  RadarLocalMergeState,
+} from "./db/radar";
 export * from "./db/conductorBridge"; // OmniConductor hub mirror — SSE cursor (PRD Conductor RF1)

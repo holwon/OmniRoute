@@ -39,6 +39,7 @@ const { resolveServerEntry } = require("./lib/resolveServerEntry");
 const { resolveDarwinHelperExecutable } = require("./lib/resolveNodeHelper");
 const { resolveRemoteServerUrl, isValidHttpUrl } = require("./lib/resolveRemoteServerUrl");
 const { writeRemoteServerUrl } = require("./lib/remoteServerPreferences");
+const { buildReadinessUrl, waitForServer } = require("./lib/serverReadiness");
 
 // ── Single Instance Lock ───────────────────────────────────
 const gotTheLock = app.requestSingleInstanceLock();
@@ -86,6 +87,7 @@ let remoteServerUrl = resolveRemoteServerUrl({
 });
 
 const getServerUrl = () => remoteServerUrl || `http://localhost:${serverPort}`;
+const getServerReadinessUrl = () => buildReadinessUrl(getServerUrl());
 
 function resolveNodeExecutable(env = process.env) {
   // #1081: Ensure Next.js standalone runs using Electron's Node runtime
@@ -112,7 +114,32 @@ function resolveNodeExecutable(env = process.env) {
   return process.execPath;
 }
 
-function resolveServerNodePath(env = process.env) {
+// Stage 7 (issue #10321): optional runtime packs are installed under
+// `${DATA_DIR}/packs/<name>/node_modules` (see open-sse/utils/optionalPacks.ts —
+// this is the plain-JS mirror; keep semantics identical). Prepending their
+// node_modules to NODE_PATH lets the server's dynamic imports (playwright, the
+// LLMLingua closure) resolve pack members while the default bundle stays slim.
+function resolvePackNodePaths(dataDir) {
+  const packsRoot = path.join(dataDir, "packs");
+  let names;
+  try {
+    names = fs.readdirSync(packsRoot);
+  } catch {
+    return []; // No packs dir yet — nothing installed.
+  }
+  const dirs = [];
+  for (const name of names) {
+    const candidate = path.join(packsRoot, name, "node_modules");
+    try {
+      if (fs.statSync(candidate).isDirectory()) dirs.push(candidate);
+    } catch {
+      // Unreadable entry — treat as not installed.
+    }
+  }
+  return dirs;
+}
+
+function resolveServerNodePath(env = process.env, extraDirs = []) {
   const seen = new Set();
   const entries = [];
 
@@ -132,6 +159,12 @@ function resolveServerNodePath(env = process.env) {
 
   for (const existing of (env.NODE_PATH || "").split(path.delimiter)) {
     addEntry(existing);
+  }
+
+  // Optional packs take precedence over bundle-resident copies so an installed
+  // pack can never be shadowed by a stale bundled duplicate.
+  for (const packDir of extraDirs) {
+    addEntry(packDir);
   }
 
   // Electron-builder installs native modules like better-sqlite3 under
@@ -183,26 +216,6 @@ function sendToRenderer(channel, data) {
   if (mainWindow && !mainWindow.isDestroyed()) {
     mainWindow.webContents.send(channel, data);
   }
-}
-
-// ── Helper: Wait for server readiness (#1, #10) ────────────
-// Default raised to 180s: the first launch after an upgrade can run long DB
-// migrations, during which the server accepts the TCP connection but holds the
-// HTTP response until handlers initialize. The previous 30s cap timed out and
-// left the window stuck on a hanging connection (#2460).
-async function waitForServer(url, timeoutMs = 180000) {
-  const start = Date.now();
-  while (Date.now() - start < timeoutMs) {
-    try {
-      const res = await fetch(url);
-      if (res.ok || res.status < 500) return true;
-    } catch {
-      /* server not ready yet */
-    }
-    await new Promise((r) => setTimeout(r, 500));
-  }
-  console.warn("[Electron] Server readiness timeout — showing window anyway");
-  return false;
 }
 
 // ── Helper: Wait for server process exit with timeout (#2) ─
@@ -533,7 +546,7 @@ async function changePort(newPort) {
 
   // Start server on new port
   startNextServer();
-  await waitForServer(getServerUrl());
+  await waitForServer(getServerReadinessUrl());
 
   // Reload window and update tray
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -603,7 +616,7 @@ async function setRemoteServerUrl(nextUrl) {
 
   startNextServer();
   try {
-    await waitForServer(`${getServerUrl()}/api/monitoring/health`);
+    await waitForServer(getServerReadinessUrl());
   } catch (err) {
     console.warn("[Electron] Server did not become ready after remote-server change:", err.message);
   }
@@ -770,7 +783,7 @@ function startNextServer() {
       PORT: String(serverPort),
       NODE_ENV: "production",
       ELECTRON_RUN_AS_NODE: "1",
-      NODE_PATH: resolveServerNodePath(serverEnv),
+      NODE_PATH: resolveServerNodePath(serverEnv, resolvePackNodePaths(dataDir)),
       NODE_OPTIONS: serverNodeOptions,
     },
     stdio: "pipe",
@@ -935,7 +948,7 @@ function setupIpcHandlers() {
     stopNextServer();
     await waitForServerExit(serverToStop);
     startNextServer();
-    await waitForServer(getServerUrl());
+    await waitForServer(getServerReadinessUrl());
     return { success: true };
   });
 
@@ -1078,8 +1091,8 @@ app.whenReady().then(async () => {
   startNextServer();
   let serverReady = true;
   if (!isDev) {
-    // Probe the auth-exempt health endpoint (not the root URL, which may redirect).
-    serverReady = await waitForServer(`${getServerUrl()}/api/monitoring/health`);
+    // Probe the lightweight auth-exempt endpoint instead of aggregating full monitoring state.
+    serverReady = await waitForServer(getServerReadinessUrl());
   }
 
   if (isHeadless) {
@@ -1095,7 +1108,7 @@ app.whenReady().then(async () => {
   // If readiness timed out (e.g. very long first-launch migrations), don't leave the
   // window stuck on a hanging connection — keep polling and reload once it responds (#2460).
   if (!isDev && !serverReady && !isHeadless) {
-    void waitForServer(`${getServerUrl()}/api/monitoring/health`, 300000).then((ready) => {
+    void waitForServer(getServerReadinessUrl(), 300000).then((ready) => {
       if (ready && mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.loadURL(getServerUrl());
       }

@@ -26,6 +26,9 @@ export const OAUTH_PROVIDERS = {
     website: "https://x.ai",
     subscriptionRisk: true,
     riskNoticeVariant: "oauth",
+    // Render xAI OAuth through the unified xAI dashboard card. Keep this
+    // catalog entry addressable for existing routes and stored connections.
+    hiddenFromDashboard: true,
     authHint:
       "Sign in with xAI to use api.x.ai models such as Grok 4.5. This is separate from Grok Build JWT sessions, which use cli-chat-proxy.grok.com and grok-build model aliases.",
   },

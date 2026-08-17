@@ -6,6 +6,7 @@
  * predicates are re-exported from combo.ts for backward compatibility.
  */
 
+import { EXECUTOR_CONTRACT_VIOLATION_CODE } from "../../config/constants.ts";
 import { errorResponse } from "../../utils/error.ts";
 import { parseModel } from "../model.ts";
 import { isSelfInflictedUpstreamTimeout } from "../../handlers/chatCore/cooldownClassification.ts";
@@ -201,6 +202,9 @@ const REQUEST_SCOPED_UPSTREAM_ERROR_CODES: Record<string, true> = {
   rate_limit_queue_timeout: true,
   rate_limit_queue_full: true,
   rate_limit_queue_wedged: true,
+  // #10360: our own executor-result contract violation. An internal defect, not
+  // a provider/account fault — it must never cool a connection or trip a breaker.
+  [EXECUTOR_CONTRACT_VIOLATION_CODE]: true,
 };
 
 /** Request/model-specific failures must not poison provider-wide resilience state. */

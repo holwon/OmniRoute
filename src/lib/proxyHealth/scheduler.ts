@@ -2,22 +2,34 @@
  * Proxy Health Check Scheduler
  *
  * Periodically tests all proxy registry entries and automatically
- * removes proxies that have been failing consecutively.
+ * removes (or soft-disables) proxies that have been failing consecutively.
  *
  * Config via environment:
  *   PROXY_HEALTH_INTERVAL_MS  — sweep interval (default: 600000 = 10min)
  *   PROXY_HEALTH_ENABLED      — set "false" to disable
- *   PROXY_AUTO_REMOVE         — set "true" to auto-remove dead proxies
- *   PROXY_AUTO_REMOVE_AFTER   — consecutive failures before removal (default: 3)
+ *   PROXY_AUTO_REMOVE         — set "true" to auto-remove dead proxies (destructive)
+ *   PROXY_AUTO_DISABLE        — set "true" to auto-disable dead proxies instead of
+ *                               deleting them (status → "dead", already excluded from
+ *                               pool/rotation resolution by PROXY_ALIVE_PREDICATE). The
+ *                               row is never deleted, and the same recovery check that
+ *                               re-activates proxies for PROXY_AUTO_REMOVE flips it back
+ *                               to "active" once it starts answering probes again — no
+ *                               manual re-add needed. If both flags are set, auto-remove
+ *                               wins (see decision.ts).
+ *   PROXY_AUTO_REMOVE_AFTER   — consecutive failures before the action above fires
+ *                               (default: 3). Shared by both PROXY_AUTO_REMOVE and
+ *                               PROXY_AUTO_DISABLE — they are alternative actions at the
+ *                               same threshold, not independently tunable.
  */
 
 import { deleteProxyById, listProxies, updateProxy } from "@/lib/localDb";
-import { createProxyDispatcher, clearDispatcherCache, proxyConfigToUrl } from "@omniroute/open-sse/utils/proxyDispatcher";
-import { fetch as undiciFetch } from "undici";
 import {
-  decideProxyHealthAction,
-  type ProxyProbeOutcome,
-} from "./decision.ts";
+  createProxyDispatcher,
+  clearDispatcherCache,
+  proxyConfigToUrl,
+} from "@omniroute/open-sse/utils/proxyDispatcher";
+import { fetch as undiciFetch } from "undici";
+import { decideProxyHealthAction, type ProxyProbeOutcome } from "./decision.ts";
 
 // #6246: a HEAD to the public probe target through a legit (often loaded) proxy
 // can exceed a few seconds; the old 5s ceiling produced false negatives that
@@ -56,6 +68,10 @@ function getIntervalMs(): number {
 
 function isAutoRemoveEnabled(): boolean {
   return process.env.PROXY_AUTO_REMOVE === "true";
+}
+
+function isAutoDisableEnabled(): boolean {
+  return process.env.PROXY_AUTO_DISABLE === "true";
 }
 
 function getRemoveAfter(): number {
@@ -127,11 +143,13 @@ async function sweep(): Promise<void> {
   const failureMap = getFailureMap();
   const removeAfter = getRemoveAfter();
   const autoRemove = isAutoRemoveEnabled();
+  const autoDisable = isAutoDisableEnabled();
 
   let tested = 0;
   let alive = 0;
   let inconclusive = 0;
   let removed = 0;
+  let disabled = 0;
 
   for (let i = 0; i < proxies.length; i += CONCURRENCY) {
     const batch = proxies.slice(i, i + CONCURRENCY);
@@ -153,31 +171,39 @@ async function sweep(): Promise<void> {
         outcome,
         priorFailures: failureMap.get(id) ?? 0,
         autoRemove,
+        autoDisable,
         removeAfter,
       });
 
       if (decision.clearFailures) failureMap.delete(id);
       else failureMap.set(id, decision.failures);
 
-      // #6246 (policy C): only mutate the operator-owned status when the decision
-      // explicitly asks for it. By default (auto-remove off) setStatus is null, so
-      // a transient probe failure never flips a healthy proxy to inactive.
+      // #6246 (policy C) / auto-disable (policy D): only mutate the operator-owned
+      // status when the decision explicitly asks for it. With both flags off,
+      // setStatus is null, so a transient probe failure never flips a healthy
+      // proxy's status.
       if (decision.setStatus) {
         await updateProxy(id, { status: decision.setStatus }).catch(() => {});
+        if (decision.setStatus === "dead") disabled++;
       }
 
       if (decision.remove) {
         if (await deleteProxyById(id, { force: true }).catch(() => false)) {
           failureMap.delete(id);
           removed++;
-          try { clearDispatcherCache(); } catch { /* non-critical */ }
+          try {
+            clearDispatcherCache();
+          } catch {
+            /* non-critical */
+          }
         }
       }
     }
   }
 
   console.log(
-    `${LOG_PREFIX} Sweep complete: ${tested} tested, ${alive} alive, ${inconclusive} inconclusive, ${removed} auto-removed`
+    `${LOG_PREFIX} Sweep complete: ${tested} tested, ${alive} alive, ${inconclusive} inconclusive, ` +
+      `${removed} auto-removed, ${disabled} auto-disabled`
   );
 }
 

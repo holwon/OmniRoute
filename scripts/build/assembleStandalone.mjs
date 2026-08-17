@@ -39,7 +39,7 @@
  * prune + validate (pack-artifact-policy)                      -               Y           -    UNIQUE (prepublish)
  * data/ dir creation                                           -               Y           -    UNIQUE (prepublish)
  * --- electron-UNIQUE ---
- * better-sqlite3 native strip + Electron-ABI rebuild            -               -           Y    UNIQUE (electron)
+ * better-sqlite3 prebuild verify + compile-input strip          -               -           Y    UNIQUE (electron)
  * Turbopack hashed-module symlink materialize (node_modules)   -               -           Y    SHARED (opt-in: materializeSymlinks)
  * symlink guard (assertBundleIsPackagable)                     -               -           Y    UNIQUE (electron)
  * removeGeneratedElectronArtifacts                             -               -           Y    UNIQUE (electron)

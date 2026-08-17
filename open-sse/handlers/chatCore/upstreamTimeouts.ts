@@ -1,4 +1,8 @@
-import { FETCH_TIMEOUT_MS } from "../../config/constants.ts";
+import {
+  EXECUTOR_CONTRACT_VIOLATION_CODE,
+  FETCH_TIMEOUT_MS,
+  HTTP_STATUS,
+} from "../../config/constants.ts";
 import { getModelTimeoutMs } from "../../config/providerModels.ts";
 import {
   getLoggedInputTokens,
@@ -98,6 +102,62 @@ export function getExecutorTimeoutMs(executor: unknown, provider?: string, model
   return resolveProviderTimeoutMs(executor);
 }
 
+/**
+ * Cross-realm Response detection (#10360).
+ *
+ * `instanceof Response` is a NOMINAL check against `globalThis.Response`, and
+ * OmniRoute's default egress does not use the global one: `proxyFetch.ts`
+ * dispatches through the npm `undici` package's `fetch`, whose `Response` is a
+ * different class from the Node built-in. A bare `instanceof` therefore
+ * rejected virtually every real upstream response as a "contract violation".
+ *
+ * Accept the built-in fast path first, then fall back to a structural probe:
+ * the `Symbol.toStringTag` brand plus the members the pipeline actually reads
+ * (`status`/`ok`/`headers.get`/`text`/`clone`). A plain `{ status, ok }` bag
+ * still fails, so the guard keeps its value.
+ */
+export function isResponseLike(value: unknown): value is Response {
+  if (value instanceof Response) return true;
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as {
+    status?: unknown;
+    ok?: unknown;
+    headers?: { get?: unknown } | null;
+    text?: unknown;
+    clone?: unknown;
+  };
+  return (
+    Object.prototype.toString.call(value) === "[object Response]" &&
+    typeof candidate.status === "number" &&
+    typeof candidate.ok === "boolean" &&
+    !!candidate.headers &&
+    typeof candidate.headers.get === "function" &&
+    typeof candidate.text === "function" &&
+    typeof candidate.clone === "function"
+  );
+}
+
+/**
+ * Builds the terminal error thrown on a genuine contract violation (#10360).
+ *
+ * Carries `status = 500` and `code = EXECUTOR_CONTRACT_VIOLATION_CODE` so the
+ * failure is classified as an INTERNAL, non-retryable defect instead of falling
+ * through chatCore's `BAD_GATEWAY` default. A 502 made every layer treat our own
+ * bug as a flaky provider: the connection was cooled down as "rate limited", the
+ * provider breaker counted it, and the batch runner (which retries 429/502/504)
+ * span for its full 24h window on an error that can never resolve itself.
+ */
+export function createExecutorContractError(): Error & { status: number; code: string } {
+  const err = new TypeError("Executor result must contain a Response") as TypeError & {
+    status: number;
+    code: string;
+  };
+  err.name = "ExecutorContractError";
+  err.status = HTTP_STATUS.SERVER_ERROR;
+  err.code = EXECUTOR_CONTRACT_VIOLATION_CODE;
+  return err;
+}
+
 export function normalizeExecutorResult(result: unknown): {
   response: Response;
   url: string;
@@ -105,16 +165,16 @@ export function normalizeExecutorResult(result: unknown): {
   transformedBody: unknown;
   transport?: string;
 } {
-  if (result instanceof Response) {
+  if (isResponseLike(result)) {
     return { response: result, url: "", headers: {}, transformedBody: null };
   }
   if (
     !result ||
     typeof result !== "object" ||
     !("response" in result) ||
-    !(result.response instanceof Response)
+    !isResponseLike(result.response)
   ) {
-    throw new TypeError("Executor result must contain a Response");
+    throw createExecutorContractError();
   }
   const normalized = result as {
     response: Response;

@@ -25,6 +25,7 @@ import {
 } from "@/lib/credentialHealth/cache";
 import { emit } from "@/lib/events/eventBus";
 import { isAutomatedTestProcess } from "@/shared/utils/testProcess";
+import { SEARCH_VALIDATOR_CONFIGS } from "@/lib/providers/validation/searchProviders";
 
 // ── Config ────────────────────────────────────────────────────────────────
 
@@ -230,7 +231,13 @@ export async function sweep(): Promise<void> {
     try {
       const raw = await getProviderConnections({ isActive: true });
       connections = (Array.isArray(raw) ? raw : []).filter(
-        (conn: any) => conn && conn.id && (conn.authType === "apikey" || conn.authType === "oauth")
+        (conn: any) =>
+          conn &&
+          conn.id &&
+          (conn.authType === "apikey" || conn.authType === "oauth") &&
+          // #9970: search-provider "validation" fires a REAL billed upstream
+          // query (e.g. POST api.tavily.com/search) — never sweep these.
+          !(conn.provider in SEARCH_VALIDATOR_CONFIGS)
       ) as Array<{
         id: string;
         provider: string;

@@ -281,9 +281,11 @@ test("AntigravityExecutor.transformRequest auto-discovers a missing projectId vi
   }
 });
 
-// #2334: when loadCodeAssist also finds no project (truly un-onboarded account), the
-// structured 422 must still be returned so the dashboard can prompt a reconnect.
-test("AntigravityExecutor.transformRequest still 422s when loadCodeAssist finds no project (#2334)", async () => {
+// #8491: when loadCodeAssist also finds no project and Google marks the
+// account BYOP (no automatic project creation for standard-tier accounts),
+// the fast 422 GCP_PROJECT_REQUIRED must be returned so the dashboard can
+// prompt the user to enter a GCP Project ID.
+test("AntigravityExecutor.transformRequest fast-422s with GCP_PROJECT_REQUIRED when loadCodeAssist finds no project (#8491)", async () => {
   clearAntigravityProjectCache();
   seedAntigravityIdeVersionCache("2.1.1");
   const executor = new AntigravityExecutor();
@@ -305,7 +307,8 @@ test("AntigravityExecutor.transformRequest still 422s when loadCodeAssist finds 
     if (!(result instanceof Response)) throw new Error("Expected a 422 Response");
     assert.equal(result.status, 422);
     const payload = (await result.json()) as ErrorPayload;
-    assert.equal(payload.error.code, "missing_project_id");
+    assert.equal(payload.error.code, "gcp_project_required");
+    assert.match(payload.error.message, /GCP_PROJECT_REQUIRED/);
   } finally {
     globalThis.fetch = originalFetch;
     clearAntigravityProjectCache();

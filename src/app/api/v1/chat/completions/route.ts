@@ -26,7 +26,7 @@ import {
   readCompressionRequestHeader,
   withCompressionHeaderEcho,
 } from "@/shared/utils/compressionHeaderEcho";
-import { resolveModelAliasOnBody } from "@/lib/modelAliasResolver";
+import { resolveModelAliasWithSeedFallbackOnBody } from "@/lib/modelAliasResolver";
 
 let initPromise = null;
 
@@ -161,7 +161,7 @@ export async function POST(request) {
 
         // Resolve model alias before forwarding to handleChat
         if (parsedBody && typeof parsedBody === "object") {
-          await resolveModelAliasOnBody(parsedBody).catch(() => {
+          await resolveModelAliasWithSeedFallbackOnBody(parsedBody).catch(() => {
             /* swallow — fall through with original model */
           });
         }

@@ -31,6 +31,8 @@
  *     to 200, so the HTTP status can no longer change).
  */
 
+import { ResponsesOutputIndexStack } from "./responsesOutputIndexStack.ts";
+
 const ENCODER = new TextEncoder();
 const KEEPALIVE_FRAME = ENCODER.encode(": keepalive\n\n");
 // OpenAI-compatible keepalive: a syntactically valid empty streaming chunk.
@@ -50,59 +52,89 @@ export const OPENAI_STARTUP_FRAME = OPENAI_KEEPALIVE_FRAME;
 // API emits `event: ping` for exactly this reason; the /v1/messages route mirrors it.
 export const ANTHROPIC_PING_FRAME = ENCODER.encode('event: ping\ndata: {"type":"ping"}\n\n');
 // Responses API keepalive: a self-contained, self-closed synthetic reasoning
-// item (added -> summary_part.added -> text.delta -> summary_part.done),
-// matching the abbreviated close pattern open-sse/utils/stream.ts's own
-// emitSyntheticResponsesReasoningSummary already uses for real mid-stream
-// reasoning. Closed within this one frame (not left dangling open) since the
-// real upstream response — once it arrives — starts its own independent
-// response.created lifecycle from scratch; this placeholder item never
-// carries a response_id and isn't meant to be continued.
+// item (added -> summary_part.added -> text.delta -> summary_part.done ->
+// output_item.done). Unlike open-sse/utils/stream.ts's own
+// emitSyntheticResponsesReasoningSummary — which only supplements a REAL
+// upstream item that the real provider stream will close on its own — this
+// placeholder item has no real counterpart: the upstream response, once it
+// arrives, starts its own independent response.created lifecycle from
+// scratch and will never close this one. It must therefore send its own
+// response.output_item.done here, not just reasoning_summary_part.done
+// (that only closes the nested summary part, not the output item itself).
+// Without it, a strict client tracking open items by output_index (as the
+// Responses API spec requires) sees this item still open at index 0 and
+// throws a collision the moment the real response's own output_item.added
+// reuses that same index — reproduced live 2026-08-13, OpenClaw issue
+// https://github.com/openclaw/openclaw/issues/123342.
+//
+// The output_index is allocated from ResponsesOutputIndexStack instead of a
+// hardcoded literal so this stays structurally correct: forgetting the
+// close() call throws at module load (assertAllClosed() below), not
+// silently at some future real request.
 const RESPONSES_STARTUP_ITEM_ID = "rs_keepalive";
 // Brand-neutral placeholder — clients persist this as visible reasoning.
 const STARTUP_THINKING_TEXT = "✨";
+const startupIndexStack = new ResponsesOutputIndexStack();
+const RESPONSES_STARTUP_OUTPUT_INDEX = startupIndexStack.open();
+const startupEvents = [
+  {
+    event: "response.output_item.added",
+    data: {
+      type: "response.output_item.added",
+      output_index: RESPONSES_STARTUP_OUTPUT_INDEX,
+      item: { id: RESPONSES_STARTUP_ITEM_ID, type: "reasoning", summary: [] },
+    },
+  },
+  {
+    event: "response.reasoning_summary_part.added",
+    data: {
+      type: "response.reasoning_summary_part.added",
+      item_id: RESPONSES_STARTUP_ITEM_ID,
+      output_index: RESPONSES_STARTUP_OUTPUT_INDEX,
+      summary_index: 0,
+      part: { type: "summary_text", text: "" },
+    },
+  },
+  {
+    event: "response.reasoning_summary_text.delta",
+    data: {
+      type: "response.reasoning_summary_text.delta",
+      item_id: RESPONSES_STARTUP_ITEM_ID,
+      output_index: RESPONSES_STARTUP_OUTPUT_INDEX,
+      summary_index: 0,
+      delta: STARTUP_THINKING_TEXT,
+    },
+  },
+  {
+    event: "response.reasoning_summary_part.done",
+    data: {
+      type: "response.reasoning_summary_part.done",
+      item_id: RESPONSES_STARTUP_ITEM_ID,
+      output_index: RESPONSES_STARTUP_OUTPUT_INDEX,
+      summary_index: 0,
+      part: { type: "summary_text", text: STARTUP_THINKING_TEXT },
+    },
+  },
+];
+// close() runs before the output_item.done event is built (not just before
+// it's appended) so assertAllClosed() below is a real check, not scaffolding
+// that always trivially passes.
+startupIndexStack.close(RESPONSES_STARTUP_OUTPUT_INDEX);
+startupEvents.push({
+  event: "response.output_item.done",
+  data: {
+    type: "response.output_item.done",
+    output_index: RESPONSES_STARTUP_OUTPUT_INDEX,
+    item: {
+      id: RESPONSES_STARTUP_ITEM_ID,
+      type: "reasoning",
+      summary: [{ type: "summary_text", text: STARTUP_THINKING_TEXT }],
+    },
+  },
+});
+startupIndexStack.assertAllClosed();
 export const RESPONSES_STARTUP_THINKING_FRAME = ENCODER.encode(
-  [
-    {
-      event: "response.output_item.added",
-      data: {
-        type: "response.output_item.added",
-        output_index: 0,
-        item: { id: RESPONSES_STARTUP_ITEM_ID, type: "reasoning", summary: [] },
-      },
-    },
-    {
-      event: "response.reasoning_summary_part.added",
-      data: {
-        type: "response.reasoning_summary_part.added",
-        item_id: RESPONSES_STARTUP_ITEM_ID,
-        output_index: 0,
-        summary_index: 0,
-        part: { type: "summary_text", text: "" },
-      },
-    },
-    {
-      event: "response.reasoning_summary_text.delta",
-      data: {
-        type: "response.reasoning_summary_text.delta",
-        item_id: RESPONSES_STARTUP_ITEM_ID,
-        output_index: 0,
-        summary_index: 0,
-        delta: STARTUP_THINKING_TEXT,
-      },
-    },
-    {
-      event: "response.reasoning_summary_part.done",
-      data: {
-        type: "response.reasoning_summary_part.done",
-        item_id: RESPONSES_STARTUP_ITEM_ID,
-        output_index: 0,
-        summary_index: 0,
-        part: { type: "summary_text", text: STARTUP_THINKING_TEXT },
-      },
-    },
-  ]
-    .map((e) => `event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`)
-    .join("")
+  startupEvents.map((e) => `event: ${e.event}\ndata: ${JSON.stringify(e.data)}\n\n`).join("")
 );
 // Anthropic Messages API default — Anthropic's own spec really does use a named
 // `event: error` SSE frame, so this is correct there. It is WRONG for the OpenAI-
@@ -184,8 +216,7 @@ export type EarlyStreamKeepaliveOptions = {
  * type-check. A string discriminant narrows both branches under the same settings.
  */
 type SettledHandler =
-  | { status: "fulfilled"; response: Response }
-  | { status: "rejected"; error: unknown };
+  { status: "fulfilled"; response: Response } | { status: "rejected"; error: unknown };
 
 export async function withEarlyStreamKeepalive(
   handlerPromise: Promise<Response>,

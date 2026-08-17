@@ -53,6 +53,12 @@ export function buildRecoveryHint(
         next_step:
           "Strict context requirements removed every target (known context windows are below minContextWindow). Lower minContextWindow, switch contextFilterMode to lenient, or add larger-context models.",
       };
+    case "all_targets_skipped":
+      return {
+        action: "switch-combo",
+        next_step:
+          "Every target was skipped before dispatch (capability pre-filter narrowed the pool and the remaining targets were all quota-exhausted/unavailable). Check the provider's quota in /dashboard/providers, reconnect or top up the account, or switch to a combo/model that has a healthy capability-matching target.",
+      };
     default:
       return {
         action: "retry",

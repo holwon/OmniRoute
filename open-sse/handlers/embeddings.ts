@@ -35,6 +35,7 @@ import {
   prepareStructuredEmbeddingRequest,
 } from "./embeddingStructuredInput.ts";
 import { MAX_EMBEDDING_INLINE_ITEM_BYTES } from "@/shared/validation/schemas/apiV1";
+import { markAccountUnavailable } from "../../src/sse/services/auth.ts";
 
 interface ClientRawRequest {
   endpoint: string;
@@ -388,6 +389,28 @@ export async function handleEmbedding({
         apiKeyName,
         connectionId,
       }).catch(() => {});
+
+      // #10347 — persist a connection-level failure marker on a hard upstream failure so
+      // the dead account is not re-selected and re-hit on the next embed request (chat
+      // parity). markAccountUnavailable classifies the status via checkFallbackError: a
+      // payment-required 402 becomes the TERMINAL state credits_exhausted (the terminal
+      // marker excludes the account from selection until an operator resets it), benign
+      // 4xx are a no-op, and terminal statuses are never overwritten. honors per-connection
+      // disableCooling. The write must never break the error response path, so it is
+      // best-effort.
+      if (connectionId) {
+        try {
+          await markAccountUnavailable(
+            connectionId,
+            response.status,
+            errorText,
+            provider,
+            model
+          );
+        } catch {
+          // swallow — the upstream error response takes priority
+        }
+      }
 
       return {
         success: false,

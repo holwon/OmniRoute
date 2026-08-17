@@ -14,6 +14,7 @@ import { basename, dirname } from "node:path";
 import { applyEdits, modify, parse, printParseErrorCode } from "jsonc-parser";
 import { printHeading, printInfo, printSuccess, printError } from "../io.mjs";
 import { resolveActiveContext } from "../contexts.mjs";
+import { guardHostConfigTarget } from "../utils/config-home-guard.mjs";
 
 const ENV_KEY_REF = "{env:OMNIROUTE_API_KEY}";
 const JSON_FORMATTING_OPTIONS = { insertSpaces: true, tabSize: 2 };
@@ -119,6 +120,15 @@ export async function runSetupOpencodeCommand(opts = {}) {
     const { resolveOpencodeConfigPath } =
       await import("../../../src/shared/services/opencodeConfigPath.ts");
     configPath = resolveOpencodeConfigPath();
+
+    const guard = await guardHostConfigTarget(configPath, {
+      toolLabel: "OpenCode",
+      hostCommand: "omniroute setup-opencode",
+      allowContainerWrite: Boolean(opts.allowContainerWrite ?? opts["allow-container-write"]),
+      dryRun,
+    });
+    if (guard !== 0) return guard;
+
     raw = await generateOpencodeConfig({
       baseUrl,
       apiKey,
@@ -163,6 +173,10 @@ export function registerSetupOpencode(program) {
     .option("--model <id>", "Set the default top-level model (omniroute/<id>)")
     .option("--only <patterns>", "Comma-separated substrings — keep only matching model IDs")
     .option("--dry-run", "Print what would be written without touching the filesystem")
+    .option(
+      "--allow-container-write",
+      "Write even when the target is inside a container and not mounted from the host"
+    )
     .action(async (opts) => {
       const code = await runSetupOpencodeCommand(opts);
       if (code !== 0) process.exit(code);

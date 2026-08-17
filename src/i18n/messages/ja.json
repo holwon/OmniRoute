@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "メッセージ、ツール呼び出し、およびレスポンスから、APIキー、トークン、秘密鍵、およびJWTを取り除きます。",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "テキスト専用モデルに到達する前に、マルチモーダルコンテンツをテキストにブリッジします。ビジョンはライブで、オーディオはAudioBridgeで到着し、ビデオはロードマップにあります。",
+    "modalityBridgeIntro": "マルチモーダルコンテンツをテキスト専用モデルに渡す前にテキストへ変換します。画像、音声、動画の各ブリッジを利用、設定できます。",
     "modalityBridgeVisionTab": "ビジョン",
     "modalityBridgeAudioTab": "オーディオ",
     "modalityBridgeVideoTab": "ビデオ",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "高度な",
     "modalityBridgeTimeoutMs": "タイムアウト (ms)",
     "modalityBridgeMaxImages": "リクエストごとの最大画像数",
+    "visionMaxCharsLabel": "最大説明文字数",
+    "visionMaxCharsHint": "ビジョンモデルの説明の長さを制限します。0 = 無制限 — 詳細が多いOCRタスクの場合は増やしてください。",
     "modalityBridgeCacheEnabled": "キャッシュの説明",
     "modalityBridgeCacheEnabledDesc": "同一の画像に対して説明を再利用します（SHA-256キー付き、メモリ内）。",
     "modalityBridgeCacheTtlMinutes": "キャッシュのTTL（分）",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "ブリッジがアクティブになりませんでした（モデルがネイティブにビジョンをサポートしているか、ブリッジが無効になっています）",
     "modalityBridgeTestError": "テストに失敗しました: {message}",
     "modalityBridgeAudioComingSoon": "オーディオブリッジ（音声 → テキスト via /v1/audio/transcriptions）は次のリリースに搭載されます。その設定キーはすでに予約されています。",
-    "modalityBridgeVideoComingSoon": "ビデオブリッジ（フレームサンプリング + キャプショニング）はバックログにあります — イシュー #9760 を参照してください。",
     "modalityBridgeMovedTitle": "Vision Bridgeが移動しました",
     "modalityBridgeMovedBody": "Vision Bridgeの設定は、専用のModality Bridgeページに移動しました。",
     "modalityBridgeMovedCta": "モダリティブリッジの設定を開く",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "オーディオブリッジ OK — {count} 件のクリップが {model} によって文字起こしされました",
     "modalityBridgeAudioTestNoop": "Audio Bridgeはアクティブになりませんでした（ターゲットはオーディオをサポートしている可能性がありますが、STTプロバイダーが接続されていないか、ブリッジが無効になっています）",
     "modalityBridgeAudioTestError": "オーディオテストに失敗しました: {message}",
+    "modalityBridgeVideoTitle": "動画ブリッジ",
+    "modalityBridgeVideoDesc": "動画のフレームをサンプリングし、視覚モデルで説明してから、選択したテキストモデルで処理を続けます。",
+    "modalityBridgeVideoRuntimeReady": "ランタイムは準備完了です",
+    "modalityBridgeVideoRuntimeUnavailable": "ランタイムを利用できません",
+    "modalityBridgeVideoRuntimeInstall": "動画抽出を有効にするには、サーバーの PATH に FFmpeg と ffprobe をインストールしてください。",
+    "modalityBridgeVideoEnabled": "動画ブリッジを有効にする",
+    "modalityBridgeVideoEnabledDesc": "対象モデルが動画を処理できない場合、動画部分をタイムスタンプ付きのフレーム説明に置き換えます。",
+    "modalityBridgeVideoModel": "フレーム説明モデル",
+    "modalityBridgeVideoModelInherited": "視覚ブリッジのモデルを継承",
+    "modalityBridgeVideoFrameCount": "動画あたりのフレーム数",
+    "modalityBridgeVideoMaxVideos": "リクエストあたりの最大動画数",
     "modelRoutingDescriptionPlaceholder": "フロンティアコンボにオーパスモデルをルーティングする",
     "cliproxyapiFallbackCodes": "Cliproxyapi フォールバックコード",
     "cliproxyapiFallbackDescription": "Cliproxyapi フォールバックの説明",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "パートナーリンク",
     "dismissAriaLabel": "閉じる"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRouteがVS Code Copilot Chat内で動作するようになりました",
+    "description": "無料のOmniCopilot拡張機能をインストールすると、すでに使っているCopilot Chatのモデル選択画面にすべてのOmniRouteモデルが表示されます。",
+    "cta": "拡張機能を入手",
+    "secondaryNote": "Open VSXでも利用可能（Cursor、Windsurf、VSCodiumなど）",
+    "dismissAriaLabel": "閉じる"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "<gateway-alias>/<model> ミラー ID を /v1/models で広告します。これは、正規の所有者にアクティブな資格情報がないが、パススルーゲートウェイがアクティブな資格情報でルーティングされるモデルに適用されます。警告: グローバルに有効にすると、すべてのクライアントにカタログエントリが追加されます。",
   "radarPage": {
     "title": "レーダーカタログ",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "オファー"
   },
   "radarSetupPage": {
     "title": "プロバイダーセットアップ",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "このページはlocalhostまたはLANからのみアクセス可能です(LOCAL_ONLY)。",
     "pollErrorStopped": "ポーリング停止:サーバーがリクエストを拒否しました(404/403)。",
     "pollErrorTransient": "データ取得エラー:自動的に再試行します。",
-    "degraded": "部分データ:利用できないソース: {sources}",
-    "degraded.source.database": "データベース",
-    "degraded.source.circuitBreaker": "サーキットブレーカー",
-    "degraded.source.modelLockouts": "モデルロックアウト",
-    "degraded.source.count": "接続数"
+    "degraded": {
+      "message": "部分データ:利用できないソース: {sources}",
+      "source": {
+        "database": "データベース",
+        "circuitBreaker": "サーキットブレーカー",
+        "modelLockouts": "モデルロックアウト",
+        "count": "接続数"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "ディスパッチ前にリクエストを拒否します。ターゲットモデルに必要な機能（ビジョン、ツール、構造化出力、コンテキストウィンドウ）が欠けている場合。コンボレイヤーの互換性フィルターをバイパスする直接の単一プロバイダーリクエストを保護します。",
-  "capabilityFilter.visionMismatch": "プロバイダーはこの画像リクエストのビジョンをサポートしていません",
-  "capabilityFilter.toolsMismatch": "プロバイダーはツール呼び出しをサポートしていません",
-  "capabilityFilter.structuredOutputMismatch": "プロバイダーは構造化出力をサポートしていません",
-  "capabilityFilter.contextWindowMismatch": "リクエストがプロバイダーのコンテキストウィンドウを超えています",
   "publicSystem": {
     "notFound": {
       "title": "ページが見つかりません",
@@ -13624,5 +13657,49 @@
     "hint": "有効にすると、発見されたモデルがOmniRoute全体のプロバイダーセレクトに表示されます。",
     "updateFailed": "更新に失敗しました (HTTP {status})",
     "networkError": "ネットワークエラー — プロバイダーの露出設定を更新できませんでした"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "サポーター向けオファー",
+    "subtitle": "Radar が確認した公式割引、クレジット、トライアル、パートナー特典です。",
+    "backToRadar": "Radar に戻る",
+    "loading": "オファーを読み込み中...",
+    "refresh": "オファーを更新",
+    "refreshing": "更新中...",
+    "loadFailed": "オファーを更新できませんでした。最後に検証されたローカルキャッシュは保持されます。",
+    "empty": "現在利用できるオファーはありません。",
+    "keyRequiredTitle": "サポーターキーが必要です",
+    "keyRequiredDescription": "オファーは Radar のライブ特典です。既存のキーを追加するか、貢献者資格を確認するか、プロジェクトを支援してキーを取得してください。",
+    "contributorButton": "コントリビューターです",
+    "supporterButton": "プロジェクトを支援",
+    "partnerBadge": "パートナー",
+    "officialBadge": "公式",
+    "conditionsLabel": "条件:",
+    "validUntil": "{date} まで有効",
+    "noExpiry": "有効期限の記載なし",
+    "openOffer": "オファーを見る",
+    "trialDays": "{days} 日間"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "プロバイダーはこの画像リクエストのビジョンをサポートしていません",
+    "toolsMismatch": "プロバイダーはツール呼び出しをサポートしていません",
+    "structuredOutputMismatch": "プロバイダーは構造化出力をサポートしていません",
+    "contextWindowMismatch": "リクエストがプロバイダーのコンテキストウィンドウを超えています"
   }
 }

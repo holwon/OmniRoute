@@ -4,6 +4,11 @@ import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  makeGitAncestryProbe,
+  readBuildSha,
+  resolveBuildProvenance,
+} from "./buildProvenance.ts";
 
 import {
   MCP_CLOSURE_SPOT_CHECK_PATH,
@@ -202,6 +207,26 @@ try {
     missingMcpPaths.length > 0
   ) {
     process.exit(1);
+  }
+
+  // #10427: an artifact is only shippable if it can be traced to the release line. The
+  // 2026-08-14 gateway outage was a package built from a feature branch that predated the
+  // fix it was supposed to carry — nothing in this gate noticed. Skipped under
+  // --policy-only, which deliberately runs without a build (no dist/BUILD_SHA to check).
+  if (!POLICY_ONLY) {
+    const provenance = resolveBuildProvenance({
+      buildSha: readBuildSha(process.cwd()),
+      isAncestorOfRelease: makeGitAncestryProbe(
+        process.env.OMNIROUTE_RELEASE_REF || "origin/main",
+        process.cwd()
+      ),
+      allowOverride: process.env.OMNIROUTE_ALLOW_CANARY_BUILD === "1",
+    });
+    console.log(`\n[provenance] ${provenance.message}`);
+    if (!provenance.ok) {
+      console.error("\n❌ Build provenance check failed.");
+      process.exit(1);
+    }
   }
 
   console.log("\n✅ Pack artifact policy check passed.");

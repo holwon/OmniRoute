@@ -38,6 +38,36 @@ Common problems and solutions for OmniRoute.
 
 ---
 
+### Rate Limiting on Free Providers (429 / 400 / 401)
+
+**Symptom**: When using `model: "auto"` with free/no-auth providers (opencode, felo-web, auggie, etc.), you intermittently get `HTTP 429`, `400`, or `401` instead of answers. The requests succeed when retrying the same prompt moments later, but automation (cron jobs, agents, scripts) breaks on the first failure.
+
+**Root cause**: Three independent failure modes stack up:
+
+1. **Provider rate-limit (`429`)**: Free tiers (notably `felo/felo-chat`) enforce a per-window quota. A burst of parallel calls exhausts it, so the next request is refused until the window resets.
+2. **Broken model in passthrough (`400`/`401`)**: `auto/*` pools can include passthrough models from `opencode` that are registered in the catalog but have no live credentials (e.g. `oc/north-mini-code-free` → `401`). The auto-router tries one, fails, and the error propagates before fallback kicks in.
+3. **Concurrency amplification (`429` under load)**: When multiple agent/cron sessions hit `auto` at once, the aggregate request rate exceeds what free providers tolerate, so legitimate calls get flagged as abusive.
+
+**Verified fix (community-reported, 2026-08-10)**: tune three environment variables so that rotation, concurrency, and fallback absorb the free-tier churn instead of dying on it:
+
+```bash
+export OMNIROUTE_ROTATE_ON_400=true           # hop to another model/provider on 400/401 (skips broken passthrough models)
+export OMNIROUTE_CHAT_MAX_HEAVY_IN_FLIGHT=4   # raise the heavyweight admission ceiling (default 1) so long-context bursts are not rejected
+export OMNIROUTE_CHAT_ADMISSION_QUEUE_MS=5000 # longer bounded wait for heavyweight capacity instead of an immediate retryable 503
+```
+
+Set these in the OmniRoute process environment (the daemon, e.g. via the LaunchAgent plist or `systemctl edit`), then restart OmniRoute. The rotation flag is the single highest-leverage lever: it converts a hard failure into a transparent retry against a healthy provider in the pool.
+
+**Note**: `OMNIROUTE_CHAT_MAX_HEAVY_IN_FLIGHT` (default `1`, per process) caps how many heavyweight — long-context — requests run at once; the bound is an admission gate, not a provider rate limiter. Raising it only reduces client-visible `503 chat_admission_busy` rejects for heavy requests. The per-provider rate limiting (`open-sse/services/rateLimitManager.ts`) is governed separately by `RATE_LIMIT_MAX_WAIT_MS`, `RATE_LIMIT_MAX_QUEUE_DEPTH`, and `RATE_LIMIT_AUTO_ENABLE` — see `.env.example`.
+
+**How to verify it worked**: run your agent/cron twice in quick succession and confirm both succeed. Before the fix, the second run typically throws `429`/`401`. After the fix, failures (if any) are retried transparently and the call completes. You can also `curl /monitoring/health` and watch the `rateLimitedUntil` field on the provider connections and the `circuitBreakers.providerBreakers[].state` for the affected providers — the state is one of `CLOSED`, `DEGRADED`, `OPEN`, or `HALF_OPEN` (see `src/shared/utils/circuitBreaker.ts`), and a provider that keeps failing will flip `CLOSED → DEGRADED → OPEN` before the reset window lets a probe through (`HALF_OPEN`).
+
+**If you still see 429**: the active account for that provider has genuinely exhausted its *quota* (not just rate). Add a second account for the same provider in the OmniRoute dashboard → Providers → Accounts, or mix in another free provider (e.g. `routeway`, `auggie`). Rotation only helps with transient rate/400/401; a hard quota exhaustion requires a second credential or a different provider.
+
+**If you see 403 on vision models (`auto/vision`, `bazaarlink/*`)**: the connected account lacks a paid plan that includes vision, or the API key has insufficient permissions. Verify in the provider dashboard that the key scope includes vision/multimodal, or connect a paid tier account and keep it as the vision target.
+
+---
+
 ## npm install Warnings (ERESOLVE / peer / deprecated)
 
 When you run `npm install -g omniroute`, you may see a wall of warnings like `npm warn ERESOLVE`, peer-dependency notices, and `deprecated` messages. **These are expected and harmless.** Your install succeeded if you see `added <N> packages` in the output.

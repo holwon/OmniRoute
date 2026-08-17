@@ -37,6 +37,7 @@ import { pathToFileURL } from "node:url";
 
 import { LLMLINGUA_WORKER_TIMEOUT_MS, LLMLINGUA_WORKER_IDLE_MS } from "./constants.ts";
 import { resolveLlmlinguaModel } from "./modelStore.ts";
+import { packMemberInstalled } from "../../../../utils/optionalPacks.ts";
 import type { LlmlinguaBackend } from "./index.ts";
 
 /** One-time model-load budget on the first call for a given model (tinybert ~2s, bert-base ~27s). */
@@ -121,7 +122,12 @@ let _depsAvailable: boolean | null = null;
  */
 export function depsAvailable(): boolean {
   if (_depsAvailable !== null) return _depsAvailable;
-  _depsAvailable = firstAncestorWith(runtimeAnchors(), GATE_DEP_REL) !== null;
+  // Stage 7 (issue #10321): the desktop bundle ships the LLMLingua closure as an
+  // optional pack installed under `${DATA_DIR}/packs/ml-runtime/node_modules`
+  // (prepended to NODE_PATH by electron/main.js), so also probe the pack dirs —
+  // the ancestor walk only covers bundle-resident installs (npm/Docker).
+  _depsAvailable =
+    firstAncestorWith(runtimeAnchors(), GATE_DEP_REL) !== null || packMemberInstalled(GATE_DEP_REL);
   return _depsAvailable;
 }
 

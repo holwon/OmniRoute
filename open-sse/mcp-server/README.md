@@ -1,6 +1,6 @@
 # OmniRoute MCP Server
 
-> **Model Context Protocol server** that exposes OmniRoute's gateway intelligence as **107 tools** for AI agents.
+> **Model Context Protocol server** that exposes OmniRoute's gateway intelligence as **109 tools** for AI agents.
 >
 > **Source of truth for the full tool catalog and REST surface:** [`docs/frameworks/MCP-SERVER.md`](../../docs/frameworks/MCP-SERVER.md). This README focuses on architecture, configuration, and integration examples; the catalog below is a summary subset.
 
@@ -20,7 +20,7 @@ The MCP Server allows any AI agent (Claude Desktop, Cursor, VS Code Copilot, cus
 ┌──────────────────────────────────────────────────────────────────┐
 │                      OmniRoute MCP Server                        │
 │  ┌──────────────┐  ┌─────────────────┐  ┌────────────────────┐  │
-│  │ Scope        │  │ 107 MCP Tools   │  │   Audit Logger     │  │
+│  │ Scope        │  │ 109 MCP Tools   │  │   Audit Logger     │  │
 │  │ Enforcement  │──│ (core + memory  │──│   (SHA-256/SQLite) │  │
 │  │              │  │  + skills + …)  │  │                    │  │
 │  └──────────────┘  └────────┬────────┘  └────────────────────┘  │
@@ -120,18 +120,23 @@ omniroute --mcp
 
 ## Tool Reference
 
-### Phase 1: Essential Tools (8)
+### Phase 1: Essential Tools (13)
 
 | #   | Tool                            | Scopes                | Description                                                                |
 | --- | ------------------------------- | --------------------- | -------------------------------------------------------------------------- |
-| 1   | `omniroute_get_health`          | `read:health`         | Gateway health, uptime, memory, circuit breakers, rate limits, cache stats |
-| 2   | `omniroute_list_combos`         | `read:combos`         | List all combos (model chains) with strategies and optional metrics        |
-| 3   | `omniroute_get_combo_metrics`   | `read:combos`         | Performance metrics for a specific combo                                   |
-| 4   | `omniroute_switch_combo`        | `write:combos`        | Activate or deactivate a combo for routing                                 |
-| 5   | `omniroute_check_quota`         | `read:quota`          | Remaining API quota per provider with token health status                  |
-| 6   | `omniroute_route_request`       | `execute:completions` | Send a chat completion through intelligent routing                         |
-| 7   | `omniroute_cost_report`         | `read:usage`          | Cost report by period (session/day/week/month) with per-provider breakdown |
-| 8   | `omniroute_list_models_catalog` | `read:models`         | List all available models across providers with capabilities and pricing   |
+| 1   | `omniroute_tool_search`         | `read:tools`          | Discover tools from the registered MCP catalog                             |
+| 2   | `omniroute_get_health`          | `read:health`         | Gateway health, uptime, memory, circuit breakers, rate limits, cache stats |
+| 3   | `omniroute_list_combos`         | `read:combos`         | List all combos (model chains) with strategies and optional metrics        |
+| 4   | `omniroute_get_combo_metrics`   | `read:combos`         | Performance metrics for a specific combo                                   |
+| 5   | `omniroute_switch_combo`        | `write:combos`        | Activate or deactivate a combo for routing                                 |
+| 6   | `omniroute_create_combo`        | `write:combos`        | Create a validated combo through the existing combo API                    |
+| 7   | `omniroute_check_quota`         | `read:quota`          | Remaining API quota per provider with token health status                  |
+| 8   | `omniroute_route_request`       | `execute:completions` | Send a chat completion through intelligent routing                         |
+| 9   | `omniroute_cost_report`         | `read:usage`          | Cost report by period (session/day/week/month) with per-provider breakdown |
+| 10  | `omniroute_list_models_catalog` | `read:models`         | List all available models across providers with capabilities and pricing   |
+| 11  | `omniroute_radar_catalog`       | `read:radar`          | Read the local signed Radar catalog with provider/family filters           |
+| 12  | `omniroute_web_search`          | `execute:search`      | Search the web through configured search providers                         |
+| 13  | `omniroute_web_fetch`           | `execute:search`      | Fetch web content through configured fetch providers                       |
 
 ### Phase 2: Advanced Tools (8)
 

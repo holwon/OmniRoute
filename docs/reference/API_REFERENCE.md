@@ -17,6 +17,7 @@ Complete reference for all OmniRoute API endpoints.
 - [Chat Completions](#chat-completions)
 - [Embeddings](#embeddings)
 - [Image Generation](#image-generation)
+- [Document OCR](#document-ocr)
 - [List Models](#list-models)
 - [Provider Plugin Manifest](#provider-plugin-manifest)
 - [Compatibility Endpoints](#compatibility-endpoints)
@@ -196,6 +197,67 @@ Available providers: OpenAI (GPT Image 2), xAI (Grok Image), Together AI (FLUX),
 # List all image models
 GET /v1/images/generations
 ```
+
+---
+
+## Document OCR
+
+```bash
+POST /v1/ocr
+Authorization: Bearer your-api-key
+Content-Type: application/json
+
+{
+  "model": "mistral/mistral-ocr-latest",
+  "document": {
+    "type": "document_url",
+    "document_url": "https://example.com/invoice.pdf"
+  }
+}
+```
+
+`model` selects the OCR provider via a `provider/model` prefix; a bare model id (e.g.
+`mistral-ocr-latest`) resolves to its registered provider, and an omitted `model` defaults to
+Mistral (`mistral-ocr-latest`). Registered providers (`open-sse/config/ocrRegistry.ts`):
+
+| Provider id                   | Model id             | `model` value                                               | Notes                                                                                              |
+| ----------------------------- | -------------------- | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `mistral`                     | `mistral-ocr-latest` | `mistral/mistral-ocr-latest` (or bare `mistral-ocr-latest`) | Synchronous — the response is returned directly from the single upstream call.                     |
+| `azure-document-intelligence` | `prebuilt-read`      | `azure-document-intelligence/prebuilt-read`                 | Asynchronous upstream (`analyze` + poll) — see below.                                              |
+| `vertex-deepseek-ocr`         | `deepseek-ocr-maas`  | `vertex-deepseek-ocr/deepseek-ocr-maas`                     | Synchronous, via Vertex AI's `openapi/chat/completions` partner endpoint — see below for auth/URL. |
+
+All three providers respond in the same Mistral-shaped body:
+
+```json
+{
+  "pages": [{ "index": 0, "markdown": "# Extracted text..." }],
+  "model": "mistral-ocr-latest",
+  "usage_info": { "pages_processed": 1 }
+}
+```
+
+### Azure Document Intelligence poll flow
+
+Azure Document Intelligence's `analyze` API is asynchronous: the initial request returns an
+`Operation-Location` header instead of a body, and the result must be polled for. The handler
+(`open-sse/handlers/ocr.ts`) polls that URL every second for up to 30 attempts, fails fast (does
+not keep polling) on a non-`ok` poll response or a `"failed"` status, and returns `504` if the
+operation is still running after the attempt budget is exhausted. The final Azure response is
+normalized into the same `pages`/`markdown` shape used by Mistral before being returned to the
+caller, so client code does not need to special-case the provider.
+
+### Vertex AI DeepSeek OCR auth and endpoint resolution
+
+`vertex-deepseek-ocr` reuses the same Vertex AI authentication OmniRoute already supports for
+chat/image traffic (`open-sse/executors/vertex.ts`): the connection's API key is either a
+Service Account JSON credential (exchanged for a short-lived OAuth access token via the JWT-bearer
+flow) or an already-minted OAuth access token used as-is. The upstream endpoint URL is Vertex's
+generic `openapi/chat/completions` partner endpoint, built from the connection's project and
+region — an explicit `providerSpecificData.project`/`providerSpecificData.region` always wins;
+otherwise the project is derived from the Service Account JSON's `project_id` and the region
+defaults to `us-central1`. Both resolutions happen in `open-sse/handlers/ocr.ts`
+(`resolveVertexOcrAccessToken`, `resolveVertexOcrBaseUrl`), consumed by
+`src/app/api/v1/ocr/route.ts` before dispatching to `handleOcr`.
 
 ---
 
@@ -489,18 +551,18 @@ call**, so the reported `X-OmniRoute-Response-Latency` is near-zero
 (benchmarking, p50/p99 monitoring) should check the
 `X-OmniRoute-Cache-Latency` response header:
 
-| Value | Meaning |
-|-------|---------|
+| Value       | Meaning                                                       |
+| ----------- | ------------------------------------------------------------- |
 | `synthetic` | Response served from cache; latency is not real upstream time |
-| *(absent)* | Response from real upstream call |
+| _(absent)_  | Response from real upstream call                              |
 
 ### Per-key cache bypass
 
 API keys can opt out of semantic cache reads via `cacheDefaultMode`:
 
-| Value | Behavior |
-|-------|----------|
-| `legacy` | Normal cache behavior (default) |
+| Value    | Behavior                                        |
+| -------- | ----------------------------------------------- |
+| `legacy` | Normal cache behavior (default)                 |
 | `bypass` | Skip cache lookup entirely; always hit upstream |
 
 Set at key creation (`POST /api/keys`) or update (`PATCH /api/keys/[id]`):
@@ -603,13 +665,15 @@ X-OmniRoute-No-Cache: true
 
 ### Monitoring
 
-| Endpoint                 | Method     | Description                                                                                          |
-| ------------------------ | ---------- | ---------------------------------------------------------------------------------------------------- |
-| `/api/sessions`          | GET        | Active session tracking                                                                              |
-| `/api/rate-limits`       | GET        | Per-account rate limits                                                                              |
-| `/api/monitoring/health` | GET        | Health check + provider summary (`catalogCount`, `configuredCount`, `activeCount`, `monitoredCount`) |
-| `/api/cache/stats`       | GET/DELETE | Cache stats / clear                                                                                  |
-| `/api/modality-bridge/stats` | GET    | In-memory Modality Bridge telemetry — per-modality `bridged`/`cacheHits`/`failures`/`lastUsedAt` counters (reset on restart; management auth) |
+| Endpoint                             | Method     | Description                                                                                                                                                                                       |
+| ------------------------------------ | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/api/sessions`                      | GET        | Active session tracking                                                                                                                                                                           |
+| `/api/rate-limits`                   | GET        | Per-account rate limits                                                                                                                                                                           |
+| `/api/monitoring/health`             | GET        | Health check + provider summary (`catalogCount`, `configuredCount`, `activeCount`, `monitoredCount`)                                                                                              |
+| `/api/cache/stats`                   | GET/DELETE | Cache stats / clear                                                                                                                                                                               |
+| `/api/modality-bridge/stats`         | GET        | In-memory `attempts`, successes/`bridged`, failures, cache hits, `totalLatencyMs`, `latencySamples`, sample-denominated `averageLatencyMs`, and last-use time (reset on restart; management auth) |
+| `/api/modality-bridge/video/runtime` | GET        | Strict trusted-loopback check before management auth/probe; sanitized FFmpeg/ffprobe availability and versions (no-store)                                                                         |
+| `/api/modality-bridge/video/extract` | POST       | Internal authenticated trusted-loopback byte broker; 50 MiB input, bounded queue/32 MiB output, `503` capacity, `499` disconnect, `504` deadline; not a public upload API                         |
 
 ### Backup & Export/Import
 

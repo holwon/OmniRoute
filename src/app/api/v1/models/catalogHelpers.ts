@@ -16,6 +16,7 @@ export interface CustomModelEntry {
   apiFormat?: string;
   supportedEndpoints?: string[];
   inputTokenLimit?: number;
+  outputTokenLimit?: number;
   isHidden?: boolean;
   // User-set "vision-capable" flag (persisted by addCustomModel / replaceCustomModels
   // in src/lib/db/models.ts). Surfaced into `/v1/models` via

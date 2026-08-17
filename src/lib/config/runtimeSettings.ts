@@ -374,18 +374,24 @@ async function applyModelsDevSyncSection(
   currentSnapshot: RuntimeSettingsSnapshot,
   force: boolean
 ) {
-  const { startPeriodicSync, stopPeriodicSync } = await import("@/lib/modelsDevSync");
+  const {
+    startPeriodicSync,
+    stopPeriodicSync,
+    isModelsDevSyncEnvDisabled,
+    isModelsDevSyncEnvForcedOn,
+  } = await import("@/lib/modelsDevSync");
   const skipBackgroundSyncInTests =
     (isAutomatedTestProcess() && process.env.OMNIROUTE_ENABLE_RUNTIME_BACKGROUND_TASKS !== "1") ||
     isTruthyEnvFlag(process.env.OMNIROUTE_DISABLE_BACKGROUND_SERVICES);
 
-  if (skipBackgroundSyncInTests) {
+  if (skipBackgroundSyncInTests || isModelsDevSyncEnvDisabled()) {
     stopPeriodicSync();
     return;
   }
 
   const wasEnabled = previousSnapshot.modelsDevSyncEnabled === true;
-  const isEnabled = currentSnapshot.modelsDevSyncEnabled === true;
+  const isEnabled =
+    isModelsDevSyncEnvForcedOn() || currentSnapshot.modelsDevSyncEnabled === true;
   const intervalChanged =
     previousSnapshot.modelsDevSyncInterval !== currentSnapshot.modelsDevSyncInterval;
 

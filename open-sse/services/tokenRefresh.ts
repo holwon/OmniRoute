@@ -336,6 +336,7 @@ async function _getAccessTokenInternal(provider, credentials, log, proxyConfig: 
       if (
         result?.accessToken &&
         (provider === "antigravity" || provider === "agy") &&
+        !credentials.providerSpecificData?.isProjectIdManual &&
         !(credentials.projectId || credentials.providerSpecificData?.projectId)
       ) {
         try {

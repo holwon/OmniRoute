@@ -7,6 +7,7 @@ import {
   SIDEBAR_SECTIONS,
   HIDDEN_SIDEBAR_ITEMS_SETTING_KEY,
   normalizeHiddenSidebarItems,
+  resolveRuntimeSidebarSections,
   type SidebarItemDefinition,
   type SidebarSectionChild,
 } from "@/shared/constants/sidebarVisibility";
@@ -60,6 +61,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [hiddenItems, setHiddenItems] = useState<Set<string>>(new Set());
+  const [radarAdminUrl, setRadarAdminUrl] = useState<unknown>(null);
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -69,6 +71,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
         setHiddenItems(
           new Set(normalizeHiddenSidebarItems(data?.[HIDDEN_SIDEBAR_ITEMS_SETTING_KEY]))
         );
+        setRadarAdminUrl(data?.radarAdminUrl ?? null);
       })
       .catch(() => {
         // ignore aborts and fetch failures; palette still works with empty hidden set
@@ -84,6 +87,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
   const safeTranslate = useCallback(
     (key: string, fallback: string) => {
       try {
+        if (typeof t.has === "function" && !t.has(key)) return fallback;
         return t(key);
       } catch {
         return fallback;
@@ -94,7 +98,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
 
   const allItems = useMemo<PaletteItem[]>(
     () =>
-      SIDEBAR_SECTIONS.flatMap((section) => {
+      resolveRuntimeSidebarSections(SIDEBAR_SECTIONS, { radarAdminUrl }).flatMap((section) => {
         const sectionLabel = safeTranslate(section.titleKey, section.titleFallback);
         return section.children.flatMap<PaletteItem>((child) => {
           if (isSidebarGroup(child)) {
@@ -105,8 +109,10 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
                 id: item.id,
                 href: item.href,
                 icon: item.icon,
-                label: safeTranslate(item.i18nKey, item.id),
-                subtitle: item.subtitleKey ? safeTranslate(item.subtitleKey, "") : undefined,
+                label: safeTranslate(item.i18nKey, item.labelFallback ?? item.id),
+                subtitle: item.subtitleKey
+                  ? safeTranslate(item.subtitleKey, item.subtitleFallback ?? "")
+                  : item.subtitleFallback,
                 external: item.external ?? false,
                 sectionId: section.id,
                 sectionLabel,
@@ -121,8 +127,10 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
               id: item.id,
               href: item.href,
               icon: item.icon,
-              label: safeTranslate(item.i18nKey, item.id),
-              subtitle: item.subtitleKey ? safeTranslate(item.subtitleKey, "") : undefined,
+              label: safeTranslate(item.i18nKey, item.labelFallback ?? item.id),
+              subtitle: item.subtitleKey
+                ? safeTranslate(item.subtitleKey, item.subtitleFallback ?? "")
+                : item.subtitleFallback,
               external: item.external ?? false,
               sectionId: section.id,
               sectionLabel,
@@ -130,7 +138,7 @@ function CommandPaletteDialog({ onClose }: { onClose: () => void }) {
           ];
         });
       }),
-    [hiddenItems, safeTranslate]
+    [hiddenItems, radarAdminUrl, safeTranslate]
   );
 
   const filtered = useMemo(() => {

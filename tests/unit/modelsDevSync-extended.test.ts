@@ -671,7 +671,7 @@ test("the usual truthy spellings all start the sync, and nothing else does", asy
         // then never fetched anything; pin the fetch actually having run
         // for each truthy spelling, not just the first one.
         assert.ok(
-          await waitFor(() => modelsDev.getSyncStatus().lastSync !== null),
+          await waitFor(() => modelsDev.getSyncStatus().lastSync !== null, 2000),
           `MODELS_DEV_SYNC_ENABLED=${JSON.stringify(value)} should have completed a sync`
         );
       }
@@ -744,5 +744,48 @@ test("an unset MODELS_DEV_SYNC_ENABLED still defers to a stored setting of true"
     modelsDev.stopPeriodicSync();
     if (previous === undefined) delete process.env.MODELS_DEV_SYNC_ENABLED;
     else process.env.MODELS_DEV_SYNC_ENABLED = previous;
+  }
+});
+
+test("MODELS_DEV_SYNC_ENABLED=0 is a hard kill switch that wins over the setting", async () => {
+  const previous = process.env.MODELS_DEV_SYNC_ENABLED;
+  process.env.MODELS_DEV_SYNC_ENABLED = "0";
+  try {
+    const modelsDev = await importFresh("env-kill-switch-0");
+    mockFetchWith(MOCK_MODELS_DEV_DATA);
+
+    const pricing = modelsDev.transformModelsDevToPricing(MOCK_MODELS_DEV_DATA);
+    modelsDev.saveModelsDevPricing(pricing);
+    assert.deepEqual(
+      modelsDev.getModelsDevPricing(),
+      {},
+      "kill switch skips the SQL/JSON pricing scan entirely"
+    );
+
+    await settingsDb.updateSettings({
+      modelsDevSyncEnabled: true,
+      modelsDevSyncInterval: 15,
+    });
+    await modelsDev.initModelsDevSync();
+    assert.equal(
+      modelsDev.getSyncStatus().enabled,
+      false,
+      "kill switch must prevent the periodic sync even when the setting is on"
+    );
+
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("0"), "false");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("false"), "false");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("off"), "false");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("no"), "false");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag(""), "unset");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("maybe"), "unset");
+    assert.equal(modelsDev.readModelsDevSyncEnvFlag("1"), "true");
+  } finally {
+    if (previous === undefined) delete process.env.MODELS_DEV_SYNC_ENABLED;
+    else process.env.MODELS_DEV_SYNC_ENABLED = previous;
+    await settingsDb.updateSettings({
+      modelsDevSyncEnabled: false,
+      modelsDevSyncInterval: 15,
+    });
   }
 });

@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Remove chaves de API, tokens, chaves privadas e JWTs de mensagens, chamadas de ferramentas e respostas.",
     "pricingAutoSyncDisabled": "Sincronização Automática Desativada",
     "pricingAutoSyncEnabled": "Sincronização Automática Ativada",
-    "modalityBridgeIntro": "Conecte conteúdo multimodal ao texto antes de chegar a modelos apenas de texto. A visão está ativa; o áudio chega com o AudioBridge; o vídeo está no roteiro.",
+    "modalityBridgeIntro": "Converta conteúdo multimodal em texto antes de chegar a modelos apenas de texto. As pontes de visão, áudio e vídeo estão disponíveis e podem ser configuradas.",
     "modalityBridgeVisionTab": "Visão",
     "modalityBridgeAudioTab": "Áudio",
     "modalityBridgeVideoTab": "Vídeo",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Avançado",
     "modalityBridgeTimeoutMs": "Tempo Limite (ms)",
     "modalityBridgeMaxImages": "Máx. de imagens por pedido",
+    "visionMaxCharsLabel": "Máximo de caracteres na descrição",
+    "visionMaxCharsHint": "Limite o comprimento da descrição do modelo de visão. 0 = ilimitado — aumente para tarefas de OCR com muitos detalhes.",
     "modalityBridgeCacheEnabled": "Descrições de cache",
     "modalityBridgeCacheEnabledDesc": "Reutilizar descrições para imagens idênticas (chaveadas por SHA-256, em memória).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minutos)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "A ponte não foi ativada (o modelo pode suportar visão nativamente ou a ponte está desativada)",
     "modalityBridgeTestError": "Teste falhou: {message}",
     "modalityBridgeAudioComingSoon": "A ponte de áudio (fala → texto via /v1/audio/transcriptions) será lançada na próxima versão. As chaves de configuração já estão reservadas.",
-    "modalityBridgeVideoComingSoon": "A ponte de vídeo (amostragem de quadros + legendagem) está na lista de tarefas — veja o problema #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge movido",
     "modalityBridgeMovedBody": "As definições do Vision Bridge agora estão disponíveis na página dedicada do Modality Bridge.",
     "modalityBridgeMovedCta": "Abrir as definições da Ponte de Modalidade",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clipe(s) transcrito(s) por {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge não ativou (o destino pode suportar áudio, nenhum fornecedor de STT está conectado ou a ponte está desativada)",
     "modalityBridgeAudioTestError": "Teste de áudio falhou: {message}",
+    "modalityBridgeVideoTitle": "Ponte de vídeo",
+    "modalityBridgeVideoDesc": "Amostre fotogramas do vídeo, descreva-os com um modelo de visão e continue com o modelo de texto escolhido.",
+    "modalityBridgeVideoRuntimeReady": "Runtime pronto",
+    "modalityBridgeVideoRuntimeUnavailable": "Runtime indisponível",
+    "modalityBridgeVideoRuntimeInstall": "Instale o FFmpeg e o ffprobe no PATH do servidor para ativar a extração de vídeo.",
+    "modalityBridgeVideoEnabled": "Ativar Ponte de vídeo",
+    "modalityBridgeVideoEnabledDesc": "Substitua as partes de vídeo por descrições de fotogramas com carimbo de data/hora quando o modelo de destino não conseguir processar vídeo.",
+    "modalityBridgeVideoModel": "Modelo de descrição de fotogramas",
+    "modalityBridgeVideoModelInherited": "Herdar o modelo da Ponte de visão",
+    "modalityBridgeVideoFrameCount": "Fotogramas por vídeo",
+    "modalityBridgeVideoMaxVideos": "Máximo de vídeos por pedido",
     "modelRoutingDescriptionPlaceholder": "Roteie modelos Opus para combinação frontier",
     "cliproxyapiFallbackCodes": "Códigos de Fallback do Cliproxyapi",
     "cliproxyapiFallbackDescription": "Descrição de Fallback do Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Link de parceiro",
     "dismissAriaLabel": "Dispensar"
   },
+  "vscodeCopilotBanner": {
+    "title": "O OmniRoute agora funciona dentro do VS Code Copilot Chat",
+    "description": "Instale a extensão gratuita OmniCopilot e cada modelo do OmniRoute surge diretamente no seletor de modelos do Copilot Chat que já utiliza.",
+    "cta": "Obter a Extensão",
+    "secondaryNote": "Também disponível na Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Dispensar"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Anuncie <gateway-alias>/<model> IDs de espelho em /v1/models para modelos cujo proprietário canónico não tem credenciais ativas, mas um gateway de passagem com credenciais ativas os encaminha. Aviso: adiciona entradas de catálogo para todos os clientes quando ativado globalmente.",
   "radarPage": {
     "title": "Catálogo Radar",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Campanhas por tempo limitado",
     "campaignsEmpty": "Sem campanhas ativas de momento — volta mais tarde.",
     "campaignsUpsellCommunity": "As campanhas por tempo limitado são um extra de supporter. Tudo o que está nos links fixos desta página continua grátis para todos.",
-    "campaignsValidUntil": "Válido até {date}"
+    "campaignsValidUntil": "Válido até {date}",
+    "colActions": "Ações",
+    "localBadge": "local",
+    "editModel": "Editar",
+    "saveModel": "Guardar",
+    "cancelEdit": "Cancelar",
+    "resetModel": "Repor alterações locais",
+    "hideModel": "Ocultar",
+    "restoreModel": "Restaurar",
+    "hiddenModelsTitle": "Modelos ocultos",
+    "modelDisplayName": "Nome de exibição local",
+    "modelEnabled": "Ativado localmente",
+    "localStateSaveFailed": "Falha ao guardar as definições locais do Radar",
+    "guidedCombos": "Guided combos",
+    "offers": "Ofertas"
   },
   "radarSetupPage": {
     "title": "Configuração do Fornecedor",
@@ -13246,17 +13279,9 @@
         "modelLockouts": "Bloqueios de Modelo",
         "count": "Contagem de Ligações"
       }
-    },
-    "degraded.source.database": "Database",
-    "degraded.source.circuitBreaker": "Circuit Breaker",
-    "degraded.source.modelLockouts": "Model Lockouts",
-    "degraded.source.count": "Connection Count"
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Rejeitar pedidos antes do envio quando o modelo de destino não tiver as capacidades necessárias (visão, ferramentas, saída estruturada, janela de contexto). Protege pedidos diretos de um único fornecedor que contornam o filtro de compatibilidade da camada combinada.",
-  "capabilityFilter.visionMismatch": "Provider does not support vision for this image request",
-  "capabilityFilter.toolsMismatch": "Provider does not support tool calling",
-  "capabilityFilter.structuredOutputMismatch": "Provider does not support structured output",
-  "capabilityFilter.contextWindowMismatch": "Request exceeds provider context window",
   "publicSystem": {
     "notFound": {
       "title": "Página não encontrada",
@@ -13631,5 +13656,49 @@
     "hint": "Quando ativado, os modelos descobertos aparecem nas seleções do provedor em todo o OmniRoute.",
     "updateFailed": "Falha ao atualizar (HTTP {status})",
     "networkError": "Erro de rede — não foi possível atualizar a configuração de exposição do fornecedor"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Ofertas para apoiadores",
+    "subtitle": "Descontos, créditos, testes oficiais e benefícios de parceiros revisados pelo Radar.",
+    "backToRadar": "Voltar ao Radar",
+    "loading": "Carregando ofertas...",
+    "refresh": "Atualizar ofertas",
+    "refreshing": "Atualizando...",
+    "loadFailed": "Não foi possível atualizar as ofertas. O último cache local verificado foi preservado.",
+    "empty": "Não há ofertas ativas neste momento.",
+    "keyRequiredTitle": "É necessária uma chave de apoiador",
+    "keyRequiredDescription": "As ofertas são um benefício ao vivo do Radar. Adicione uma chave existente na tela do Radar, valide sua contribuição ou apoie o projeto para obter uma.",
+    "contributorButton": "Sou contribuidor",
+    "supporterButton": "Apoiar o projeto",
+    "partnerBadge": "Parceiro",
+    "officialBadge": "Oficial",
+    "conditionsLabel": "Condições:",
+    "validUntil": "Válida até {date}",
+    "noExpiry": "Sem validade anunciada",
+    "openOffer": "Ver oferta",
+    "trialDays": "{days, plural, one {# dia} other {# dias}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Provider does not support vision for this image request",
+    "toolsMismatch": "Provider does not support tool calling",
+    "structuredOutputMismatch": "Provider does not support structured output",
+    "contextWindowMismatch": "Request exceeds provider context window"
   }
 }

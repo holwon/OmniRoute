@@ -25,6 +25,7 @@ import {
 import { requireManagementAuth } from "@/lib/api/requireManagementAuth";
 import { isApiKeyRevealEnabled, maskStoredApiKey } from "@/lib/apiKeyExposure";
 import { cleanupProviderModelsAfterConnectionDelete } from "@/lib/db/models";
+import { canUpdateProviderApiKey } from "@/shared/providers/webSessionCredentials";
 import {
   refreshConnectionRateLimits,
   enableRateLimitProtection,
@@ -161,7 +162,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (globalPriority !== undefined) updateData.globalPriority = globalPriority;
     if (defaultModel !== undefined) updateData.defaultModel = defaultModel;
     if (isActive !== undefined) updateData.isActive = isActive;
-    if (apiKey && existing.authType === "apikey") {
+    if (apiKey && canUpdateProviderApiKey(existing.authType, existing.provider)) {
       if (existing.provider === "chatgpt-web-codex") {
         const validationId =
           incomingPsd && typeof incomingPsd.validationId === "string"
@@ -373,6 +374,15 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     console.log("Error updating connection:", error);
     return NextResponse.json({ error: "Failed to update connection" }, { status: 500 });
   }
+}
+
+// PATCH /api/providers/[id] - Update connection (partial)
+// The OpenAPI spec and the CLI (`omniroute providers rotate`, generated
+// api-commands) both use PATCH, but only PUT was implemented — PATCH requests
+// 405'd. PATCH and PUT share the same update semantics here (the schema only
+// applies provided fields), so delegate to the PUT handler.
+export async function PATCH(request: Request, ctx: { params: Promise<{ id: string }> }) {
+  return PUT(request, ctx);
 }
 
 // DELETE /api/providers/[id] - Delete connection

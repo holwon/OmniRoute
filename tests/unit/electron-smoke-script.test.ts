@@ -5,6 +5,7 @@ import {
   buildSmokeEnv,
   FATAL_LOG_PATTERNS,
   LINUX_EXECUTABLE_NAMES,
+  stopApp,
 } from "../../scripts/dev/smoke-electron-packaged.mjs";
 
 test("electron smoke discovers the default Linux executable name", () => {
@@ -46,4 +47,27 @@ test("electron smoke treats Electron process errors as fatal startup logs", () =
       `${log} should match a fatal log pattern`
     );
   }
+});
+
+test("electron smoke force-terminates the Windows process tree before the parent can exit", async () => {
+  const signals: string[] = [];
+  const waits: number[] = [];
+  const child = {
+    pid: 4242,
+    exitCode: 0,
+    signalCode: null,
+  };
+
+  await stopApp(child, {
+    currentPlatform: "win32",
+    signalProcessTreeFn: async (_child, signal) => {
+      signals.push(signal);
+    },
+    waitForProcessTreeExitFn: async (_child, timeoutMs) => {
+      waits.push(timeoutMs);
+    },
+  });
+
+  assert.deepEqual(signals, ["SIGKILL"]);
+  assert.deepEqual(waits, [2_000]);
 });

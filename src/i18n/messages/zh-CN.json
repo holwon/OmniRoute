@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "清除消息、工具调用和响应中的 API 密钥、令牌、私钥和 JWT。",
     "pricingAutoSyncDisabled": "自动同步已禁用",
     "pricingAutoSyncEnabled": "自动同步已启用",
-    "modalityBridgeIntro": "在文本仅模型之前，将多模态内容桥接到文本。视觉是实时的；音频通过 AudioBridge 到达；视频在规划中。",
+    "modalityBridgeIntro": "在多模态内容到达纯文本模型之前将其转换为文本。视觉、音频和视频桥接均可用且可配置。",
     "modalityBridgeVisionTab": "视觉",
     "modalityBridgeAudioTab": "音频",
     "modalityBridgeVideoTab": "视频",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "高级",
     "modalityBridgeTimeoutMs": "超时 (毫秒)",
     "modalityBridgeMaxImages": "每个请求的最大图像数",
+    "visionMaxCharsLabel": "最大描述字符数",
+    "visionMaxCharsHint": "限制视觉模型的描述长度。0 = 无限 — 对于细节丰富的OCR任务，请提高。",
     "modalityBridgeCacheEnabled": "缓存描述",
     "modalityBridgeCacheEnabledDesc": "重用相同图像的描述（SHA-256 键控，内存中）。",
     "modalityBridgeCacheTtlMinutes": "缓存 TTL（分钟）",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "桥接未激活（模型可能原生支持视觉或桥接已禁用）",
     "modalityBridgeTestError": "测试失败：{message}",
     "modalityBridgeAudioComingSoon": "音频桥接（语音 → 文本通过 /v1/audio/transcriptions）将在下一个版本中发布。其设置键已被保留。",
-    "modalityBridgeVideoComingSoon": "视频桥接（帧采样 + 字幕）在待办事项中 — 请参阅问题 #9760。",
     "modalityBridgeMovedTitle": "Vision Bridge 已移动",
     "modalityBridgeMovedBody": "Vision Bridge 设置现在位于专用的 Modality Bridge 页面。",
     "modalityBridgeMovedCta": "打开模态桥设置",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "音频桥接正常 — {count} 个剪辑由 {model} 转录",
     "modalityBridgeAudioTestNoop": "音频桥未激活（目标可能支持音频，但未连接STT提供者，或桥接已禁用）",
     "modalityBridgeAudioTestError": "音频测试失败：{message}",
+    "modalityBridgeVideoTitle": "视频桥接",
+    "modalityBridgeVideoDesc": "对视频帧进行采样，使用视觉模型描述这些帧，然后继续使用所选的文本模型。",
+    "modalityBridgeVideoRuntimeReady": "运行时已就绪",
+    "modalityBridgeVideoRuntimeUnavailable": "运行时不可用",
+    "modalityBridgeVideoRuntimeInstall": "请在服务器的 PATH 中安装 FFmpeg 和 ffprobe 以启用视频提取。",
+    "modalityBridgeVideoEnabled": "启用视频桥接",
+    "modalityBridgeVideoEnabledDesc": "当目标模型无法处理视频时，将视频部分替换为带时间戳的帧描述。",
+    "modalityBridgeVideoModel": "帧描述模型",
+    "modalityBridgeVideoModelInherited": "继承视觉桥接模型",
+    "modalityBridgeVideoFrameCount": "每个视频的帧数",
+    "modalityBridgeVideoMaxVideos": "每个请求的最大视频数",
     "modelRoutingDescriptionPlaceholder": "将 Opus 模型路由到 frontier 组合",
     "cliproxyapiFallbackCodes": "Cliproxyapi 回退代码",
     "cliproxyapiFallbackDescription": "Cliproxyapi 备用描述",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "合作伙伴链接",
     "dismissAriaLabel": "关闭"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute 现已可在 VS Code Copilot Chat 中运行",
+    "description": "安装免费的 OmniCopilot 扩展，每个 OmniRoute 模型都会直接出现在你已经在用的 Copilot Chat 模型选择器中。",
+    "cta": "获取扩展",
+    "secondaryNote": "同样支持 Open VSX（Cursor、Windsurf、VSCodium…）",
+    "dismissAriaLabel": "关闭"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "在/v1/models上为那些规范所有者没有活动凭证但通过一个具有活动凭证的通道网关路由的模型宣传<gateway-alias>/<model>镜像ID。警告：当全局启用时，会为所有客户端添加目录条目。",
   "radarPage": {
     "title": "雷达目录",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "提供者设置",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "此页面仅可从 localhost 或局域网访问 (LOCAL_ONLY)。",
     "pollErrorStopped": "轮询已停止:服务器拒绝了请求 (404/403)。",
     "pollErrorTransient": "获取数据出错:将自动重试。",
-    "degraded": "部分数据:不可用的数据源: {sources}",
-    "degraded.source.database": "数据库",
-    "degraded.source.circuitBreaker": "断路器",
-    "degraded.source.modelLockouts": "模型锁定",
-    "degraded.source.count": "连接数"
+    "degraded": {
+      "message": "部分数据:不可用的数据源: {sources}",
+      "source": {
+        "database": "数据库",
+        "circuitBreaker": "断路器",
+        "modelLockouts": "模型锁定",
+        "count": "连接数"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "在目标模型缺少所需能力（视觉、工具、结构化输出、上下文窗口）时，拒绝调度前的请求。保护绕过组合层兼容性过滤器的直接单一提供者请求。",
-  "capabilityFilter.visionMismatch": "提供者不支持此图像请求的视觉效果",
-  "capabilityFilter.toolsMismatch": "提供者不支持工具调用",
-  "capabilityFilter.structuredOutputMismatch": "提供者不支持结构化输出",
-  "capabilityFilter.contextWindowMismatch": "请求超出提供者上下文窗口",
   "publicSystem": {
     "notFound": {
       "title": "页面未找到",
@@ -13624,5 +13657,49 @@
     "hint": "启用后，发现的模型会出现在 OmniRoute 的提供者选择中。",
     "updateFailed": "更新失败 (HTTP {status})",
     "networkError": "网络错误 — 无法更新提供者曝光设置"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "提供者不支持此图像请求的视觉效果",
+    "toolsMismatch": "提供者不支持工具调用",
+    "structuredOutputMismatch": "提供者不支持结构化输出",
+    "contextWindowMismatch": "请求超出提供者上下文窗口"
   }
 }

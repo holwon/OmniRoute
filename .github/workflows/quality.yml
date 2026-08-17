@@ -60,13 +60,49 @@ jobs:
   build:
     name: Build (advisory)
     needs: changes
-    if: ${{ github.event_name != 'pull_request' || ((github.event.pull_request.draft == false || startsWith(github.head_ref, 'mergify/merge-queue/')) && needs.changes.outputs.code == 'true') }}
-    # Dynamic runner — same fork-safe rule as ci.yml / fast-gates.
-    runs-on: ${{ (vars.USE_VPS_RUNNER == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)) && fromJSON('["self-hosted","omni-release"]') || 'ubuntu-latest' }}
+    # FORK PRs ONLY. build.yml's `Fast Production Build` triggers on `push: branches: ["**"]`
+    # and runs `build:release` — a superset of this job — so for an own-origin branch this job
+    # was building the same tree twice. A fork contributor pushes to THEIR repo, so that push
+    # never fires here, and this is the only pre-merge build signal they get. Measured
+    # 2026-08-14: 72 of the last 100 PRs into release/** came from forks, so the fork case is
+    # the majority of the traffic, not the exception — this job earns its place, it just should
+    # not duplicate build.yml for the own-origin 28%.
+    if: ${{ github.event_name != 'pull_request' || ((github.event.pull_request.draft == false || startsWith(github.head_ref, 'mergify/merge-queue/')) && needs.changes.outputs.code == 'true' && github.event.pull_request.head.repo.full_name != github.repository) }}
+    # PINNED to hosted — this was the last job in THIS workflow still on the USE_VPS_RUNNER
+    # switch (ci.yml's Build, nightly-release-green and npm-publish keep it, so the variable
+    # stays meaningful), and with USE_VPS_RUNNER=true it produced NO signal at all here.
+    # Measured 2026-08-14 over the last 25
+    # quality.yml runs: not one Build (advisory) reached a conclusion. Every sample was either
+    # queued on the self-hosted pool (2 runners, `omniroute-113-6/7`, both permanently busy — one
+    # job sat queued 2h+ and was still unclaimed) or, when it did land, killed mid-build by this
+    # workflow's own `cancel-in-progress` concurrency. 6/6 sampled "failures" are exit 143 /
+    # "The runner has received a shutdown signal" at ~3.5 min into `npm run build` — zero OOM,
+    # zero build errors. So the job burned a scarce runner that the gates actually need while
+    # reporting a permanent red on every PR.
+    #
+    # Gap 19 left USE_VPS_RUNNER governing build-like jobs on the premise that "the build needs
+    # the .113's RAM". That premise no longer holds: `Fast Production Build` (build.yml) runs
+    # `build:release` — a SUPERSET of this job's `npm run build`, plus the CLI bundle — on plain
+    # ubuntu-latest and passed 24/25 of its last runs in ~15 min. What it has and this job did
+    # not is memory PROVISIONING: a 10 GB swapfile plus a 12 GB V8 heap. That matters because
+    # --max-old-space-size only bounds V8's JS heap, never Turbopack's native (Rust) allocation
+    # (#6409) — swap is what absorbs the native peak. Both are mirrored below.
+    runs-on: ubuntu-latest
     # #7307: advisory for the first week of release-PR runs; remove
     # continue-on-error after the production-build signal is stable.
     continue-on-error: true
     steps:
+      # Mirrors build.yml: Turbopack's native peak is not bounded by --max-old-space-size, so
+      # the hosted runner needs swap headroom before the build starts.
+      - name: Expand virtual memory (10 GB swap)
+        run: |
+          sudo swapoff -a || true
+          sudo rm -f /mnt/swapfile /swapfile
+          sudo fallocate -l 10G /mnt/swapfile || sudo dd if=/dev/zero of=/mnt/swapfile bs=1M count=10240
+          sudo chmod 600 /mnt/swapfile
+          sudo mkswap /mnt/swapfile
+          sudo swapon /mnt/swapfile
+          free -h
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
@@ -79,6 +115,10 @@ jobs:
       - run: npm run build
         env:
           OMNIROUTE_USE_TURBOPACK: "1"
+          # Same heap build.yml proves sufficient. build-next-isolated.mjs defaults to 8192 and
+          # honours OMNIROUTE_BUILD_MEMORY_MB; NODE_OPTIONS is set for parity with build.yml.
+          NODE_OPTIONS: "--max-old-space-size=12288"
+          OMNIROUTE_BUILD_MEMORY_MB: "12288"
       # No artifact upload here: the PR-to-release quality workflow has no
       # downstream package/e2e jobs that consume the Next.js build output.
 
@@ -97,7 +137,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       # One walk of src/app/api for openapi-routes + docs-symbols (both still fail independently).
       - run: npm run check:api-docs-refs
       - name: Docs accuracy (fabricated-docs + i18n mirrors, strict)
@@ -141,7 +181,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       - name: Restore ESLint file cache
         uses: actions/cache@v6
         with:
@@ -390,7 +430,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       # WS5.2/5.3: JUnit feeds Trunk Flaky Tests — the fast-path runs on EVERY PR,
       # which is where flaky-detection volume actually comes from (ci.yml's heavy
       # jobs only run on the release PR). Advisory upload, own-origin only.
@@ -436,7 +476,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       # QW-d: fonte única — o mesmo npm script do CI pesado/local. Fecha dois drifts do
       # comando inline antigo: os dirs `memory` e `usage` estavam FORA do glob (testes
       # silenciosamente não rodavam no fast path) e o setupPolyfill não era importado.
@@ -476,7 +516,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       - name: Restore ESLint file cache
         uses: actions/cache@v6
         with:
@@ -543,7 +583,7 @@ jobs:
         with:
           node-version: ${{ env.CI_NODE_VERSION }}
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       - name: CHANGELOG integrity (nenhum bullet da base pode sumir no merge-result)
         run: npm run check:changelog-integrity
       - name: Agent-skills generator sync (SKILL.md gerado ≡ catálogo)

@@ -496,6 +496,11 @@ export async function saveCallLog(entry: any) {
       correlationId: entry.correlationId || null,
       modelPinned: entry.modelPinned ? 1 : 0,
       sessionTag: entry.sessionTag || null,
+      // OpenAI Responses API response id, when this attempt produced one --
+      // indexed so a later request's `previous_response_id` can resolve
+      // this row's artifact for OmniRoute-native continuation. See
+      // src/lib/db/responsesContinuationStore.ts.
+      responseId: typeof entry.responseId === "string" ? entry.responseId : null,
     };
 
     const requestSummary = noLogEnabled
@@ -544,7 +549,7 @@ export async function saveCallLog(entry: any) {
         combo_name, combo_step_id, combo_execution_key, error_summary, detail_state,
         artifact_relpath, artifact_size_bytes, artifact_sha256,
         has_request_body, has_response_body, has_pipeline_details, request_summary,
-        correlation_id, model_pinned, session_tag
+        correlation_id, model_pinned, session_tag, response_id
       )
       VALUES (
         @id, @timestamp, @method, @path, @status, @model, @requestedModel, @provider,
@@ -555,7 +560,7 @@ export async function saveCallLog(entry: any) {
         @comboName, @comboStepId, @comboExecutionKey, @errorSummary, @detailState,
         @artifactRelPath, @artifactSizeBytes, @artifactSha256,
         @hasRequestBody, @hasResponseBody, @hasPipelineDetails, @requestSummary,
-        @correlationId, @modelPinned, @sessionTag
+        @correlationId, @modelPinned, @sessionTag, @responseId
       )
     `
     ).run({

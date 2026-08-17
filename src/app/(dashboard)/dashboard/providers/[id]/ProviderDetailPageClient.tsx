@@ -2,7 +2,7 @@
 
 // Issue #3501 strangler-fig decomposition — Phase 1t (final push)
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Card, Button, CardSkeleton } from "@/shared/components";
@@ -31,7 +31,11 @@ import { normalizeModelCatalogSource } from "@/shared/utils/modelCatalogSearch";
 import { useCopyToClipboard } from "@/shared/hooks/useCopyToClipboard";
 import useEmailPrivacyStore from "@/store/emailPrivacyStore";
 import { useNotificationStore } from "@/store/notificationStore";
-import { resolveDashboardProviderInfo, resolveProviderHeaderLink } from "../providerPageUtils";
+import {
+  resolveDashboardProviderInfo,
+  resolveProviderHeaderLink,
+  resolveProviderOAuthBackendId,
+} from "../providerPageUtils";
 import { findDefaultReferral } from "@/lib/radar/referrals";
 import { type ConnectionRowConnection } from "./components/ConnectionRow";
 import { useProviderConnections } from "./hooks/useProviderConnections";
@@ -68,6 +72,7 @@ import AnonymousFallbackToggle from "./components/AnonymousFallbackToggle";
 
 export default function ProviderDetailPageClient() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const providerId = params.id as string;
 
   // ── UI-only modal state (not owned by hooks) ─────────────────────────────
@@ -253,8 +258,11 @@ export default function ProviderDetailPageClient() {
     providerInfo?.website,
     referralUrl
   );
+  const oauthProviderId = resolveProviderOAuthBackendId(providerId, providerInfo);
   const providerSupportsOAuth =
-    providerInfo?.toggleAuthType === "oauth" || providerInfo?.toggleAuthType === "free";
+    providerInfo?.toggleAuthType === "oauth" ||
+    providerInfo?.toggleAuthType === "free" ||
+    oauthProviderId !== providerId;
   const subscriptionRisk = providerInfo?.subscriptionRisk === true;
 
   // ── Phase 1t.3: connection gate + risk-notice modal state ───────────────
@@ -356,6 +364,10 @@ export default function ProviderDetailPageClient() {
     }
     setShowAddApiKeyModal(true);
   }, [providerId]);
+
+  useEffect(() => {
+    if (searchParams.get("action") === "add-api-key") gateConnectionFlow(openApiKeyAddFlow);
+  }, [searchParams, gateConnectionFlow, openApiKeyAddFlow]);
 
   const openPrimaryAddFlow = useCallback(() => {
     if (providerId === "kimi-coding") return setShowKimiAuthMethodModal(true);

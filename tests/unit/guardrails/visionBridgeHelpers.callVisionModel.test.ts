@@ -93,6 +93,35 @@ test("callVisionModel returns description on success", async () => {
   }
 });
 
+test("callVisionModel can route a catalog model through the OmniRoute self-loop", async () => {
+  let capturedUrl = "";
+  let capturedBody: Record<string, unknown> = {};
+  let capturedHeaders: Record<string, string> = {};
+  const fetchImpl: typeof fetch = async (input, init) => {
+    capturedUrl = String(input);
+    capturedBody = JSON.parse(String(init?.body));
+    capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
+    return Response.json({ choices: [{ message: { content: "GREEN_SCENE_2" } }] });
+  };
+
+  const result = await callVisionModel("data:image/png;base64,iVBORw0KGgo", {
+    model: "openai/gpt-4o-mini",
+    prompt: "Describe this frame",
+    timeoutMs: 30000,
+    maxImages: 1,
+    routeThroughOmniRoute: true,
+    fetchImpl,
+  });
+
+  const url = new URL(capturedUrl);
+  assert.equal(url.hostname, "localhost");
+  assert.equal(url.pathname, "/v1/chat/completions");
+  assert.equal(capturedBody.model, "openai/gpt-4o-mini");
+  assert.equal(capturedHeaders["x-omniroute-admission-bypass"], "internal");
+  assert.match(capturedHeaders["x-omniroute-disabled-guardrails"], /video-bridge/);
+  assert.equal(result, "GREEN_SCENE_2");
+});
+
 test("callVisionModel throws on HTTP error", async () => {
   const mockResponse = {
     ok: false,
@@ -333,6 +362,50 @@ test("callVisionModel fetches remote images before Anthropic requests", async ()
     assert.strictEqual(imageSource.type, "base64");
     assert.strictEqual(imageSource.media_type, "image/png");
     assert.strictEqual(imageSource.data, Buffer.from("cat-image-bytes").toString("base64"));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("callVisionModel propagates an external abort to fetch and stops before fallback", async () => {
+  const controller = new AbortController();
+  let fetchCalls = 0;
+  let fetchSignal: AbortSignal | null = null;
+
+  globalThis.fetch = async (_url: URL | RequestInfo, init?: RequestInit) => {
+    fetchCalls += 1;
+    fetchSignal = init?.signal instanceof AbortSignal ? init.signal : null;
+    controller.abort();
+    const error = new Error("private aborted request detail");
+    error.name = "AbortError";
+    throw error;
+  };
+
+  try {
+    const config: VisionModelConfig = {
+      model: "openai/gpt-4o-mini",
+      prompt: "Describe this image",
+      timeoutMs: 30_000,
+      maxImages: 10,
+      signal: controller.signal,
+    };
+
+    await assert.rejects(
+      () =>
+        callVisionModel(
+          "data:image/png;base64,iVBORw0KGgo",
+          config,
+          "sk-test",
+          { maxFallbackAttempts: 2 },
+          {
+            hasUsableCredentials: async (model) =>
+              model === "openai/gpt-4o-mini" || model.startsWith("anthropic/"),
+          }
+        ),
+      /timed out|aborted/i
+    );
+    assert.equal(fetchCalls, 1, "an aborted parent request must not try a fallback model");
+    assert.equal(fetchSignal?.aborted, true, "the parent abort must reach the active fetch");
   } finally {
     globalThis.fetch = originalFetch;
   }

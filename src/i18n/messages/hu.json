@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Eltávolítja az API-kulcsokat, tokeneket, privát kulcsokat és JWT-ket az üzenetekből, eszközhívásokból és válaszokból.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Híd a multimodális tartalmat szöveggé, mielőtt elérné a csak szöveges modelleket. A látás élő; A hang az AudioBridge-en érkezik; A videó a terveink között szerepel.",
+    "modalityBridgeIntro": "Alakítsa a multimodális tartalmat szöveggé, mielőtt az csak szöveget kezelő modellekhez érne. A kép-, hang- és videóhidak elérhetők és beállíthatók.",
     "modalityBridgeVisionTab": "Látás",
     "modalityBridgeAudioTab": "Hang",
     "modalityBridgeVideoTab": "Videó",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Haladó",
     "modalityBridgeTimeoutMs": "Időtúllépés (ms)",
     "modalityBridgeMaxImages": "Max képek kérésenként",
+    "visionMaxCharsLabel": "Max leírás karakterek",
+    "visionMaxCharsHint": "Korlátozza a látásmodell leírásának hosszát. 0 = korlátlan — növelje részletes OCR feladatokhoz.",
     "modalityBridgeCacheEnabled": "Gyorsítótár leírások",
     "modalityBridgeCacheEnabledDesc": "Az azonos képek (SHA-256 kulcsú, memóriában) leírásainak újrafelhasználása.",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (perc)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "A híd nem aktiválódott (a modell natívan támogathatja a látást, vagy a híd le van tiltva)",
     "modalityBridgeTestError": "A teszt megbukott: {message}",
     "modalityBridgeAudioComingSoon": "A Hanghíd (beszéd → szöveg a /v1/audio/transcriptions segítségével) a következő kiadásban érkezik. A beállítási kulcsai már le vannak foglalva.",
-    "modalityBridgeVideoComingSoon": "A videohíd (keretmintavételezés + feliratozás) a hátralékban van — lásd a #9760 számú problémát.",
     "modalityBridgeMovedTitle": "A Vision Bridge áthelyezve",
     "modalityBridgeMovedBody": "A Vision Bridge beállításai mostantól a dedikált Modality Bridge oldalon találhatók.",
     "modalityBridgeMovedCta": "Nyisd meg a Modalitás Híd beállításait",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} klip(pek) átírása a {model} által",
     "modalityBridgeAudioTestNoop": "Az Audio Bridge nem aktiválódott (a célpont támogathatja a hangot, nincs csatlakoztatva STT szolgáltató, vagy a híd le van tiltva)",
     "modalityBridgeAudioTestError": "A hangteszt nem sikerült: {message}",
+    "modalityBridgeVideoTitle": "Videóhíd",
+    "modalityBridgeVideoDesc": "Vegyen mintát a videó képkockáiból, írassa le őket egy látásmodellel, majd folytassa a kiválasztott szövegmodellel.",
+    "modalityBridgeVideoRuntimeReady": "A futtatókörnyezet kész",
+    "modalityBridgeVideoRuntimeUnavailable": "A futtatókörnyezet nem érhető el",
+    "modalityBridgeVideoRuntimeInstall": "Telepítse az FFmpeg és az ffprobe programot a kiszolgáló PATH útvonalára a videókinyerés engedélyezéséhez.",
+    "modalityBridgeVideoEnabled": "Videóhíd engedélyezése",
+    "modalityBridgeVideoEnabledDesc": "Ha a célmodell nem tud videót feldolgozni, cserélje a videórészeket időbélyeges képkockaleírásokra.",
+    "modalityBridgeVideoModel": "Képkockaleíró modell",
+    "modalityBridgeVideoModelInherited": "A Vision Bridge modelljének öröklése",
+    "modalityBridgeVideoFrameCount": "Képkockák videónként",
+    "modalityBridgeVideoMaxVideos": "Videók maximális száma kérésenként",
     "modelRoutingDescriptionPlaceholder": "Irányítsd az Opus modelleket a frontier kombinációhoz",
     "cliproxyapiFallbackCodes": "Cliproxyapi Visszaállító Kódok",
     "cliproxyapiFallbackDescription": "Cliproxyapi Visszaállítási Leírás",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Partnerhivatkozás",
     "dismissAriaLabel": "Elvetés"
   },
+  "vscodeCopilotBanner": {
+    "title": "Az OmniRoute mostantól fut a VS Code Copilot Chatben",
+    "description": "Telepítsd az ingyenes OmniCopilot bővítményt, és minden OmniRoute modell megjelenik a Copilot Chat modellválasztójában, amit már használsz.",
+    "cta": "Bővítmény letöltése",
+    "secondaryNote": "Elérhető az Open VSX-en is (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Elvetés"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Hirdesse a <gateway-alias>/<model> tükör azonosítókat a /v1/models-on olyan modellekhez, amelyek kanonikus tulajdonosa nem rendelkezik aktív hitelesítő adatokkal, de egy átjáró, amelynek aktív hitelesítő adatai vannak, irányítja őket. Figyelmeztetés: globális engedélyezés esetén a katalógus bejegyzéseket ad hozzá az összes klienshez.",
   "radarPage": {
     "title": "Radar Katalógus",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Szolgáltató beállítása",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Ez az oldal csak localhostról vagy LAN-ról érhető el (LOCAL_ONLY).",
     "pollErrorStopped": "Lekérdezés leállítva: a szerver elutasította a kérést (404/403).",
     "pollErrorTransient": "Hiba az adatok lekérésekor: automatikus újrapróbálkozás.",
-    "degraded": "Részleges adatok: nem elérhető források: {sources}",
-    "degraded.source.database": "Adatbázis",
-    "degraded.source.circuitBreaker": "Megszakító",
-    "degraded.source.modelLockouts": "Modell Zárolások",
-    "degraded.source.count": "Kapcsolatok Száma"
+    "degraded": {
+      "message": "Részleges adatok: nem elérhető források: {sources}",
+      "source": {
+        "database": "Adatbázis",
+        "circuitBreaker": "Megszakító",
+        "modelLockouts": "Modell Zárolások",
+        "count": "Kapcsolatok Száma"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Elutasítja a kéréseket a kiszállítás előtt, amikor a célmodell hiányzik a szükséges képességekből (látás, eszközök, strukturált kimenet, kontextusablak). Védi a közvetlen, egy szolgáltatótól érkező kéréseket, amelyek megkerülik a kombinált réteg kompatibilitási szűrőt.",
-  "capabilityFilter.visionMismatch": "A szolgáltató nem támogatja a látást ehhez a képkéréshez",
-  "capabilityFilter.toolsMismatch": "A szolgáltató nem támogatja az eszközhívást",
-  "capabilityFilter.structuredOutputMismatch": "A szolgáltató nem támogatja a strukturált kimenetet",
-  "capabilityFilter.contextWindowMismatch": "A kérés meghaladja a szolgáltató kontextusablakát",
   "publicSystem": {
     "notFound": {
       "title": "Az oldal nem található",
@@ -13624,5 +13657,49 @@
     "hint": "Ha engedélyezve van, a felfedezett modellek megjelennek a szolgáltató kiválasztásokban az OmniRoute-ban.",
     "updateFailed": "Sikertelen frissítés (HTTP {status})",
     "networkError": "Hálózati hiba — nem sikerült frissíteni a szolgáltató láthatósági beállítását"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "A szolgáltató nem támogatja a látást ehhez a képkéréshez",
+    "toolsMismatch": "A szolgáltató nem támogatja az eszközhívást",
+    "structuredOutputMismatch": "A szolgáltató nem támogatja a strukturált kimenetet",
+    "contextWindowMismatch": "A kérés meghaladja a szolgáltató kontextusablakát"
   }
 }

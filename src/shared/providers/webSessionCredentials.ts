@@ -42,6 +42,13 @@ export const WEB_SESSION_CREDENTIAL_REQUIREMENTS = {
     acceptsFullCookieHeader: true,
     storageKeys: ["cookie"],
   },
+  "tencent-aistudio-web": {
+    kind: "cookie",
+    credentialName: "Cookie header (full)",
+    placeholder: "paste the full Cookie header from aistudio.tencent.ai",
+    acceptsFullCookieHeader: true,
+    storageKeys: ["cookie"],
+  },
   "tinycms-web": {
     kind: "token",
     credentialName: "app-config-uuid",
@@ -366,6 +373,12 @@ export function getWebSessionCredentialRequirement(
       providerId as keyof typeof WEB_SESSION_CREDENTIAL_REQUIREMENTS
     ] ?? null
   );
+}
+
+export function canUpdateProviderApiKey(authType: unknown, providerId: unknown): boolean {
+  if (authType === "apikey") return true;
+  if (authType !== "cookie") return false;
+  return getWebSessionCredentialRequirement(providerId)?.kind === "token";
 }
 
 export function requiresWebSessionCredential(providerId: unknown): boolean {

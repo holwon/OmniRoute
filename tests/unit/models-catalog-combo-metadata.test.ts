@@ -87,18 +87,18 @@ test("single-target combo respects registry reasoning overrides before specs", a
   assert.equal(Object.hasOwn(capabilities, "effort_tiers"), false);
 });
 
-test("single-target combo respects resolved reasoning deny patterns", async () => {
+test("single-target combo reflects unblocked Antigravity Gemini reasoning", async () => {
   await providersDb.createProviderConnection({
     provider: "antigravity",
     authType: "oauth",
-    name: "antigravity-gemini-no-thinking-combo",
+    name: "antigravity-gemini-reasoning-combo",
     accessToken: "antigravity-test-token",
     isActive: true,
     testStatus: "active",
     providerSpecificData: {},
   });
   await combosDb.createCombo({
-    name: "antigravity-gemini-no-thinking-combo",
+    name: "antigravity-gemini-reasoning-combo",
     strategy: "auto",
     models: ["antigravity/gemini-3.1-pro-high"],
   });
@@ -107,13 +107,13 @@ test("single-target combo respects resolved reasoning deny patterns", async () =
     new Request("http://localhost/api/v1/models")
   );
   const body = (await response.json()) as { data: Array<Record<string, unknown>> };
-  const combo = body.data.find((item) => item.id === "antigravity-gemini-no-thinking-combo");
+  const combo = body.data.find((item) => item.id === "antigravity-gemini-reasoning-combo");
 
   assert.equal(response.status, 200);
   assert.ok(combo);
   const capabilities = combo.capabilities as Record<string, unknown>;
-  assert.equal(capabilities.reasoning, false);
-  assert.equal(capabilities.thinking, false);
-  assert.equal(capabilities.supportsThinking, false);
-  assert.equal(Object.hasOwn(capabilities, "effort_tiers"), false);
+  assert.equal(capabilities.reasoning, true);
+  assert.equal(capabilities.thinking, true);
+  assert.equal(capabilities.supportsThinking, true);
+  assert.equal(Object.hasOwn(capabilities, "effort_tiers"), true);
 });

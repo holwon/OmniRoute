@@ -255,20 +255,33 @@ async function signalProcessTree(child, signal) {
   }
 }
 
-async function stopApp(child) {
+export async function stopApp(
+  child,
+  {
+    currentPlatform = platform(),
+    signalProcessTreeFn = signalProcessTree,
+    waitForProcessTreeExitFn = waitForProcessTreeExit,
+  } = {}
+) {
   if (!child.pid) return;
 
-  await signalProcessTree(child, "SIGTERM");
-  await waitForProcessTreeExit(child, 5_000);
+  // On Windows, terminating only the direct Electron process can orphan the
+  // packaged server when the parent exits before the follow-up liveness check.
+  // Kill the process tree in one operation while the root PID is still valid.
+  if (currentPlatform === "win32") {
+    await signalProcessTreeFn(child, "SIGKILL");
+    await waitForProcessTreeExitFn(child, 2_000);
+    return;
+  }
 
-  const isStillRunning =
-    platform() === "win32"
-      ? child.exitCode === null && child.signalCode === null
-      : isProcessGroupAlive(child.pid);
+  await signalProcessTreeFn(child, "SIGTERM");
+  await waitForProcessTreeExitFn(child, 5_000);
+
+  const isStillRunning = isProcessGroupAlive(child.pid);
 
   if (isStillRunning) {
-    await signalProcessTree(child, "SIGKILL");
-    await waitForProcessTreeExit(child, 2_000);
+    await signalProcessTreeFn(child, "SIGKILL");
+    await waitForProcessTreeExitFn(child, 2_000);
   }
 }
 

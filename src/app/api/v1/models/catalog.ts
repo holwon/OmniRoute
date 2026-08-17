@@ -368,6 +368,18 @@ async function buildUnifiedModelsResponseCore(
       return collected;
     };
 
+    // Health-check exclusions (provider_specific_data.excludedModels) are enforced
+    // at request time in getProviderCredentials(); mirror the same rule in the
+    // catalog so ghost models do not appear as available. A model is hidden when
+    // the provider HAS connections but NONE of them is eligible for it.
+    const isExcludedByProviderConnections = (providerKey: string, modelId: string) => {
+      const providerId = aliasToProviderId[providerKey] || providerKey;
+      const alias = providerIdToAlias[providerId] || providerKey;
+      const providerConnections = getConnectionsForProvider(providerId, alias, providerKey);
+      if (providerConnections.length === 0) return false; // noAuth / no DB row: keep
+      return !hasEligibleConnectionForModel(providerConnections, modelId);
+    };
+
     const providerSupportsModel = (providerKey: string, modelId: string) => {
       const providerId = aliasToProviderId[providerKey] || providerKey;
       const alias = providerIdToAlias[providerId] || providerKey;
@@ -793,6 +805,7 @@ async function buildUnifiedModelsResponseCore(
         if (!providerSupportsModel(canonicalProviderId, model.id)) continue;
         const aliasId = `${alias}/${model.id}`;
         if (getModelIsHidden(canonicalProviderId, model.id)) continue;
+        if (isExcludedByProviderConnections(canonicalProviderId, model.id)) continue;
         if (shouldHidePaid(canonicalProviderId, model.id, (model as { pricing?: unknown }).pricing))
           continue;
 
@@ -913,6 +926,7 @@ async function buildUnifiedModelsResponseCore(
             continue;
           }
           if (getModelIsHidden(providerId, sm.id)) continue;
+          if (isExcludedByProviderConnections(canonicalProviderId, sm.id)) continue;
           // #6457: some upstream discovery catalogs (e.g. HuggingFace's live
           // `/v1/models`) return image/diffusion models with no modality info,
           // so `endpoints` below would default to ["chat"] and misrepresent
@@ -1307,6 +1321,7 @@ async function buildUnifiedModelsResponseCore(
             continue;
           if (model.isHidden === true) continue;
           if (getModelIsHidden(canonicalProviderId, modelId)) continue;
+          if (isExcludedByProviderConnections(canonicalProviderId, modelId)) continue;
           // #6328: apply hidePaidModels to user-defined custom rows too.
           // Custom entries do not carry pricing, so shouldHidePaid() decides
           // via FREE_MODEL_IDS_BY_PROVIDER — matches synced/PROVIDER_MODELS.
@@ -1487,6 +1502,7 @@ async function buildUnifiedModelsResponseCore(
         }
 
         if (getModelIsHidden(canonicalProviderId, modelId)) continue;
+        if (isExcludedByProviderConnections(canonicalProviderId, modelId)) continue;
         // #6328: apply hidePaidModels to alias-backed rows too. Alias mappings
         // point at providerKey/modelId with no pricing, so shouldHidePaid()
         // decides via the FREE_MODEL_IDS_BY_PROVIDER catalog tier.
@@ -1560,6 +1576,7 @@ async function buildUnifiedModelsResponseCore(
         const modelId = typeof model.id === "string" ? model.id : null;
         if (!modelId) continue;
         if (getModelIsHidden(canonicalProviderId, modelId)) continue;
+        if (isExcludedByProviderConnections(canonicalProviderId, modelId)) continue;
         // #6328: apply hidePaidModels to managed-fallback rows too. Compatible
         // provider fallbacks lack pricing; shouldHidePaid() decides via the
         // FREE_MODEL_IDS_BY_PROVIDER catalog tier.

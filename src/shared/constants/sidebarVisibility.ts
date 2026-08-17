@@ -2,6 +2,7 @@ export * from "./sidebarVisibility/types";
 export { COMPRESSION_CONTEXT_GROUP, SIDEBAR_SECTIONS } from "./sidebarVisibility/sections";
 
 import { HIDEABLE_SIDEBAR_ITEM_IDS } from "./sidebarVisibility/types";
+import { parseRadarAdminUrl } from "../validation/radarAdminUrl";
 import type {
   HideableSidebarItemId,
   SidebarItemId,
@@ -49,6 +50,7 @@ export const SIDEBAR_ICON_ACCENTS: Partial<Record<SidebarItemId, string>> = {
   "costs-pricing": "#FB923C",
   "costs-budget": "#22C55E",
   "costs-quota-share": "#06B6D4",
+  "radar-admin": "#F59E0B",
   audit: "#F43F5E",
   "audit-mcp": "#818CF8",
   "audit-a2a": "#A855F7",
@@ -151,6 +153,47 @@ export function getSectionItems(
   );
 }
 
+const RADAR_ADMIN_ITEM: SidebarItemDefinition = {
+  id: "radar-admin",
+  href: "",
+  i18nKey: "radarAdmin",
+  labelFallback: "Radar Admin ↗",
+  subtitleKey: "radarAdminSubtitle",
+  subtitleFallback: "Private operations panel",
+  icon: "admin_panel_settings",
+  external: true,
+};
+
+/**
+ * Materialize owner-only entries resolved at request time. The canonical
+ * catalog never embeds the private URL; an absent or invalid authenticated
+ * settings value returns the original sections without the admin item.
+ */
+export function resolveRuntimeSidebarSections(
+  sections: readonly SidebarSectionDefinition[],
+  runtime: { radarAdminUrl?: unknown }
+): SidebarSectionDefinition[] {
+  const radarAdminUrl = parseRadarAdminUrl(runtime.radarAdminUrl);
+  if (!radarAdminUrl) return [...sections];
+
+  return sections.map((section) => {
+    if (section.id !== "costs") return section;
+
+    const children = section.children.filter(
+      (child) => !("id" in child && child.id === RADAR_ADMIN_ITEM.id)
+    );
+    const radarIndex = children.findIndex((child) => !("type" in child) && child.id === "radar");
+    const insertionIndex = radarIndex >= 0 ? radarIndex + 1 : children.length;
+    const resolvedChildren = [...children];
+    resolvedChildren.splice(insertionIndex, 0, {
+      ...RADAR_ADMIN_ITEM,
+      href: radarAdminUrl,
+    });
+
+    return { ...section, children: resolvedChildren };
+  });
+}
+
 // ─── Ordering & preset setting keys ──────────────────────────────────────────
 
 export const HIDDEN_SIDEBAR_ITEMS_SETTING_KEY = "hiddenSidebarItems";
@@ -227,6 +270,7 @@ const ADMIN_SHOWN: ReadonlySet<HideableSidebarItemId> = new Set([
   "costs-pricing",
   "costs-budget",
   "costs-quota-share",
+  "radar-admin",
   "cache",
   "logs",
   "activity",

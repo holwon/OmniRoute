@@ -1,0 +1,1 @@
+- fix(sse): mark gemini-3.5-flash as thinking-capable so reasoning_effort is no longer rejected with a spurious 400 (#10286)

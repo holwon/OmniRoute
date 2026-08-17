@@ -251,6 +251,11 @@ test("v1 model catalog overlays same-id custom metadata before final overrides",
     { outputTokenLimit: 32000 },
     false
   );
+
+  const customProjected = await getModel(`${prefix}/${modelId}`);
+  assert.ok(customProjected);
+  assert.equal(customProjected.max_output_tokens, 32000);
+
   assert.equal(
     capabilityOverrides.setModelCapabilityOverride(
       `${prefix}/${modelId}`,

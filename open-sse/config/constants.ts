@@ -179,6 +179,24 @@ export const HTTP_STATUS = {
   SERVICE_UNAVAILABLE: 503,
   GATEWAY_TIMEOUT: 504,
 };
+
+/**
+ * #10360 — stable error code for an INTERNAL violation of the executor
+ * `execute()` result contract (`normalizeExecutorResult` received something
+ * that is neither a Response nor `{ response: Response }`).
+ *
+ * This is our own bug, never a provider/account health signal, so every
+ * resilience layer must treat it as request-scoped and terminal: no connection
+ * cooldown, no provider circuit-breaker trip, no retry. It rides on the error's
+ * `.code` (read by `getUpstreamErrorIdentifier`) and therefore reaches
+ * `checkFallbackError` as `structuredError.code` and the chat/combo predicates
+ * as `result.errorCode`.
+ *
+ * Lives here (leaf config module) so both `open-sse/handlers/` and
+ * `open-sse/services/` can import it without creating a cycle.
+ */
+export const EXECUTOR_CONTRACT_VIOLATION_CODE = "executor_contract_violation";
+
 export {
   BACKOFF_CONFIG,
   COOLDOWN_MS,

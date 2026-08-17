@@ -82,6 +82,7 @@ export const APIKEY_PROVIDERS_GATEWAYS = {
     website: "https://openrouter.ai",
     hasFree: true,
     freeNote: "Free models at $0/token with :free suffix - 20 RPM / 200 RPD",
+    serviceKinds: ["llm", "imageToText"],
   },
   requesty: {
     id: "requesty",
@@ -932,6 +933,10 @@ export const APIKEY_PROVIDERS_GATEWAYS = {
       "No free tier as of 2026 — Chutes moved to pay-as-you-go (free Early Access ended 2026-03).",
     authHint: "Bearer API key for the Chutes OpenAI-compatible gateway.",
     passthroughModels: true,
+    // dots.ocr (rednote-hilab/dots.ocr) is served via Chutes discovery — no static
+    // model entry needed (passthroughModels). Declare imageToText alongside llm
+    // (declaring serviceKinds means "llm" must be explicit too, see #10275).
+    serviceKinds: ["llm", "imageToText"],
   },
   // Factory AI ("Factory Droids") subscription gateway — the same backend the
   // local `droid` CLI shells into, exposed here as an OpenAI-compatible HTTP

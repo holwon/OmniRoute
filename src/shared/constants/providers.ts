@@ -38,22 +38,43 @@ export const FREE_APIKEY_PROVIDER_IDS = new Set([
   // accepts an optional connection row for display/priority/testStatus tracking —
   // no apiKey is ever required or sent upstream.
   "auggie",
+  // zcode is a local app-server backend; auth stays in the ZCode profile.
+  "zcode",
 ]);
 
 export function supportsApiKeyOnFreeProvider(providerId: unknown): boolean {
   return typeof providerId === "string" && FREE_APIKEY_PROVIDER_IDS.has(providerId);
 }
 
-// OAuth-primary providers that also accept a direct API key. Keep these out of
-// FREE_APIKEY_PROVIDER_IDS so the dashboard's primary action remains OAuth.
-const DUAL_AUTH_PROVIDER_IDS = new Set(["clinepass", "codebuddy-cn"]);
+// Providers presented as one dashboard card with OAuth as the primary action
+// and a direct API-key alternative. Keep these out of FREE_APIKEY_PROVIDER_IDS.
+const DUAL_AUTH_PROVIDER_IDS = new Set(["clinepass", "codebuddy-cn", "xai"]);
 
 export function supportsDualAuthProvider(providerId: unknown): boolean {
   return typeof providerId === "string" && DUAL_AUTH_PROVIDER_IDS.has(providerId);
 }
 
-// Web / Cookie Providers
+/**
+ * Backend provider IDs that are managed from one dashboard provider family.
+ *
+ * Family members intentionally remain distinct in the registry and database:
+ * the xAI OAuth ID has different token-refresh and quota semantics from the
+ * API-key ID. Consumers that need to list or test every connection for a
+ * family should use getProviderConnectionFamilyIds() rather than duplicating
+ * this compatibility map.
+ */
+export const PROVIDER_CONNECTION_FAMILY_ALIASES: Readonly<Record<string, readonly string[]>> = {
+  alibaba: ["alibaba-cn"],
+  "kimi-coding": ["kimi-coding-apikey"],
+  xai: ["xai-oauth", "xao"],
+};
 
+export function getProviderConnectionFamilyIds(providerId: unknown): readonly string[] {
+  if (typeof providerId !== "string" || providerId.length === 0) return [];
+  return [providerId, ...(PROVIDER_CONNECTION_FAMILY_ALIASES[providerId] || [])];
+}
+
+// Web / Cookie Providers
 
 // API Key Providers
 
@@ -500,6 +521,10 @@ export const USAGE_SUPPORTED_PROVIDERS = [
   "command-code",
   "conol-web",
   "cnl",
+  // Alibaba Coding Plan triple-window quota (#9603 UI gap — fetcher existed, list entry missing)
+  "bailian-coding-plan",
+  // Qwen Cloud / Model Studio personal Token Plan (cookie-authenticated console gateway)
+  "qwen-cloud-token-plan",
 ];
 
 // ── Zod validation at module load (Phase 7.2) ──
