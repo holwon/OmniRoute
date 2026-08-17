@@ -918,6 +918,11 @@
       "model": "Filtrar por model"
     }
   },
+  "radar": {
+    "description": "Inspecionar e sincronizar os feeds locais do catálogo Radar",
+    "status": "Mostrar configurações locais e estado dos caches do Radar",
+    "sync": "Sincronizar catálogo, indicações, ofertas e Intel pelo servidor local"
+  },
   "resilience": {
     "description": "Inspecionar e gerenciar mecanismos de resiliência",
     "status": {
@@ -1296,5 +1301,23 @@
   },
   "setupCodex": {
     "description": "Gera os arquivos de perfil ~/.codex a partir do catálogo de modelos ao vivo do OmniRoute"
+  },
+  "packs": {
+    "description": "Gerencia packs opcionais de runtime (ML / automação de navegador)",
+    "listDescription": "Lista os packs opcionais e seu estado de instalação",
+    "installDescription": "Instala um pack opcional no DATA_DIR",
+    "verifyDescription": "Verifica os packs instalados contra o índice de checksums embarcado",
+    "removeDescription": "Remove um pack opcional instalado",
+    "sourceOpt": "Diretório com os payloads dos packs e o índice de packs",
+    "warnNoIndex": "optional-packs.index.json não encontrado — install/verify indisponíveis neste checkout (instaladores desktop o embarcam)",
+    "errUnknown": "pack desconhecido: {name}",
+    "errNoIndex": "índice de packs não encontrado; passe --source <dir> com o payload do pack (instaladores desktop o embarcam ao lado do app)",
+    "installed": "pack \"{name}\" instalado e verificado em {dir}",
+    "restartHint": "reinicie o servidor OmniRoute (ou o app desktop) para o runtime reconhecer o pack",
+    "removed": "pack \"{name}\" removido",
+    "notInstalled": "o pack \"{name}\" não estava instalado",
+    "verifyOk": "todos os packs instalados verificados",
+    "verifyFailed": "{count} pack(s) falharam na verificação",
+    "noneInstalled": "nenhum pack opcional instalado"
   }
 }

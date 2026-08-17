@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Puhdistaa API-avaimet, tokenit, yksityiset avaimet ja JWT:t viesteistä, työkalukutsuista ja vastauksista.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Sillaa monimuotoista sisältöä tekstiin ennen kuin se saavuttaa vain tekstimallit. Näkö on käytössä; Ääni saapuu AudioBridgen kanssa; Video on suunnitelmissa.",
+    "modalityBridgeIntro": "Muunna multimodaalinen sisältö tekstiksi ennen kuin se saavuttaa vain tekstiä käsittelevät mallit. Kuva-, ääni- ja videosillat ovat käytettävissä ja määritettävissä.",
     "modalityBridgeVisionTab": "Näkö",
     "modalityBridgeAudioTab": "Ääni",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Edistynyt",
     "modalityBridgeTimeoutMs": "Aikakatkaisu (ms)",
     "modalityBridgeMaxImages": "Maksimi kuvat per pyyntö",
+    "visionMaxCharsLabel": "Maksimi kuvauksen merkit",
+    "visionMaxCharsHint": "Rajoita vision-mallin kuvauksen pituutta. 0 = rajoittamaton — nosta yksityiskohtaisille OCR-tehtäville.",
     "modalityBridgeCacheEnabled": "Välimuistin kuvaukset",
     "modalityBridgeCacheEnabledDesc": "Käytä kuvien kuvauksia uudelleen (SHA-256 avaimella, muistissa).",
     "modalityBridgeCacheTtlMinutes": "Välimuistin TTL (minuutit)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Silta ei aktivoitunut (malli saattaa tukea visiota natiivisti tai silta on poistettu käytöstä)",
     "modalityBridgeTestError": "Testi epäonnistui: {message}",
     "modalityBridgeAudioComingSoon": "Äänisilta (puhe → teksti /v1/audio/transcriptions kautta) julkaistaan seuraavassa versiossa. Sen asetusten avaimet on jo varattu.",
-    "modalityBridgeVideoComingSoon": "Videosillan (kehysnäytteenotto + tekstitys) toteuttaminen on odotuslistalla — katso ongelma #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge siirretty",
     "modalityBridgeMovedBody": "Vision Bridge -asetukset ovat nyt käytettävissä omalla Modality Bridge -sivullaan.",
     "modalityBridgeMovedCta": "Avaa Modality Bridge -asetukset",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} klippiä transkriptoitu {model} avulla",
     "modalityBridgeAudioTestNoop": "Audio Bridge ei aktivoitunut (kohde saattaa tukea ääntä, STT-toimittajaa ei ole liitetty tai silta on poistettu käytöstä)",
     "modalityBridgeAudioTestError": "Äänitesti epäonnistui: {message}",
+    "modalityBridgeVideoTitle": "Videosilta",
+    "modalityBridgeVideoDesc": "Poimi videosta kuvia, kuvaile ne konenäkömallilla ja jatka valitulla tekstimallilla.",
+    "modalityBridgeVideoRuntimeReady": "Ajoympäristö on valmis",
+    "modalityBridgeVideoRuntimeUnavailable": "Ajoympäristö ei ole käytettävissä",
+    "modalityBridgeVideoRuntimeInstall": "Asenna FFmpeg ja ffprobe palvelimen PATH-polkuun videoiden purkamista varten.",
+    "modalityBridgeVideoEnabled": "Ota Videosilta käyttöön",
+    "modalityBridgeVideoEnabledDesc": "Korvaa video-osat aikaleimatuilla kuvakuvauksilla, kun kohdemalli ei pysty käsittelemään videota.",
+    "modalityBridgeVideoModel": "Kuvien kuvausmalli",
+    "modalityBridgeVideoModelInherited": "Käytä Vision Bridge -mallia",
+    "modalityBridgeVideoFrameCount": "Kuvia videota kohti",
+    "modalityBridgeVideoMaxVideos": "Videoiden enimmäismäärä pyyntöä kohti",
     "modelRoutingDescriptionPlaceholder": "Reititä Opus-mallit frontier-yhdistelmään",
     "cliproxyapiFallbackCodes": "Cliproxyapi Varakoodit",
     "cliproxyapiFallbackDescription": "Cliproxyapi Varayhteyskuvaus",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Kumppanilinkki",
     "dismissAriaLabel": "Sulje"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute toimii nyt suoraan VS Code Copilot Chatissa",
+    "description": "Asenna ilmainen OmniCopilot-laajennus, niin kaikki OmniRoute-mallit näkyvät suoraan siinä Copilot Chatin mallivalitsimessa, jota jo käytät.",
+    "cta": "Hanki laajennus",
+    "secondaryNote": "Myös Open VSX:ssä (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Sulje"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Mainosta <gateway-alias>/<model> peilid tunnuksia /v1/models -osoitteessa malleille, joiden kanoninen omistaja ei omaa aktiivista tunnistetta, mutta ohjaa niitä aktiivisella tunnisteella varustettu ohitusportti. Varoitus: lisää luettelo-merkintöjä kaikille asiakkaille, kun se on otettu käyttöön globaalisti.",
   "radarPage": {
     "title": "Radar-katalogi",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Palveluntarjoajan asennus",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Tämä sivu on käytettävissä vain localhostista tai LAN-verkosta (LOCAL_ONLY).",
     "pollErrorStopped": "Kysely pysäytetty: palvelin hylkäsi pyynnön (404/403).",
     "pollErrorTransient": "Virhe tietojen haussa: yritetään automaattisesti uudelleen.",
-    "degraded": "Osittaiset tiedot: käyttökelvottomat lähteet: {sources}",
-    "degraded.source.database": "Tietokanta",
-    "degraded.source.circuitBreaker": "Piirikatkaisija",
-    "degraded.source.modelLockouts": "Mallilukitukset",
-    "degraded.source.count": "Yhteyksien Määrä"
+    "degraded": {
+      "message": "Osittaiset tiedot: käyttökelvottomat lähteet: {sources}",
+      "source": {
+        "database": "Tietokanta",
+        "circuitBreaker": "Piirikatkaisija",
+        "modelLockouts": "Mallilukitukset",
+        "count": "Yhteyksien Määrä"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Hylkää pyynnöt ennen lähettämistä, kun kohdemallilta puuttuu vaadittuja ominaisuuksia (näkö, työkalut, jäsennelty ulostulo, kontekstikkelu). Suojaa suorat yhden tarjoajan pyynnöt, jotka ohittavat yhdistelmäkerroksen yhteensopivuussuodattimen.",
-  "capabilityFilter.visionMismatch": "Palveluntarjoaja ei tue näkymää tälle kuvapyynnölle",
-  "capabilityFilter.toolsMismatch": "Toimittaja ei tue työkalun kutsumista",
-  "capabilityFilter.structuredOutputMismatch": "Palveluntarjoaja ei tue jäsenneltyä tulostusta",
-  "capabilityFilter.contextWindowMismatch": "Pyyntö ylittää tarjoajan kontekstin ikkunan",
   "publicSystem": {
     "notFound": {
       "title": "Sivua ei löytynyt",
@@ -13624,5 +13657,49 @@
     "hint": "Kun käytössä, löydetyt mallit näkyvät tarjoajien valinnoissa OmniRoutessa.",
     "updateFailed": "Päivitys epäonnistui (HTTP {status})",
     "networkError": "Verkkovirhe — ei voitu päivittää tarjoajan altistusasetusta"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Palveluntarjoaja ei tue näkymää tälle kuvapyynnölle",
+    "toolsMismatch": "Toimittaja ei tue työkalun kutsumista",
+    "structuredOutputMismatch": "Palveluntarjoaja ei tue jäsenneltyä tulostusta",
+    "contextWindowMismatch": "Pyyntö ylittää tarjoajan kontekstin ikkunan"
   }
 }

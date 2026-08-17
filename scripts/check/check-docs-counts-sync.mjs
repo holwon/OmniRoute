@@ -158,6 +158,7 @@ function readCodeFacts() {
     'import {pluginTools} from "./open-sse/mcp-server/tools/pluginTools.ts";',
     'import {notionTools} from "./open-sse/mcp-server/tools/notionTools.ts";',
     'import {obsidianTools} from "./open-sse/mcp-server/tools/obsidianTools.ts";',
+    'import {localCorpusTools} from "./open-sse/mcp-server/tools/localCorpusTools.ts";',
     'import {compressionTools} from "./open-sse/mcp-server/tools/compressionTools.ts";',
     // Live provider total — the SAME collections gen-provider-reference.ts unions, so the
     // doc-vs-live check below cannot drift from the generator's definition of "provider".
@@ -169,16 +170,21 @@ function readCodeFacts() {
     "const pids=new Set();",
     "for(const c of provCols)for(const p of Object.values(c||{}))if(p&&p.id)pids.add(p.id);",
     "const cols={MCP_TOOLS,memoryTools,skillTools,agentSkillTools,githubSkillTools,poolTools,",
-    "gamificationTools,pluginTools,notionTools,obsidianTools,compressionTools};",
+    "gamificationTools,pluginTools,notionTools,obsidianTools,localCorpusTools,compressionTools};",
     "const sc=new Set();",
     "for(const col of Object.values(cols))for(const t of Object.values(col))",
     "for(const x of (t?.scopes||[]))sc.add(x);",
     "const t=computeFreeModelTotals();const cli=Object.values(CLI_TOOLS);",
     "const by=(c)=>cli.filter(x=>x.category===c).length;",
+    // "Free forever" = every provider whose free access renews or needs no key at all.
+    // one-time-initial (signup credits) and discontinued pools are excluded on purpose.
+    "const FOREVER=new Set(['recurring-monthly','recurring-daily','recurring-uncapped',",
+    "'recurring-credit','keyless']);",
+    "const ff=new Set();for(const m of t.perModel)if(FOREVER.has(m.freeType))ff.add(m.provider);",
     'console.log("@@"+JSON.stringify({freeSteady:t.steadyRecurringTokens,',
     "freeFirst:t.firstMonthRealisticTokens,freePools:t.poolCount,engines:ENGINE_IDS.length,",
     "cliTotal:cli.length,cliCode:by('code'),cliAgent:by('agent'),",
-    "mcpTools:countUniqueMcpTools(cols),mcpScopes:sc.size,providers:pids.size}));",
+    "mcpTools:countUniqueMcpTools(cols),mcpScopes:sc.size,providers:pids.size,freeForever:ff.size}));",
   ].join("");
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "docs-counts-"));
   try {
@@ -452,7 +458,7 @@ export function buildChecks() {
             // total ("33 tools (25 CLI Code's …)") are not the MCP aggregate
             // per-module rows read "… tool definitions (N tools" / "… management tools
             // (N tools" — the word tool(s)/definitions sits right before the paren. The
-            // aggregate ("MCP Server (104 tools", "all 104 tools") never does.
+            // aggregate ("MCP Server (109 tools", "all 109 tools") never does.
             skipBefore: /(tools?|definitions?)\s*\(\s*$/i,
             skipAfter: /^\s*\(\d+ CLI/,
           },
@@ -460,6 +466,10 @@ export function buildChecks() {
         ),
         claim(f.mcpScopes, "MCP scopes", { pattern: /(\d+) scopes/gi }, ["README.md", "AGENTS.md"]),
         claim(f.cliTotal, "CLI tools", { pattern: /(\d+) tools(?=\s*\(\d+ CLI)/gi }, ["README.md"]),
+        claim(f.freeForever, "free-forever providers", { pattern: /(\d+) free forever/gi }, [
+          "README.md",
+          "docs/diagrams/promise-pillars.svg",
+        ]),
       ];
     })(),
     {

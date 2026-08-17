@@ -1,4 +1,4 @@
-import { describe, it } from "node:test";
+import { describe, it, beforeEach, afterEach } from "node:test";
 import assert from "node:assert";
 import {
   MimocodeExecutor,
@@ -254,8 +254,6 @@ describe("mimocode providerRegistry entry", () => {
 });
 
 describe("mimocode per-account proxy", () => {
-  const exec = new MimocodeExecutor();
-
   it("AccountProxyConfig type has required fields", () => {
     const config: AccountProxyConfig = {
       fingerprint: "abc123",
@@ -498,6 +496,7 @@ interface TestAccountState {
   expiresAt: number;
   cooldownUntil: number;
   consecutiveFails: number;
+  proxy?: unknown;
 }
 
 interface ExecutorAccountAccess {
@@ -623,5 +622,252 @@ describe("mimocode 400 classification (#2101/#4976)", () => {
     } finally {
       globalThis.fetch = originalFetch;
     }
+  });
+});
+
+describe("mimocode network-error rotation (parity with OpencodeExecutor)", () => {
+  function makeJwt(): string {
+    const header = Buffer.from(JSON.stringify({ alg: "none" })).toString("base64url");
+    const payload = Buffer.from(
+      JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 })
+    ).toString("base64url");
+    return `${header}.${payload}.sig`;
+  }
+
+  function twoAccountExecutor(proxies: [unknown, unknown]): MimocodeExecutor {
+    const exec = new MimocodeExecutor();
+    const access = accountAccess(exec);
+    access.accounts = [
+      {
+        fingerprint: "acct-a",
+        jwt: "",
+        expiresAt: 0,
+        cooldownUntil: 0,
+        consecutiveFails: 0,
+        proxy: proxies[0],
+      },
+      {
+        fingerprint: "acct-b",
+        jwt: "",
+        expiresAt: 0,
+        cooldownUntil: 0,
+        consecutiveFails: 0,
+        proxy: proxies[1],
+      },
+    ] as TestAccountState[];
+    access.nextAccountIdx = 0;
+    return exec;
+  }
+
+  const A_PROXY = { type: "http", host: "127.0.0.1", port: 8080 };
+  const B_PROXY = { type: "http", host: "127.0.0.1", port: 8081 };
+
+  it("rotates to the next account on a network throw when the failed account has a dedicated proxy", async () => {
+    const testExec = twoAccountExecutor([A_PROXY, B_PROXY]);
+    // Force both dispatch legs (bootstrap + chat) through the plain `fetch()`
+    // fallback instead of a real undici proxy dispatcher — this test exercises
+    // the rotation DECISION (account.proxy is configured → rotate), not actual
+    // proxy network I/O, which has its own dedicated dispatcher tests below.
+    (testExec as unknown as { getProxyDispatcher: () => undefined }).getProxyDispatcher = () =>
+      undefined;
+    let chatCalls = 0;
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = (async (url: unknown) => {
+      const urlStr = String(url);
+      if (urlStr.includes("/api/free-ai/bootstrap")) {
+        return new Response(JSON.stringify({ jwt: makeJwt() }), { status: 200 });
+      }
+      if (urlStr.includes("/api/free-ai/openai/chat")) {
+        chatCalls++;
+        if (chatCalls === 1) throw new Error("ECONNRESET");
+        return new Response(JSON.stringify({ id: "ok", choices: [] }), { status: 200 });
+      }
+      throw new Error(`unexpected fetch: ${urlStr}`);
+    }) as typeof fetch;
+
+    const warnCalls: string[] = [];
+    try {
+      const result = await testExec.execute({
+        model: "mimo-auto",
+        body: { messages: [{ role: "user", content: "hi" }], stream: false },
+        stream: false,
+        signal: null,
+        credentials: {
+          providerSpecificData: {
+            fingerprints: ["acct-a", "acct-b"],
+            accountProxies: [
+              { fingerprint: "acct-a", proxy: A_PROXY },
+              { fingerprint: "acct-b", proxy: B_PROXY },
+            ],
+          },
+        },
+        log: {
+          debug: () => {},
+          info: () => {},
+          warn: (_tag: unknown, msg: string) => warnCalls.push(msg),
+          error: () => {},
+        },
+      });
+
+      assert.strictEqual(chatCalls, 2, "should retry on the next account after the throw");
+      assert.strictEqual(result.response.status, 200);
+      const acctA = accountAccess(testExec).accounts[0];
+      assert.ok(acctA.cooldownUntil > Date.now(), "account with a dedicated proxy must cool down");
+      assert.ok(
+        warnCalls.some((m) => /network error/i.test(m)),
+        `expected a "network error" warn log; got=${JSON.stringify(warnCalls)}`
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
+  describe("NETWORK_ROTATION_SHARED_EGRESS_GUARD", () => {
+    const FLAG = "NETWORK_ROTATION_SHARED_EGRESS_GUARD";
+    let originalEnvValue: string | undefined;
+
+    beforeEach(() => {
+      originalEnvValue = process.env[FLAG];
+    });
+
+    afterEach(() => {
+      if (originalEnvValue === undefined) delete process.env[FLAG];
+      else process.env[FLAG] = originalEnvValue;
+    });
+
+    it("rotates to a proxied account after a proxy-less account throws (mixed fleet, guard on by default)", async () => {
+      const testExec = twoAccountExecutor([null, B_PROXY]);
+      // Force both dispatch legs through the plain `fetch()` fallback instead
+      // of a real undici proxy dispatcher — this test exercises the rotation
+      // DECISION, not actual proxy network I/O.
+      (testExec as unknown as { getProxyDispatcher: () => undefined }).getProxyDispatcher = () =>
+        undefined;
+      let chatCalls = 0;
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async (url: unknown) => {
+        const urlStr = String(url);
+        if (urlStr.includes("/api/free-ai/bootstrap")) {
+          return new Response(JSON.stringify({ jwt: makeJwt() }), { status: 200 });
+        }
+        if (urlStr.includes("/api/free-ai/openai/chat")) {
+          chatCalls++;
+          if (chatCalls === 1) throw new Error("ETIMEDOUT");
+          return new Response(JSON.stringify({ id: "ok", choices: [] }), { status: 200 });
+        }
+        throw new Error(`unexpected fetch: ${urlStr}`);
+      }) as typeof fetch;
+
+      try {
+        const result = await testExec.execute({
+          model: "mimo-auto",
+          body: { messages: [{ role: "user", content: "hi" }], stream: false },
+          stream: false,
+          signal: null,
+          credentials: {
+            providerSpecificData: {
+              fingerprints: ["acct-a", "acct-b"],
+              accountProxies: [{ fingerprint: "acct-b", proxy: B_PROXY }],
+            },
+          },
+          log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+        });
+
+        assert.strictEqual(chatCalls, 2, "the proxied account (B) must still be tried");
+        assert.strictEqual(result.response.status, 200);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("makes a single real network call when no account has a configured proxy (guard on by default)", async () => {
+      const testExec = twoAccountExecutor([null, null]);
+      let chatCalls = 0;
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async (url: unknown) => {
+        const urlStr = String(url);
+        if (urlStr.includes("/api/free-ai/bootstrap")) {
+          return new Response(JSON.stringify({ jwt: makeJwt() }), { status: 200 });
+        }
+        if (urlStr.includes("/api/free-ai/openai/chat")) {
+          chatCalls++;
+          throw new Error("ETIMEDOUT");
+        }
+        throw new Error(`unexpected fetch: ${urlStr}`);
+      }) as typeof fetch;
+
+      try {
+        const result = await testExec.execute({
+          model: "mimo-auto",
+          body: { messages: [{ role: "user", content: "hi" }], stream: false },
+          stream: false,
+          signal: null,
+          credentials: {},
+          log: { debug: () => {}, info: () => {}, warn: () => {}, error: () => {} },
+        });
+
+        assert.strictEqual(
+          chatCalls,
+          1,
+          "remaining proxy-less accounts must be skipped without a network call once the shared egress is known down"
+        );
+        assert.strictEqual(result.response.status, 502);
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
+
+    it("fails fast without rotating when the guard is disabled (legacy behavior)", async () => {
+      process.env[FLAG] = "false";
+      const testExec = twoAccountExecutor([null, null]);
+      let chatCalls = 0;
+      const originalFetch = globalThis.fetch;
+      globalThis.fetch = (async (url: unknown) => {
+        const urlStr = String(url);
+        if (urlStr.includes("/api/free-ai/bootstrap")) {
+          return new Response(JSON.stringify({ jwt: makeJwt() }), { status: 200 });
+        }
+        if (urlStr.includes("/api/free-ai/openai/chat")) {
+          chatCalls++;
+          throw new Error("ETIMEDOUT");
+        }
+        throw new Error(`unexpected fetch: ${urlStr}`);
+      }) as typeof fetch;
+
+      const warnCalls: string[] = [];
+      try {
+        const result = await testExec.execute({
+          model: "mimo-auto",
+          body: { messages: [{ role: "user", content: "hi" }], stream: false },
+          stream: false,
+          signal: null,
+          credentials: {},
+          log: {
+            debug: () => {},
+            info: () => {},
+            warn: (_tag: unknown, msg: string) => warnCalls.push(msg),
+            error: () => {},
+          },
+        });
+
+        assert.strictEqual(
+          chatCalls,
+          1,
+          "must NOT retry against another account sharing the same egress"
+        );
+        const acctA = accountAccess(testExec).accounts[0];
+        assert.strictEqual(
+          acctA.cooldownUntil,
+          0,
+          "an account without a dedicated proxy must not be cooled down for a shared-egress failure"
+        );
+        assert.strictEqual(result.response.status, 502);
+        assert.ok(
+          warnCalls.some((m) => /network error/i.test(m) && /not rotating/i.test(m)),
+          `expected a "network error … not rotating" warn log; got=${JSON.stringify(warnCalls)}`
+        );
+      } finally {
+        globalThis.fetch = originalFetch;
+      }
+    });
   });
 });

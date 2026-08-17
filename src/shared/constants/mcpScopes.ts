@@ -15,6 +15,7 @@ export const MCP_SCOPE_LIST = [
   "read:quota",
   "read:usage",
   "read:models",
+  "read:radar",
   "execute:completions",
   "execute:search",
   "write:budget",
@@ -44,6 +45,7 @@ export const MCP_TOOL_SCOPES: Record<string, readonly McpScope[]> = {
   omniroute_web_fetch: ["execute:search"],
   omniroute_cost_report: ["read:usage"],
   omniroute_list_models_catalog: ["read:models"],
+  omniroute_radar_catalog: ["read:radar"],
 
   // Phase 2: Advanced Tools
   omniroute_simulate_route: ["read:health", "read:combos"],

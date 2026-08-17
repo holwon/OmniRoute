@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "24"
           cache: npm
-      - run: npm ci
+      - uses: ./.github/actions/npm-ci-retry
       - name: Build CLI bundle
         env:
           OMNIROUTE_BUILD_BACKEND_ONLY: "1"

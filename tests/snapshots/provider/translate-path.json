@@ -565,8 +565,8 @@
       }
     },
     "url": {
-      "nonStream": "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1",
-      "stream": "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1"
+      "nonStream": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1",
+      "stream": "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1"
     }
   },
   "baseten": {
@@ -1604,7 +1604,7 @@
     }
   },
   "deepseek": {
-    "format": "openai",
+    "format": "openai-responses",
     "headers": {
       "apiKey": {
         "Accept": "text/event-stream",
@@ -1622,8 +1622,8 @@
       }
     },
     "url": {
-      "nonStream": "https://api.deepseek.com/v1/chat/completions",
-      "stream": "https://api.deepseek.com/v1/chat/completions"
+      "nonStream": "https://api.deepseek.com/responses",
+      "stream": "https://api.deepseek.com/responses"
     }
   },
   "deepseek-web": {
@@ -2082,8 +2082,8 @@
       }
     },
     "url": {
-      "nonStream": "https://freeaiapikey.com/v1/chat/completions",
-      "stream": "https://freeaiapikey.com/v1/chat/completions"
+      "nonStream": "https://api.freeaiapikey.com/v1/chat/completions",
+      "stream": "https://api.freeaiapikey.com/v1/chat/completions"
     }
   },
   "freeinference": {
@@ -5391,6 +5391,29 @@
       "stream": "https://api.hunyuan.cloud.tencent.com/v1/chat/completions"
     }
   },
+  "tencent-aistudio-web": {
+    "format": "openai",
+    "headers": {
+      "apiKey": {
+        "Accept": "text/event-stream",
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      },
+      "nonStream": {
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      },
+      "oauth": {
+        "Accept": "text/event-stream",
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      }
+    },
+    "url": {
+      "nonStream": "https://aistudio.tencent.ai/api/chat",
+      "stream": "https://aistudio.tencent.ai/api/chat"
+    }
+  },
   "theoldllm": {
     "format": "openai",
     "headers": {
@@ -6131,6 +6154,29 @@
     "url": {
       "nonStream": "https://chat.z.ai",
       "stream": "https://chat.z.ai"
+    }
+  },
+  "zcode": {
+    "format": "openai",
+    "headers": {
+      "apiKey": {
+        "Accept": "text/event-stream",
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      },
+      "nonStream": {
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      },
+      "oauth": {
+        "Accept": "text/event-stream",
+        "Authorization": "Bearer <TOK>",
+        "Content-Type": "application/json"
+      }
+    },
+    "url": {
+      "nonStream": "zcode://app-server/stdio",
+      "stream": "zcode://app-server/stdio"
     }
   },
   "zed-hosted": {

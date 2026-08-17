@@ -1,6 +1,26 @@
 export const ANTIGRAVITY_PUBLIC_MODELS = Object.freeze([
-  // Gemini 3.6 Flash tiers returned by the live model selector for both the IDE 2.1.1
-  // and CLI 1.1.x client identities. High is the current defaultAgentModelId.
+  // Gemini 3.7 Flash tiers listed by the current official Antigravity model catalog
+  // alongside the existing Gemini 3.6 tiers. Keep the upstream model ids unchanged so
+  // discovery and execution address the same models selected by the native client.
+  {
+    id: "gemini-3.7-flash-high",
+    name: "Gemini 3.7 Flash (High)",
+    contextLength: 1048576,
+    maxOutputTokens: 65536,
+    supportsReasoning: true,
+    supportsVision: true,
+    toolCalling: true,
+  },
+  {
+    id: "gemini-3.7-flash-medium",
+    name: "Gemini 3.7 Flash (Medium)",
+    contextLength: 1048576,
+    maxOutputTokens: 65536,
+    supportsReasoning: true,
+    supportsVision: true,
+    toolCalling: true,
+  },
+  // Gemini 3.6 Flash tiers retained alongside the newer Gemini 3.7 tiers.
   {
     id: "gemini-3.6-flash-high",
     name: "Gemini 3.6 Flash (High)",
@@ -195,6 +215,32 @@ const UPSTREAM_PUBLIC_MODEL_IDS = new Set(
   ANTIGRAVITY_PUBLIC_MODELS.map((model) => resolveAntigravityModelId(model.id))
 );
 
+// The authenticated Antigravity `:fetchAvailableModels` response is the source of truth for
+// the models enabled for the current account and client version. Keep only known non-chat
+// surfaces out of that live catalog; do not require every newly launched chat model to be
+// added to this static fallback catalog first.
+const ANTIGRAVITY_NON_CHAT_MODEL_IDS = new Set([
+  "gemini-3-pro-image-preview",
+  "gemini-3.1-flash-image",
+  "gemini-3.1-flash-tts-preview",
+  "gemini-2.5-flash-preview-tts",
+  "tab_flash_lite_preview",
+  "tab_jump_flash_lite_preview",
+]);
+
+const ANTIGRAVITY_RETIRED_MODEL_IDS = new Set([
+  "gemini-3-pro-preview",
+  "gemini-3.1-pro",
+  "gemini-3.5-flash-high",
+  "gemini-3.5-flash-medium",
+  "gemini-3.5-flash-preview",
+  "gemini-2.5-pro",
+  "gemini-2.5-computer-use-preview-10-2025",
+]);
+
+const ANTIGRAVITY_NON_CHAT_MODEL_PATTERN =
+  /(?:^|[-_])(image|imagen|audio|tts|embedding|embed|video|veo)(?:[-_]|$)/i;
+
 export function resolveAntigravityModelId(modelId: string): string {
   if (!modelId) return modelId;
   return (ANTIGRAVITY_MODEL_ALIASES as AntigravityModelAliasMap)[modelId] || modelId;
@@ -233,4 +279,17 @@ export function isUserCallableAntigravityModelId(modelId: string): boolean {
   const clientId = toClientAntigravityModelId(modelId);
   const upstreamId = resolveAntigravityModelId(modelId);
   return PUBLIC_MODEL_IDS.has(clientId) || UPSTREAM_PUBLIC_MODEL_IDS.has(upstreamId);
+}
+
+/**
+ * Return whether a model reported by Antigravity's authenticated live catalog is eligible for
+ * chat discovery. The upstream response already applies account/subscription gating and marks
+ * internal entries with `isInternal`; this predicate only excludes known non-chat surfaces.
+ */
+export function isDiscoverableAntigravityModelId(modelId: string): boolean {
+  const id = modelId.trim();
+  if (!id || ANTIGRAVITY_NON_CHAT_MODEL_IDS.has(id) || ANTIGRAVITY_RETIRED_MODEL_IDS.has(id)) {
+    return false;
+  }
+  return !ANTIGRAVITY_NON_CHAT_MODEL_PATTERN.test(id);
 }

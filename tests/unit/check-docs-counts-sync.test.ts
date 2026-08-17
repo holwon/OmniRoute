@@ -146,10 +146,9 @@ test("free-tier gate passes when a file carries no headline at all", () => {
   assert.equal(checkHeadline("no figures here", TOTALS).ok, true);
 });
 
-
 // --- Generic numeric-claim gate (engines / MCP tools / scopes / CLI) --------
 // Extends the same drift guard to the counts that silently drifted in v3.8.49:
-// 11→12 engines, 94→107 MCP tools, 30→32 scopes, 26→33 CLI tools.
+// 11→12 engines, 94→109 MCP tools, 30→33 scopes, 26→33 CLI tools.
 import { makeNumberClaimValidator } from "../../scripts/check/check-docs-counts-sync.mjs";
 
 const makeValidator = makeNumberClaimValidator as (
@@ -158,19 +157,19 @@ const makeValidator = makeNumberClaimValidator as (
 ) => (content: string) => { ok: boolean; detail: string };
 
 test("MCP-tools gate accepts the aggregate and rejects a stale one", () => {
-  const v = makeValidator(107, {
+  const v = makeValidator(109, {
     what: "MCP tools",
     pattern: /(\d+) tools/gi,
     skipBefore: /(tools?|definitions?)\s*\(\s*$/i,
     skipAfter: /^\s*\(\d+ CLI/,
   });
-  assert.equal(v("MCP Server (107 tools)").ok, true);
-  assert.equal(v("with 107 tools total").ok, true);
+  assert.equal(v("MCP Server (109 tools)").ok, true);
+  assert.equal(v("with 109 tools total").ok, true);
   assert.equal(v("MCP Server (94 tools)").ok, false);
 });
 
 test("MCP-tools gate ignores per-module counts and the CLI catalog total", () => {
-  const v = makeValidator(107, {
+  const v = makeValidator(109, {
     what: "MCP tools",
     pattern: /(\d+) tools/gi,
     skipBefore: /(tools?|definitions?)\s*\(\s*$/i,
@@ -245,18 +244,18 @@ test("package.json description validator catches a stale provider count", () => 
 });
 
 test("migrations claim validator accepts the real count and rejects stale styles", () => {
-  const v = makeValidator(144, { what: "migrations", pattern: /(\d+)\+? migrations?\b/gi });
-  assert.equal(v("SQLite domain modules (144 migrations)").ok, true);
+  const v = makeValidator(146, { what: "migrations", pattern: /(\d+)\+? migrations?\b/gi });
+  assert.equal(v("SQLite domain modules (146 migrations)").ok, true);
   assert.equal(v("local, zero-config, 110+ migrations").ok, false);
   assert.equal(v("(130 migrations)").ok, false);
 });
 
-const SVG_EXPECTED = { providers: 338, mcpTools: 105, strategies: 19, pools: 42 };
+const SVG_EXPECTED = { providers: 339, mcpTools: 109, strategies: 19, pools: 41 };
 
 test("SVG gate accepts canonical numbers in text and aria-label claims", () => {
   const good =
-    'aria-label="338 AI providers, 19 routing strategies, MCP with 105 tools, ' +
-    '42 provider pools" <text>338 providers</text><text>MCP (105</text>';
+    'aria-label="339 AI providers, 19 routing strategies, MCP with 109 tools, ' +
+    '41 provider pools" <text>339 providers</text><text>MCP (109</text>';
   assert.equal(checkSvg(good, SVG_EXPECTED).ok, true);
 });
 

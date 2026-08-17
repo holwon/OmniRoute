@@ -222,6 +222,8 @@ test("findMissingArtifactPaths flags missing root runtime files in the tarball",
     "scripts/build/fixTlsClientNodeBinary.mjs",
     "scripts/build/native-binary-compat.mjs",
     "scripts/build/runtime-env.mjs",
+    "scripts/packs/optionalPackInstaller.mjs",
+    "scripts/packs/optionalPackManifest.mjs",
     "src/shared/utils/nodeRuntimeSupport.ts",
   ]);
 });

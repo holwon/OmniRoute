@@ -147,7 +147,7 @@ test("sanitizePII detects AWS access key", async () => {
   delete process.env.PII_RESPONSE_SANITIZATION_MODE;
 
   const { sanitizePII } = await import("@/lib/piiSanitizer");
-  const input = "Key: AKIAIOSFODNN7EXAMPLE";
+  const input = "Key: AKIAEXAMPLE123456789";
   const result = sanitizePII(input);
 
   assert.ok(result.text.includes("[AWS_KEY_REDACTED]"), "AWS access key should be redacted");

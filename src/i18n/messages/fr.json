@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Masque les clés d'API, les jetons, les clés privées et les JWT des messages, des appels d'outils et des réponses.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Reliez le contenu multimodal au texte avant qu'il n'atteigne les modèles uniquement textuels. La vision est en direct ; l'audio arrive avec l'AudioBridge ; la vidéo est sur la feuille de route.",
+    "modalityBridgeIntro": "Convertissez le contenu multimodal en texte avant qu’il n’atteigne les modèles limités au texte. Les ponts de vision, d’audio et de vidéo sont disponibles et configurables.",
     "modalityBridgeVisionTab": "Vision",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Vidéo",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Avancé",
     "modalityBridgeTimeoutMs": "Délai d'attente (ms)",
     "modalityBridgeMaxImages": "Nombre maximal d'images par requête",
+    "visionMaxCharsLabel": "Caractères maximum pour la description",
+    "visionMaxCharsHint": "Limitez la longueur de la description du modèle de vision. 0 = illimité — augmentez pour des tâches OCR riches en détails.",
     "modalityBridgeCacheEnabled": "Descriptions de cache",
     "modalityBridgeCacheEnabledDesc": "Réutiliser les descriptions pour les images identiques (clé SHA-256, en mémoire).",
     "modalityBridgeCacheTtlMinutes": "Durée de vie du cache (minutes)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Le pont ne s'est pas activé (le modèle peut prendre en charge la vision nativement ou le pont est désactivé)",
     "modalityBridgeTestError": "Test échoué : {message}",
     "modalityBridgeAudioComingSoon": "Le pont audio (parole → texte via /v1/audio/transcriptions) sera inclus dans la prochaine version. Ses clés de paramètres sont déjà réservées.",
-    "modalityBridgeVideoComingSoon": "Le pont vidéo (échantillonnage d'images + sous-titrage) est dans la liste des tâches — voir l'issue #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge déplacé",
     "modalityBridgeMovedBody": "Les paramètres de Vision Bridge sont désormais disponibles sur la page dédiée à Modality Bridge.",
     "modalityBridgeMovedCta": "Ouvrir les paramètres du pont de modalité",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clip(s) transcrit(s) par {model}",
     "modalityBridgeAudioTestNoop": "Le pont audio ne s'est pas activé (la cible peut prendre en charge l'audio, aucun fournisseur STT n'est connecté, ou le pont est désactivé)",
     "modalityBridgeAudioTestError": "Échec du test audio : {message}",
+    "modalityBridgeVideoTitle": "Pont vidéo",
+    "modalityBridgeVideoDesc": "Échantillonnez des images de la vidéo, décrivez-les avec un modèle de vision, puis poursuivez avec le modèle de texte choisi.",
+    "modalityBridgeVideoRuntimeReady": "Environnement d’exécution prêt",
+    "modalityBridgeVideoRuntimeUnavailable": "Environnement d’exécution indisponible",
+    "modalityBridgeVideoRuntimeInstall": "Installez FFmpeg et ffprobe dans le PATH du serveur pour activer l’extraction vidéo.",
+    "modalityBridgeVideoEnabled": "Activer le Pont vidéo",
+    "modalityBridgeVideoEnabledDesc": "Remplacez les parties vidéo par des descriptions d’images horodatées lorsque le modèle cible ne peut pas traiter la vidéo.",
+    "modalityBridgeVideoModel": "Modèle de description des images",
+    "modalityBridgeVideoModelInherited": "Hériter du modèle du Pont de vision",
+    "modalityBridgeVideoFrameCount": "Images par vidéo",
+    "modalityBridgeVideoMaxVideos": "Nombre maximal de vidéos par requête",
     "modelRoutingDescriptionPlaceholder": "Router les modèles Opus vers le combo frontier",
     "cliproxyapiFallbackCodes": "Codes de secours Cliproxyapi",
     "cliproxyapiFallbackDescription": "Description du mécanisme de repli Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Lien partenaire",
     "dismissAriaLabel": "Ignorer"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute fonctionne désormais directement dans VS Code Copilot Chat",
+    "description": "Installez l'extension gratuite OmniCopilot et tous les modèles OmniRoute apparaissent directement dans le sélecteur de modèles de Copilot Chat que vous utilisez déjà.",
+    "cta": "Obtenir l'extension",
+    "secondaryNote": "Aussi sur Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Ignorer"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Annoncez les identifiants de miroir <gateway-alias>/<model> sur /v1/models pour les modèles dont le propriétaire canonique n'a pas de crédentiel actif mais un passerelle de contournement avec un crédentiel actif les achemine. Avertissement : ajoute des entrées de catalogue pour tous les clients lorsqu'il est activé globalement.",
   "radarPage": {
     "title": "Catalogue Radar",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Configuration du fournisseur",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Cette page n'est accessible que depuis localhost ou le LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Sondage arrêté : le serveur a rejeté la requête (404/403).",
     "pollErrorTransient": "Erreur lors de la récupération des données : nouvelle tentative automatique.",
-    "degraded": "Données partielles : sources indisponibles : {sources}",
-    "degraded.source.database": "Base de Données",
-    "degraded.source.circuitBreaker": "Disjoncteur",
-    "degraded.source.modelLockouts": "Blocages de Modèle",
-    "degraded.source.count": "Nombre de Connexions"
+    "degraded": {
+      "message": "Données partielles : sources indisponibles : {sources}",
+      "source": {
+        "database": "Base de Données",
+        "circuitBreaker": "Disjoncteur",
+        "modelLockouts": "Blocages de Modèle",
+        "count": "Nombre de Connexions"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Rejeter les demandes avant l'expédition lorsque le modèle cible manque des capacités requises (vision, outils, sortie structurée, fenêtre de contexte). Protège les demandes directes à un seul fournisseur qui contournent le filtre de compatibilité de la couche combo.",
-  "capabilityFilter.visionMismatch": "Le fournisseur ne prend pas en charge la vision pour cette demande d'image",
-  "capabilityFilter.toolsMismatch": "Le fournisseur ne prend pas en charge l'appel d'outils",
-  "capabilityFilter.structuredOutputMismatch": "Le fournisseur ne prend pas en charge la sortie structurée",
-  "capabilityFilter.contextWindowMismatch": "La demande dépasse la fenêtre de contexte du fournisseur",
   "publicSystem": {
     "notFound": {
       "title": "Page introuvable",
@@ -13624,5 +13657,49 @@
     "hint": "Lorsqu'il est activé, les modèles découverts apparaissent dans les sélecteurs de fournisseur à travers OmniRoute.",
     "updateFailed": "Échec de la mise à jour (HTTP {status})",
     "networkError": "Erreur réseau — impossible de mettre à jour le paramètre d'exposition du fournisseur"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Le fournisseur ne prend pas en charge la vision pour cette demande d'image",
+    "toolsMismatch": "Le fournisseur ne prend pas en charge l'appel d'outils",
+    "structuredOutputMismatch": "Le fournisseur ne prend pas en charge la sortie structurée",
+    "contextWindowMismatch": "La demande dépasse la fenêtre de contexte du fournisseur"
   }
 }

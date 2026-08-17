@@ -165,14 +165,16 @@ test("Antigravity Gemini 3.5 upstream IDs share the Flash capability profile", (
     const capabilities = modelCapabilities.getResolvedModelCapabilities(`antigravity/${modelId}`);
     assert.equal(capabilities.contextWindow, 1048576, modelId);
     assert.equal(capabilities.maxOutputTokens, 65536, modelId);
-    assert.equal(capabilities.supportsThinking, false, modelId);
+    assert.equal(capabilities.supportsThinking, true, modelId);
     assert.equal(capabilities.supportsTools, true, modelId);
     assert.equal(capabilities.supportsVision, true, modelId);
   }
 });
 
-test("Antigravity Gemini 3.6 tier IDs share the Flash capability profile", () => {
+test("Antigravity Gemini 3.7 and 3.6 tier IDs share the Flash capability profile", () => {
   for (const modelId of [
+    "gemini-3.7-flash-high",
+    "gemini-3.7-flash-medium",
     "gemini-3.6-flash-high",
     "gemini-3.6-flash-medium",
     "gemini-3.6-flash-low",
@@ -182,7 +184,7 @@ test("Antigravity Gemini 3.6 tier IDs share the Flash capability profile", () =>
     const capabilities = modelCapabilities.getResolvedModelCapabilities(`antigravity/${modelId}`);
     assert.equal(capabilities.contextWindow, 1048576, modelId);
     assert.equal(capabilities.maxOutputTokens, 65536, modelId);
-    assert.equal(capabilities.supportsThinking, false, modelId);
+    assert.equal(capabilities.supportsThinking, true, modelId);
     assert.equal(capabilities.supportsTools, true, modelId);
     assert.equal(capabilities.supportsVision, true, modelId);
   }

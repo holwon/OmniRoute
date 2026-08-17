@@ -302,7 +302,12 @@ export async function createEmbeddingResponse(
       clientRawRequest: options.clientRawRequest || null,
       apiKeyId: options.apiKeyId || null,
       apiKeyName: options.apiKeyName || null,
-      connectionId: options.connectionId || null,
+      // #10347 — thread the selected connection id so handleEmbedding can cool the
+      // account on a hard upstream failure (previously always null on /v1/embeddings).
+      connectionId:
+        ((credentials as { connectionId?: string } | null)?.connectionId) ||
+        options.connectionId ||
+        null,
     });
 
   const result = connectionIdForProxy

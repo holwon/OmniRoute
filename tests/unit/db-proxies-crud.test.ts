@@ -223,6 +223,7 @@ test("proxy health stats aggregate proxy_logs and force delete removes assignmen
     type: "http",
     host: "stats.local",
     port: 8080,
+    status: "active",
     totalRequests: 3,
     successCount: 1,
     errorCount: 1,

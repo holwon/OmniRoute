@@ -35,9 +35,9 @@ export interface CuratedSkillEntry {
   isNew?: boolean;
 }
 
-// ── Canonical 45-entry curated list (D28) ────────────────────────────────────
+// ── Canonical 46-entry curated list (D28) ────────────────────────────────────
 
-/** Curated metadata for all 45 agent skills. Source-of-truth for the catalog. */
+/** Curated metadata for all 46 agent skills. Source-of-truth for the catalog. */
 export const CURATED_SKILLS: CuratedSkillEntry[] = [
   // ── API Skills (23) ─────────────────────────────────────────────────────────
 

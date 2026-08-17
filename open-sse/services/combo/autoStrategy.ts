@@ -39,6 +39,11 @@ import {
 } from "../autoCombo/scoring.ts";
 import type { RoutingHint } from "../manifestAdapter";
 import { getCachedProviderConnections } from "../../../src/lib/db/readCache";
+import {
+  getSyncedAvailableModels,
+  getCustomModels,
+  getHiddenModelsByProvider,
+} from "../../../src/lib/db/models";
 import { getProviderModels } from "../../config/providerModels.ts";
 import {
   getConnectionRoutingTags,
@@ -458,10 +463,27 @@ export async function expandAutoComboCandidatePool(
     // expansion doesn't turn into O(n^2) per provider. See #OOM incident
     // (zero-config auto combo expanding to 1000s of provider/model targets).
     const seenModelStrs = new Set(eligibleTargets.map((t) => t.modelStr));
+    const hiddenModelsMap = getHiddenModelsByProvider();
     for (const providerId of providerIds) {
-      const providerModels = getProviderModels(providerId);
-      for (const model of providerModels) {
-        const modelStr = `${providerId}/${model.id}`;
+      // #auto-pool-visible-only: when the operator has synced/custom models for
+      // this provider, expand ONLY those (minus hidden); fall back to the static
+      // catalog only when the user has none. This keeps catalog-only models
+      // (e.g. openrouter/auto) out of pure-auto pools when the operator only
+      // synced a subset (e.g. OpenRouter with importFreeModelsOnly).
+      const [syncedModels, customModels] = await Promise.all([
+        getSyncedAvailableModels(providerId),
+        getCustomModels(providerId),
+      ]);
+      const hiddenModels = hiddenModelsMap.get(providerId);
+      const userVisibleIds = new Set<string>();
+      for (const m of syncedModels) if (m.id && !hiddenModels?.has(m.id)) userVisibleIds.add(m.id);
+      for (const m of customModels) if (m.id && !hiddenModels?.has(m.id)) userVisibleIds.add(m.id);
+      const hasUserModels = userVisibleIds.size > 0;
+      const expandIds = hasUserModels
+        ? Array.from(userVisibleIds)
+        : getProviderModels(providerId).map((m) => m.id);
+      for (const modelId of expandIds) {
+        const modelStr = `${providerId}/${modelId}`;
         if (!seenModelStrs.has(modelStr)) {
           seenModelStrs.add(modelStr);
           eligibleTargets.push({

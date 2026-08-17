@@ -45,6 +45,7 @@ import {
 } from "@omniroute/open-sse/services/accountFallback.ts";
 import { isLocalProvider } from "@omniroute/open-sse/config/providerRegistry.ts";
 import { COOLDOWN_MS, RateLimitReason } from "@omniroute/open-sse/config/constants.ts";
+import { honorsRuleLockScope } from "@omniroute/open-sse/config/providerErrorRules.ts";
 import {
   preflightQuota,
   isQuotaPreflightEnabled,
@@ -80,6 +81,7 @@ import {
   WEB_COOKIE_PROVIDERS,
 } from "@/shared/constants/providers";
 import { isModelExcludedByConnection } from "@/domain/connectionModelRules";
+import { isFreeModel } from "@/shared/utils/freeModels";
 import {
   applySessionAffinityPin,
   formatSessionKeyForLog,
@@ -339,6 +341,31 @@ function isTerminalConnectionStatus(connection: ProviderConnectionView): boolean
   return status === "credits_exhausted" || status === "banned" || status === "expired";
 }
 
+// OpenRouter's paid balance and its `:free`-suffixed models are billed
+// separately — a 402 from a paid model call correctly locks the whole
+// connection as credits_exhausted (see openrouter-quota-6842.test.ts), but
+// that lock must not also block :free model requests on the same
+// connection, or combo failover to the user's configured free models never
+// fires. Scoped to provider === "openrouter" + status === credits_exhausted
+// only; every other terminal status (banned, expired) and every other
+// provider keep the unconditional exclusion.
+function isTerminalConnectionStatusForModel(
+  connection: ProviderConnectionView,
+  provider: string,
+  requestedModel: string | null
+): boolean {
+  if (!isTerminalConnectionStatus(connection)) return false;
+  if (
+    provider === "openrouter" &&
+    normalizeStatus(connection.testStatus) === "credits_exhausted" &&
+    requestedModel &&
+    isFreeModel("openrouter", { id: requestedModel })
+  ) {
+    return false;
+  }
+  return true;
+}
+
 // #8200: cookie-auth providers (perplexity-web, grok-web, ...) use a rotating browser
 // session, not a static API key — a 401 means "session needs a refresh", not "dead".
 function isRecoverableCookieAuth401(
@@ -360,6 +387,7 @@ function resolveTerminalConnectionStatus(
   if (result.creditsExhausted || status === 402) return "credits_exhausted";
   if (
     providerErrorType === PROVIDER_ERROR_TYPES.PROJECT_ROUTE_ERROR ||
+    providerErrorType === PROVIDER_ERROR_TYPES.GEO_BLOCKED ||
     providerErrorType === PROVIDER_ERROR_TYPES.OAUTH_INVALID_TOKEN ||
     // #1010: Cloudflare fingerprint rejection is the CDN refusing the CLIENT's
     // signature, not the account's credentials — never a terminal account state.
@@ -1238,7 +1266,7 @@ export async function getProviderCredentials(
           connectionFilterStatus.set(c.id, "rateLimited");
           return false;
         }
-        if (isTerminalConnectionStatus(c)) {
+        if (isTerminalConnectionStatusForModel(c, provider, requestedModel)) {
           connectionFilterStatus.set(c.id, "terminalStatus");
           return false;
         }
@@ -1981,6 +2009,46 @@ export async function getProviderCredentialsWithQuotaPreflight(
   }
 }
 
+/**
+ * #10334 — Guard for the agentrouter-exclusive "connection scope" quota
+ * cooldown branch in markAccountUnavailable. The "never terminal" invariant of
+ * that branch is NOT structurally guaranteed by `ruleScope === "connection"`
+ * alone — it also depends on the provider rule table only ever pairing scope
+ * "connection" with a genuinely transient reason. Today
+ * (`buildAgentrouterRules()` in providerErrorRules.ts) that is true: the only
+ * rule declaring scope "connection" is the quota-exhausted one. But a FUTURE
+ * agentrouter rule for a permanent account state (e.g. "账号已封禁") — or a 402
+ * added to `AGENTROUTER_ERROR_STATUSES` with scope "connection", a natural-
+ * looking choice for an account ban — would otherwise be silently downgraded
+ * to a transient cooldown here instead of going through
+ * resolveTerminalConnectionStatus()/auto-disable below. Require the
+ * reason/permanent/creditsExhausted signals checkFallbackError already
+ * computes to explicitly confirm "this is quota, not a permanent state"
+ * before taking the early return.
+ *
+ * Exported (not just inlined) so a synthetic permanent/credits-exhausted
+ * `fallbackResult` can be tested directly — no rule in the table produces
+ * that combination today, so this predicate is the only way to pin the guard
+ * without editing the (production) rule table just for a test.
+ */
+export function isAgentrouterConnectionQuotaScope(
+  provider: string | null | undefined,
+  fallbackResult: {
+    ruleScope?: "model" | "provider" | "connection";
+    reason?: string;
+    permanent?: boolean;
+    creditsExhausted?: boolean;
+  }
+): boolean {
+  return (
+    honorsRuleLockScope(provider) &&
+    fallbackResult.ruleScope === "connection" &&
+    fallbackResult.reason === RateLimitReason.QUOTA_EXHAUSTED &&
+    !fallbackResult.permanent &&
+    !fallbackResult.creditsExhausted
+  );
+}
+
 /** Persist exponential-backoff state for an unavailable provider connection. */
 export async function markAccountUnavailable(
   connectionId: string,
@@ -2101,6 +2169,53 @@ export async function markAccountUnavailable(
     const disableCooling = connProviderSpecificData.disableCooling === true;
 
     const isPerModelQuotaProvider = hasPerModelQuota(provider, model, connectionPassthroughModels);
+
+    // #10334 — agentrouter EXCLUSIVE: the matched provider rule declared scope
+    // "connection" for account-wide quota exhaustion ("额度不足"). agentrouter is
+    // a passthroughModels provider (isPerModelQuotaProvider === true), so without
+    // this branch the next `if` would treat it like any other passthrough 429 and
+    // lock a SINGLE model — leaving combo routing to burn one upstream call per
+    // remaining model of the same exhausted account. Must run BEFORE that block.
+    // Deliberately ignores persistUnavailableState/isCombo: for combo the caller
+    // downgrades persistUnavailableState to false, and the generic path further
+    // below would then lock per MODEL instead of cooling the connection — exactly
+    // what this scope must override. NEVER sets a terminal status: this is a
+    // renewing quota window, not "credits_exhausted"/"banned"/"expired".
+    //
+    // The "never terminal" invariant above is NOT structurally guaranteed by
+    // ruleScope === "connection" alone — see isAgentrouterConnectionQuotaScope's
+    // doc comment for why (a future permanent-state rule could pair scope
+    // "connection" with a non-quota reason). That predicate is the actual guard.
+    const ruleScopeIsConnection = isAgentrouterConnectionQuotaScope(provider, fallbackResult);
+    // #2997's disableCooling opt-out is respected here (`!disableCooling` below):
+    // a connection with disableCooling=true skips this branch entirely and falls
+    // into the per-model-quota block further down, which locks the model for up
+    // to ~30min (mlSettings.maxCooldownMs) instead of cooling the connection for
+    // the rule's shorter transient window. That is a deliberate, if counter-
+    // intuitive, consequence of #2997's scope (opt-out was designed only for the
+    // CONNECTION-level cooldown, never extended to model lockout) — "opting out
+    // of cooldown" ends up producing a LONGER effective block for this one rule.
+    // Not addressed here; flagged for a future #2997 follow-up if it proves to be
+    // a real operator complaint.
+    if (ruleScopeIsConnection && provider && !disableCooling) {
+      const connectionCooldownMs =
+        fallbackResult.cooldownMs > 0 ? fallbackResult.cooldownMs : COOLDOWN_MS.rateLimit;
+      await updateProviderConnection(connectionId, {
+        lastErrorType: fallbackResult.reason || RateLimitReason.QUOTA_EXHAUSTED,
+        lastError: `Account quota exhausted (${provider})`,
+        lastErrorAt: new Date().toISOString(),
+        errorCode: status,
+        backoffLevel: fallbackResult.newBackoffLevel ?? backoffLevel,
+        rateLimitedUntil: getUnavailableUntil(connectionCooldownMs),
+        testStatus: "unavailable",
+      });
+      log.info(
+        "AUTH",
+        `Connection-scoped cooldown for ${provider}:${connectionId.slice(0, 8)} — ${status} ${fallbackResult.reason} ${Math.ceil(connectionCooldownMs / 1000)}s (rule scope=connection, overrides per-model lockout)`
+      );
+      return { shouldFallback: true, cooldownMs: connectionCooldownMs };
+    }
+
     const isNvidiaModelGone = provider === "nvidia" && status === 410;
     const modelLockoutOptions = { maxCooldownMs: effectiveProviderProfile?.maxCooldownMs };
     if (

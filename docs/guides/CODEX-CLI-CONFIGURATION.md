@@ -79,7 +79,7 @@ Use a real key instead when your OmniRoute server is protected or remote.
 
 Codex CLI deprecated `wire_api = "chat"` (Chat Completions) in February 2026 and now **requires** `wire_api = "responses"` (OpenAI Responses API). Setting `wire_api = "chat"` causes an immediate startup crash since v0.138.
 
-DeepSeek, GLM, Kimi and others only expose a Chat Completions endpoint — not the Responses API. If you pointed Codex directly at them, it would fail.
+Many providers, including GLM and Kimi, still expose only a Chat Completions endpoint. DeepSeek V4 now exposes a native Responses API as well as an Anthropic-compatible endpoint; OmniRoute uses Responses by default and lets each DeepSeek connection select Anthropic compatibility.
 
 **OmniRoute solves this transparently:**
 
@@ -87,8 +87,8 @@ DeepSeek, GLM, Kimi and others only expose a Chat Completions endpoint — not t
 Codex CLI
   → wire_api = "responses"
   → POST /v1/responses (OmniRoute)
-    → OmniRoute Responses ↔ Chat Completions transformer
-    → POST /chat/completions (DeepSeek / Mistral / GLM / Kimi / any provider)
+    → OmniRoute selects the provider's native protocol and translates when needed
+    → POST /responses (DeepSeek V4) or /chat/completions (Mistral / GLM / Kimi / others)
 ```
 
 You never need a separate translation proxy when using OmniRoute. **All models use `wire_api = "responses"`** — OmniRoute handles the rest.

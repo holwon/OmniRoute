@@ -1144,6 +1144,19 @@ test("isCreditsExhausted returns true for actual credits-exhausted signals", () 
   // #5239: "Insufficient account balance" out-of-credit bodies
   assert.equal(isCreditsExhausted("Insufficient account balance"), true);
   assert.equal(isCreditsExhausted("insufficient_balance"), true);
+  assert.equal(isCreditsExhausted("Insufficient credit balance"), true);
+  // Command Code returns 400 "You have insufficient credits to make this
+  // request. Please purchase more credits to continue using the service."
+  // when the account's billing credits run out. Without this signal the
+  // error is unclassified (errorType=null), so the connection is never
+  // marked credits_exhausted and keeps being re-selected on every request.
+  assert.equal(isCreditsExhausted("insufficient credits"), true);
+  assert.equal(
+    isCreditsExhausted(
+      "You have insufficient credits to make this request. Please purchase more credits to continue using the service."
+    ),
+    true
+  );
 });
 
 test("CREDITS_EXHAUSTED_SIGNALS no longer contains generic gRPC resource-exhausted patterns", () => {

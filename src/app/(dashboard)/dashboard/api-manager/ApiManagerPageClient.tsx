@@ -33,6 +33,7 @@ import { BypassProviderQuotaToggle } from "./components/BypassProviderQuotaToggl
 import { ApiKeyCompressionToggle } from "./components/ApiKeyCompressionToggle";
 import ProviderModelPermissionList from "./components/ProviderModelPermissionList";
 import ReasoningRoutingRules from "@/shared/components/ReasoningRoutingRules";
+import { ALL_COMBOS_ACCESS_RULE } from "@/shared/constants/comboAccess";
 
 // Constants for validation
 const MAX_KEY_NAME_LENGTH = 200;
@@ -1056,7 +1057,8 @@ export default function ApiManagerPageClient() {
               const providerCount = providerWildcards.length;
               const modelCount = exactModels.length;
               const hasComboRestrictions =
-                Array.isArray(key.allowedCombos) && key.allowedCombos.length > 0;
+                Array.isArray(key.allowedCombos) &&
+                !key.allowedCombos.includes(ALL_COMBOS_ACCESS_RULE);
               const hasConnectionRestrictions =
                 Array.isArray(key.allowedConnections) && key.allowedConnections.length > 0;
               const noLogEnabled = key.noLog === true;
@@ -1686,7 +1688,9 @@ const PermissionsModal = memo(function PermissionsModal({
     () => (Array.isArray(apiKey?.blockedModels) ? apiKey.blockedModels : []),
     [apiKey?.blockedModels]
   );
-  const initialCombos = Array.isArray(apiKey?.allowedCombos) ? apiKey.allowedCombos : [];
+  const initialCombos = Array.isArray(apiKey?.allowedCombos)
+    ? apiKey.allowedCombos.filter((combo) => combo !== ALL_COMBOS_ACCESS_RULE)
+    : [];
   const initialConnections = Array.isArray(apiKey?.allowedConnections)
     ? apiKey.allowedConnections
     : [];
@@ -1702,7 +1706,9 @@ const PermissionsModal = memo(function PermissionsModal({
   const [allowAll, setAllowAll] = useState(
     apiKey?.modelAccessMode === "restricted" ? false : initialModels.length === 0
   );
-  const [allowAllCombos, setAllowAllCombos] = useState(initialCombos.length === 0);
+  const [allowAllCombos, setAllowAllCombos] = useState(
+    apiKey?.allowedCombos?.includes(ALL_COMBOS_ACCESS_RULE) === true
+  );
   const [noLogEnabled, setNoLogEnabled] = useState(apiKey?.noLog === true);
   const [autoResolveEnabled, setAutoResolveEnabled] = useState(apiKey?.autoResolve === true);
   const [keyIsActive, setKeyIsActive] = useState(apiKey?.isActive !== false);
@@ -1938,7 +1944,7 @@ const PermissionsModal = memo(function PermissionsModal({
     onSave(
       keyName,
       modelAccess.allowedModels,
-      allowAllCombos ? [] : selectedCombos,
+      allowAllCombos ? [ALL_COMBOS_ACCESS_RULE] : selectedCombos,
       noLogEnabled,
       allowAllConnections ? [] : selectedConnections,
       autoResolveEnabled,

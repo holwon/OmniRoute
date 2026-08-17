@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, writeFileSync, copyFileSync } from "node:fs";
 import { apiFetch } from "../api.mjs";
 import { createPrompt, printSuccess, printError, printInfo, printHeading } from "../io.mjs";
 import { t } from "../i18n.mjs";
+import { guardHostConfigTarget } from "../utils/config-home-guard.mjs";
 
 /**
  * `omniroute configure <cli>` — interactive provider+model picker that writes a
@@ -75,6 +76,12 @@ function buildCodexProfile(modelId, ctx) {
 
 async function configureCodex(modelId, ctxWindow, opts) {
   const codexHome = opts.codexHome || path.join(os.homedir(), ".codex");
+  const guard = await guardHostConfigTarget(codexHome, {
+    toolLabel: "Codex",
+    hostCommand: "omniroute configure codex",
+    allowContainerWrite: Boolean(opts.allowContainerWrite ?? opts["allow-container-write"]),
+  });
+  if (guard !== 0) return guard;
   if (!existsSync(codexHome)) mkdirSync(codexHome, { recursive: true });
   const profile = opts.name || profileNameFromModel(modelId);
   const filePath = path.join(codexHome, `${profile}.config.toml`);
@@ -86,6 +93,7 @@ async function configureCodex(modelId, ctxWindow, opts) {
   printInfo(`Use it:  codex --profile ${profile}`);
   printInfo("Prereq: ~/.codex/config.toml must define the [model_providers.omniroute] block");
   printInfo("        (run the Codex setup once — see docs/guides/CODEX-CLI-CONFIGURATION.md).");
+  return 0;
 }
 
 export async function runConfigureCommand(cli, opts = {}, cmd) {
@@ -130,7 +138,9 @@ export async function runConfigureCommand(cli, opts = {}, cmd) {
       }
       const inProvider = ids.filter((id) => providerList.includes(providerOf(byId(models, id))));
       const candidates = inProvider.length ? inProvider : ids;
-      printInfo(`Models: ${candidates.slice(0, 40).join(", ")}${candidates.length > 40 ? " …" : ""}`);
+      printInfo(
+        `Models: ${candidates.slice(0, 40).join(", ")}${candidates.length > 40 ? " …" : ""}`
+      );
       chosenId = await prompt.ask("Model id");
     } finally {
       prompt.close();
@@ -149,7 +159,7 @@ export async function runConfigureCommand(cli, opts = {}, cmd) {
   const ctxWindow = contextWindowOf(entry);
 
   if (target === "codex") {
-    await configureCodex(chosenId, ctxWindow, opts);
+    return await configureCodex(chosenId, ctxWindow, opts);
   }
   return 0;
 }
@@ -173,6 +183,10 @@ export function registerConfigure(program) {
     .option("--model <id>", "Model id (skips the interactive model prompt)")
     .option("--name <name>", "Profile name to write (default: derived from model)")
     .option("--codex-home <dir>", "Codex home dir (default: ~/.codex)")
+    .option(
+      "--allow-container-write",
+      "Write the config even when OmniRoute runs in a container and the target is not mounted from the host"
+    )
     .action(async (cli, opts, cmd) => {
       const code = await runConfigureCommand(cli, opts, cmd);
       if (code !== 0) process.exit(code);

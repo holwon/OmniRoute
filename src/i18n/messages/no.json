@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Renser API-nøkler, tokener, private nøkler og JWT-er fra meldinger, verktøykall og svar.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Bro ut multimodal innhold til tekst før det når tekstbare modeller. Visjon er live; Lyd ankommer med AudioBridge; Video er på veikartet.",
+    "modalityBridgeIntro": "Gjør multimodalt innhold om til tekst før det når modeller som bare behandler tekst. Broene for bilde, lyd og video er tilgjengelige og kan konfigureres.",
     "modalityBridgeVisionTab": "Visjon",
     "modalityBridgeAudioTab": "Lyd",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Avansert",
     "modalityBridgeTimeoutMs": "Timeout (ms)",
     "modalityBridgeMaxImages": "Maks bilder per forespørsel",
+    "visionMaxCharsLabel": "Maks antall tegn i beskrivelsen",
+    "visionMaxCharsHint": "Begrens lengden på beskrivelsen av visjonsmodellen. 0 = ubegrenset — øk for detaljrike OCR-oppgaver.",
     "modalityBridgeCacheEnabled": "Cache-beskrivelser",
     "modalityBridgeCacheEnabledDesc": "Gjenbruk beskrivelser for identiske bilder (SHA-256 nøkkel, i minnet).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minutter)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Broen ble ikke aktivert (modellen kan støtte visjon nativt eller broen er deaktivert)",
     "modalityBridgeTestError": "Testet feilet: {message}",
     "modalityBridgeAudioComingSoon": "Audio-broen (tale → tekst via /v1/audio/transcriptions) leveres i neste utgivelse. Dens innstillingsnøkler er allerede reservert.",
-    "modalityBridgeVideoComingSoon": "Videobroing (rammesampling + teksting) er på backloggen — se sak #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge flyttet",
     "modalityBridgeMovedBody": "Innstillinger for Vision Bridge er nå tilgjengelige på den dedikerte Modality Bridge-siden.",
     "modalityBridgeMovedCta": "Åpne Modality Bridge-innstillinger",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} klipp(e) transkribert av {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge ble ikke aktivert (målet kan støtte lyd, ingen STT-leverandør er tilkoblet, eller broen er deaktivert)",
     "modalityBridgeAudioTestError": "Lydtest mislyktes: {message}",
+    "modalityBridgeVideoTitle": "Videobro",
+    "modalityBridgeVideoDesc": "Ta ut videobilder, beskriv dem med en synsmodell, og fortsett med den valgte tekstmodellen.",
+    "modalityBridgeVideoRuntimeReady": "Kjøremiljøet er klart",
+    "modalityBridgeVideoRuntimeUnavailable": "Kjøremiljøet er utilgjengelig",
+    "modalityBridgeVideoRuntimeInstall": "Installer FFmpeg og ffprobe i serverens PATH for å aktivere videouttrekk.",
+    "modalityBridgeVideoEnabled": "Aktiver Videobro",
+    "modalityBridgeVideoEnabledDesc": "Erstatt videodeler med tidsstemplede bildebeskrivelser når målmodellen ikke kan behandle video.",
+    "modalityBridgeVideoModel": "Modell for bildebeskrivelse",
+    "modalityBridgeVideoModelInherited": "Bruk modellen fra Vision Bridge",
+    "modalityBridgeVideoFrameCount": "Bilder per video",
+    "modalityBridgeVideoMaxVideos": "Maksimalt antall videoer per forespørsel",
     "modelRoutingDescriptionPlaceholder": "Rute Opus-modeller til frontier-kombinasjon",
     "cliproxyapiFallbackCodes": "Cliproxyapi Fallback Koder",
     "cliproxyapiFallbackDescription": "Cliproxyapi Fallback Beskrivelse",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Partnerlenke",
     "dismissAriaLabel": "Avvis"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute kjører nå inne i VS Code Copilot Chat",
+    "description": "Installer den gratis OmniCopilot-utvidelsen, så vises hver OmniRoute-modell rett i Copilot Chat-modellvelgeren du allerede bruker.",
+    "cta": "Last ned utvidelsen",
+    "secondaryNote": "Også på Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Avvis"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Reklamer <gateway-alias>/<model> speil-id-er på /v1/models for modeller hvis kanoniske eier ikke har aktive legitimasjoner, men en passthrough-gateway med aktive legitimasjoner ruter dem. Advarsel: legger til katalogoppføringer for alle klienter når det er aktivert globalt.",
   "radarPage": {
     "title": "Radar Katalog",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Leverandøroppsett",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Denne siden er kun tilgjengelig fra localhost eller LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Polling stoppet: serveren avviste forespørselen (404/403).",
     "pollErrorTransient": "Feil ved henting av data: prøver automatisk igjen.",
-    "degraded": "Delvise data: utilgjengelige kilder: {sources}",
-    "degraded.source.database": "Database",
-    "degraded.source.circuitBreaker": "Kretsbryter",
-    "degraded.source.modelLockouts": "Modelllåsinger",
-    "degraded.source.count": "Antall Tilkoblinger"
+    "degraded": {
+      "message": "Delvise data: utilgjengelige kilder: {sources}",
+      "source": {
+        "database": "Database",
+        "circuitBreaker": "Kretsbryter",
+        "modelLockouts": "Modelllåsinger",
+        "count": "Antall Tilkoblinger"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Avvis forespørselene før utsendelse når målmodellen mangler nødvendige funksjoner (visjon, verktøy, strukturert utdata, kontekstvindu). Beskytter direkte forespørseler fra enkeltleverandører som omgår kombinasjonslagets kompatibilitetsfilter.",
-  "capabilityFilter.visionMismatch": "Leverandøren støtter ikke visjon for denne bildeforespørselen",
-  "capabilityFilter.toolsMismatch": "Leverandøren støtter ikke verktøykall.",
-  "capabilityFilter.structuredOutputMismatch": "Leverandøren støtter ikke strukturert utdata",
-  "capabilityFilter.contextWindowMismatch": "Forespørselen overskrider leverandørens kontekstvindu",
   "publicSystem": {
     "notFound": {
       "title": "Siden ble ikke funnet",
@@ -13624,5 +13657,49 @@
     "hint": "Når aktivert, vises oppdagede modeller i leverandørvalg på tvers av OmniRoute.",
     "updateFailed": "Feilet å oppdatere (HTTP {status})",
     "networkError": "Nettverksfeil — kunne ikke oppdatere leverandørens eksponeringsinnstilling"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Leverandøren støtter ikke visjon for denne bildeforespørselen",
+    "toolsMismatch": "Leverandøren støtter ikke verktøykall.",
+    "structuredOutputMismatch": "Leverandøren støtter ikke strukturert utdata",
+    "contextWindowMismatch": "Forespørselen overskrider leverandørens kontekstvindu"
   }
 }

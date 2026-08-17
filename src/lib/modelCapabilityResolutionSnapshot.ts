@@ -1,7 +1,7 @@
 /**
  * Build-local capability/context/override resolution snapshot (#9199).
  *
- * Catalog preparation bulk-loads the three capability tables once into a
+ * Catalog preparation bulk-loads the capability and custom-model tables once into a
  * build-local view for pure in-memory resolution. This must not flip models.dev's
  * module-global all-row cache, and ordinary runtime callers keep on-demand DB reads.
  *
@@ -10,6 +10,11 @@
  */
 import { listModelCapabilityOverrides } from "@/lib/db/modelCapabilityOverrides";
 import { listModelContextOverrides } from "@/lib/db/modelContextOverrides";
+import {
+  listCustomModelVisionOverrides,
+  type CustomModelVisionOverrideMap,
+  type CustomModelVisionOverrideReadOptions,
+} from "@/lib/db/models";
 import {
   loadAllSyncedCapabilitiesUncached,
   type CapabilitiesByProvider,
@@ -23,6 +28,11 @@ export interface ModelCapabilityResolutionSnapshot {
   readonly maxTokenOverrides: NestedOverrideMap;
   readonly maxInputTokenOverrides: NestedOverrideMap;
   readonly contextOverrides: NestedOverrideMap;
+  readonly customVisionOverrides: CustomModelVisionOverrideMap;
+}
+
+export interface ModelCapabilityResolutionSnapshotOptions {
+  customModelVision?: CustomModelVisionOverrideReadOptions;
 }
 
 function setNestedOverride(
@@ -40,11 +50,13 @@ function setNestedOverride(
 }
 
 /**
- * Load all three capability tables in one uninterrupted JS turn.
+ * Load all capability/custom-model tables in one uninterrupted JS turn.
  * Callers must not yield between the bulk reads if they need a coherent view;
  * existing catalog generation guards remain authoritative across later yields.
  */
-export function createModelCapabilityResolutionSnapshot(): ModelCapabilityResolutionSnapshot {
+export function createModelCapabilityResolutionSnapshot(
+  options: ModelCapabilityResolutionSnapshotOptions = {}
+): ModelCapabilityResolutionSnapshot {
   const synced = loadAllSyncedCapabilitiesUncached();
 
   const maxTokenOverrides = new Map<string, Map<string, number>>();
@@ -67,5 +79,6 @@ export function createModelCapabilityResolutionSnapshot(): ModelCapabilityResolu
     maxTokenOverrides,
     maxInputTokenOverrides,
     contextOverrides,
+    customVisionOverrides: listCustomModelVisionOverrides(options.customModelVision),
   };
 }

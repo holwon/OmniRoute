@@ -1736,6 +1736,8 @@
     "quotaShare": "Quota Share",
     "discovery": "Discovery",
     "freeProviderRankings": "Free Provider Rankings",
+    "radar": "Radar",
+    "setup": "Setup",
     "freeTiers": "Free Tiers",
     "gamification": "Gamification",
     "leaderboard": "Leaderboard",
@@ -8018,7 +8020,7 @@
     "enableCredentialRedactionDesc": "Scrubs API keys, tokens, private keys, and JWTs from messages, tool calls, and responses.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Bridge multimodal content to text before it reaches text-only models. Vision is live; Audio arrives with the AudioBridge; Video is on the roadmap.",
+    "modalityBridgeIntro": "Bridge multimodal content to text before it reaches text-only models. Vision, Audio, and Video bridges are available and configurable.",
     "modalityBridgeVisionTab": "Vision",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8042,8 @@
     "modalityBridgeAdvanced": "Advanced",
     "modalityBridgeTimeoutMs": "Timeout (ms)",
     "modalityBridgeMaxImages": "Max images per request",
+    "visionMaxCharsLabel": "Max description characters",
+    "visionMaxCharsHint": "Cap the vision model's description length. 0 = unlimited — raise for detail-heavy OCR tasks.",
     "modalityBridgeCacheEnabled": "Cache descriptions",
     "modalityBridgeCacheEnabledDesc": "Reuse descriptions for identical images (SHA-256 keyed, in-memory).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minutes)",
@@ -8056,7 +8060,6 @@
     "modalityBridgeTestNoop": "Bridge did not activate (model may support vision natively or bridge is disabled)",
     "modalityBridgeTestError": "Test failed: {message}",
     "modalityBridgeAudioComingSoon": "The Audio bridge (speech → text via /v1/audio/transcriptions) ships in the next release. Its settings keys are already reserved.",
-    "modalityBridgeVideoComingSoon": "Video bridging (frame sampling + captioning) is on the backlog — see issue #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge moved",
     "modalityBridgeMovedBody": "Vision Bridge settings now live in the dedicated Modality Bridge page.",
     "modalityBridgeMovedCta": "Open Modality Bridge settings",
@@ -8072,6 +8075,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clip(s) transcribed by {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge did not activate (the target may support audio, no STT provider is connected, or the bridge is disabled)",
     "modalityBridgeAudioTestError": "Audio test failed: {message}",
+    "modalityBridgeVideoTitle": "Video Bridge",
+    "modalityBridgeVideoDesc": "Sample video frames, describe them with a vision model, and continue with the chosen text model.",
+    "modalityBridgeVideoRuntimeReady": "Runtime ready",
+    "modalityBridgeVideoRuntimeUnavailable": "Runtime unavailable",
+    "modalityBridgeVideoRuntimeInstall": "Install FFmpeg and ffprobe on the server PATH to enable video extraction.",
+    "modalityBridgeVideoEnabled": "Enable Video Bridge",
+    "modalityBridgeVideoEnabledDesc": "Replace video parts with timestamped frame descriptions when the target model cannot process video.",
+    "modalityBridgeVideoModel": "Frame description model",
+    "modalityBridgeVideoModelInherited": "Inherit the Vision Bridge model",
+    "modalityBridgeVideoFrameCount": "Frames per video",
+    "modalityBridgeVideoMaxVideos": "Max videos per request",
     "modelRoutingDescriptionPlaceholder": "Route Opus models to frontier combo",
     "cliproxyapiFallbackCodes": "Cliproxyapi Fallback Codes",
     "cliproxyapiFallbackDescription": "Cliproxyapi Fallback Description",
@@ -12425,6 +12439,11 @@
       "rare": "Rare achievements"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "Radar Supporter",
+        "description": "Verified a live OmniRoute Radar supporter feed",
+        "criteria": "Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "First Token",
         "description": "Made your first API request",
@@ -13069,6 +13088,13 @@
     "partnerLinkNote": "Partner link",
     "dismissAriaLabel": "Dismiss"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute now runs inside VS Code Copilot Chat",
+    "description": "Install the free OmniCopilot extension and every OmniRoute model shows up right in the Copilot Chat model picker you already use.",
+    "cta": "Get the Extension",
+    "secondaryNote": "Also on Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Dismiss"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Advertise <gateway-alias>/<model> mirror ids on /v1/models for models whose canonical owner has no active credential but a passthrough gateway with an active credential routes them. Warning: adds catalog entries for all clients when enabled globally.",
   "radarPage": {
     "title": "Radar Catalog",
@@ -13124,7 +13150,39 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers",
+    "intel": "Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Provider Setup",
@@ -13239,17 +13297,17 @@
     "pollErrorLocalOnly": "This page is only accessible from localhost or LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Polling stopped: the server rejected the request (404/403).",
     "pollErrorTransient": "Error fetching data: retrying automatically.",
-    "degraded": "Partial data: unavailable sources: {sources}",
-    "degraded.source.database": "Database",
-    "degraded.source.circuitBreaker": "Circuit Breaker",
-    "degraded.source.modelLockouts": "Model Lockouts",
-    "degraded.source.count": "Connection Count"
+    "degraded": {
+      "message": "Partial data: unavailable sources: {sources}",
+      "source": {
+        "database": "Database",
+        "circuitBreaker": "Circuit Breaker",
+        "modelLockouts": "Model Lockouts",
+        "count": "Connection Count"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Reject requests before dispatch when the target model lacks required capabilities (vision, tools, structured output, context window). Protects direct single-provider requests that bypass the combo-layer compatibility filter.",
-  "capabilityFilter.visionMismatch": "Provider does not support vision for this image request",
-  "capabilityFilter.toolsMismatch": "Provider does not support tool calling",
-  "capabilityFilter.structuredOutputMismatch": "Provider does not support structured output",
-  "capabilityFilter.contextWindowMismatch": "Request exceeds provider context window",
   "publicSystem": {
     "notFound": {
       "title": "Page not found",
@@ -13624,5 +13682,65 @@
     "hint": "When enabled, discovered models appear in provider selects across OmniRoute.",
     "updateFailed": "Failed to update (HTTP {status})",
     "networkError": "Network error — could not update provider exposure setting"
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "Radar Intel",
+    "subtitle": "Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading Intel...",
+    "refresh": "Refresh Intel",
+    "syncing": "Refreshing...",
+    "loadFailed": "We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "No verified Intel snapshot is available yet.",
+    "supporterBadge": "Radar Supporter",
+    "methodology": "Methodology",
+    "eloMethod": "ELO, initial {initial}, K={factor}",
+    "freshness": "Catalog freshness",
+    "ageDays": "{days, plural, one {# day old} other {# days old}}",
+    "trend": "Catalog trend",
+    "modelDelta": "{current} models, +{added} / -{removed}",
+    "ranking": "Model ranking",
+    "noRankings": "No confirmed comparisons are available yet.",
+    "model": "Model",
+    "category": "Category",
+    "rating": "Rating",
+    "matches": "Matches",
+    "freshnessValues": {
+      "fresh": "Fresh",
+      "aging": "Aging",
+      "stale": "Stale"
+    },
+    "trendValues": {
+      "growing": "Growing",
+      "stable": "Stable",
+      "shrinking": "Shrinking"
+    }
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Provider does not support vision for this image request",
+    "toolsMismatch": "Provider does not support tool calling",
+    "structuredOutputMismatch": "Provider does not support structured output",
+    "contextWindowMismatch": "Request exceeds provider context window"
   }
 }

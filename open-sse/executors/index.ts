@@ -1,3 +1,4 @@
+import { SEARCH_PROVIDERS } from "../config/searchRegistry.ts";
 import { AntigravityExecutor } from "./antigravity.ts";
 import { GithubExecutor } from "./github.ts";
 import { GheCopilotExecutor } from "./ghe-copilot.ts";
@@ -19,6 +20,7 @@ import { NineRouterExecutor } from "./ninerouter.ts";
 import { PerplexityWebExecutor } from "./perplexity-web.ts";
 import { GrokWebExecutor } from "./grok-web.ts";
 import { GeminiWebExecutor } from "./gemini-web.ts";
+import { TencentAIStudioWebExecutor } from "./tencent-aistudio-web.ts";
 import { GeminiBusinessExecutor } from "./gemini-business.ts";
 import { ChatGptWebExecutor } from "./chatgpt-web.ts";
 import { ChatGptWebCodexExecutor } from "./chatgpt-web-codex.ts";
@@ -32,6 +34,7 @@ import { NlpCloudExecutor } from "./nlpcloud.ts";
 import { DevinDesktopExecutor } from "./devin-desktop.ts";
 import { ZedHostedExecutor } from "./zed-hosted.ts";
 import { DevinCliExecutor } from "./devin-cli.ts";
+import { ZcodeExecutor } from "./zcode.ts";
 import { DevinCliAgenticExecutor } from "./devin-cli-agentic.ts";
 import { AuggieExecutor } from "./auggie.ts";
 import { DeepSeekWebExecutor } from "./deepseek-web.ts";
@@ -133,6 +136,8 @@ const executors = {
   "devin-desktop": new DevinDesktopExecutor(),
   "zed-hosted": new ZedHostedExecutor(),
   "devin-cli": new DevinCliExecutor(),
+  zcode: new ZcodeExecutor(),
+  zc: new ZcodeExecutor(), // Alias
   "devin-cli-agentic": new DevinCliAgenticExecutor(),
   devin: new DevinCliExecutor(), // Alias
   "deepseek-web": new DeepSeekWebWithAutoRefreshExecutor(),
@@ -159,6 +164,8 @@ const executors = {
   huggingchat: new HuggingChatExecutor(),
   hc: new HuggingChatExecutor(), // Alias
   "yuanbao-web": new YuanbaoWebExecutor(),
+  "tencent-aistudio-web": new TencentAIStudioWebExecutor(),
+  tasw: new TencentAIStudioWebExecutor(),
   ybw: new YuanbaoWebExecutor(), // Alias
   "poe-web": new PoeWebExecutor(),
   // #8969: do NOT alias canonical `poe` (API-key / api.poe.com) to PoeWebExecutor.
@@ -227,11 +234,29 @@ const defaultCache = new Map();
 // follow-up once their own chat-routing behavior is confirmed.
 const CHAT_UNSUPPORTED_CLOUD_AGENT_PROVIDERS = new Set(["jules"]);
 
+// #10274 — providers that exist ONLY as /v1/search endpoint entries
+// (SEARCH_PROVIDERS in open-sse/config/searchRegistry.ts) and have no chat-completions
+// REGISTRY entry anywhere in open-sse/. Without this guard, getExecutor() silently falls
+// through to DefaultExecutor's `PROVIDERS[provider] || PROVIDERS.openai` fallback, sending
+// the user's real search API key (e.g. a Tavily `tvly-...` key) to OpenAI's endpoint and
+// surfacing OpenAI's own "Incorrect API key provided" error for a provider the user believes
+// is the search provider. The set is DERIVED from SEARCH_PROVIDERS so adding a new search
+// provider without updating this guard fails the regression test automatically. Search
+// providers must be executed through /v1/search, never the chat-completions path.
+const CHAT_UNSUPPORTED_SEARCH_PROVIDERS = new Set(Object.keys(SEARCH_PROVIDERS));
+
 export function getExecutor(provider) {
   if (executors[provider]) return executors[provider];
   if (CHAT_UNSUPPORTED_CLOUD_AGENT_PROVIDERS.has(provider)) {
     const err = new Error(
       `Provider "${provider}" is a cloud-agent provider and does not support direct chat completions; use the Cloud Agents task API instead.`
+    );
+    (err as Error & { status?: number }).status = 400;
+    throw err;
+  }
+  if (CHAT_UNSUPPORTED_SEARCH_PROVIDERS.has(provider)) {
+    const err = new Error(
+      `Provider "${provider}" is a search provider and does not support chat completions; use the /v1/search endpoint instead.`
     );
     (err as Error & { status?: number }).status = 400;
     throw err;

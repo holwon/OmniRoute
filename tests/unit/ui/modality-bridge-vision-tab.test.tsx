@@ -154,6 +154,10 @@ describe("ModalityBridgeVisionTab", () => {
 
     await waitFor(() => el.textContent?.includes("3 modalityBridgeStatsBridged") ?? false, "stats");
     expect(el.textContent).toContain("1 modalityBridgeStatsCacheHits");
+    expect(el.textContent).toContain("3 requestlogger.attempts");
+    expect(el.textContent).toContain("trafficInspector.timingTotalLatency: —");
+    expect(el.textContent).toContain("avgLatency: —");
+    expect(el.textContent).not.toContain("0 ms");
   });
 
   it("clamps advanced numeric settings to the schema bounds before PATCHing", async () => {
@@ -184,6 +188,37 @@ describe("ModalityBridgeVisionTab", () => {
           return body.modalityBridgeVisionTimeout === 1000;
         }),
       "clamped timeout PATCH"
+    );
+  });
+
+  it("renders the max description characters field, accepts a value, and PATCHes it", async () => {
+    const el = await render();
+    const maxChars = el.querySelector(
+      '[data-testid="modality-bridge-max-chars"]'
+    ) as HTMLInputElement | null;
+    expect(maxChars).toBeTruthy();
+
+    act(() => {
+      const setter = Object.getOwnPropertyDescriptor(
+        window.HTMLInputElement.prototype,
+        "value"
+      )?.set;
+      setter?.call(maxChars, "2000");
+      maxChars?.dispatchEvent(new Event("input", { bubbles: true }));
+    });
+    await act(async () => {
+      maxChars?.dispatchEvent(new FocusEvent("focusout", { bubbles: true }));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    await waitFor(
+      () =>
+        fetchMock.mock.calls.some(([, init]) => {
+          if ((init as RequestInit | undefined)?.method !== "PATCH") return false;
+          const body = JSON.parse(String((init as RequestInit).body)) as Record<string, unknown>;
+          return body.modalityBridgeVisionMaxChars === 2000;
+        }),
+      "maxChars PATCH"
     );
   });
 

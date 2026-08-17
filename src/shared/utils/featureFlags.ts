@@ -111,3 +111,15 @@ export function isControlPlaneProxyDirectFallbackEnabled(): boolean {
     return false;
   }
 }
+
+export function isNetworkRotationSharedEgressGuardEnabled(): boolean {
+  try {
+    return isFeatureFlagEnabled("NETWORK_ROTATION_SHARED_EGRESS_GUARD");
+  } catch (error) {
+    console.error(
+      "[featureFlags] Failed to resolve NETWORK_ROTATION_SHARED_EGRESS_GUARD, defaulting to enabled:",
+      error instanceof Error ? error.message : error
+    );
+    return true;
+  }
+}

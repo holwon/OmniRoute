@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "يزيل مفاتيح API والرموز المميزة والمفاتيح الخاصة وJWTs من الرسائل واستدعاءات الأدوات والاستجابات.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "قم بربط المحتوى متعدد الوسائط بالنص قبل أن يصل إلى النماذج النصية فقط. الرؤية حية؛ الصوت يصل مع AudioBridge؛ الفيديو في خارطة الطريق.",
+    "modalityBridgeIntro": "حوّل المحتوى متعدد الوسائط إلى نص قبل وصوله إلى النماذج النصية فقط. جسور الرؤية والصوت والفيديو متاحة وقابلة للتهيئة.",
     "modalityBridgeVisionTab": "رؤية",
     "modalityBridgeAudioTab": "صوت",
     "modalityBridgeVideoTab": "فيديو",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "متقدم",
     "modalityBridgeTimeoutMs": "مهلة (مللي ثانية)",
     "modalityBridgeMaxImages": "أقصى عدد من الصور لكل طلب",
+    "visionMaxCharsLabel": "أقصى عدد من أحرف الوصف",
+    "visionMaxCharsHint": "حدد طول وصف نموذج الرؤية. 0 = غير محدود — ارفع للمهام التي تتطلب تفاصيل كثيفة في OCR.",
     "modalityBridgeCacheEnabled": "وصف التخزين المؤقت",
     "modalityBridgeCacheEnabledDesc": "إعادة استخدام الأوصاف للصور المتطابقة (مفتاح SHA-256، في الذاكرة).",
     "modalityBridgeCacheTtlMinutes": "مدة صلاحية التخزين المؤقت (دقائق)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "لم يتم تفعيل الجسر (قد يدعم النموذج الرؤية بشكل أصلي أو أن الجسر معطل)",
     "modalityBridgeTestError": "فشل الاختبار: {message}",
     "modalityBridgeAudioComingSoon": "جسر الصوت (الكلام → النص عبر /v1/audio/transcriptions) سيتم شحنه في الإصدار التالي. تم حجز مفاتيح إعداداته بالفعل.",
-    "modalityBridgeVideoComingSoon": "تجسير الفيديو (عينة الإطار + الترجمة) في قائمة الانتظار - راجع المشكلة #9760.",
     "modalityBridgeMovedTitle": "تم نقل Vision Bridge",
     "modalityBridgeMovedBody": "إعدادات Vision Bridge الآن موجودة في صفحة Modality Bridge المخصصة.",
     "modalityBridgeMovedCta": "فتح إعدادات جسر الوضعية",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "جسر الصوت OK — تم نسخ {count} مقطع(ات) بواسطة {model}",
     "modalityBridgeAudioTestNoop": "لم يتم تفعيل جسر الصوت (قد يدعم الهدف الصوت، لم يتم الاتصال بمزود STT، أو أن الجسر معطل)",
     "modalityBridgeAudioTestError": "فشل اختبار الصوت: {message}",
+    "modalityBridgeVideoTitle": "جسر الفيديو",
+    "modalityBridgeVideoDesc": "خذ عينات من إطارات الفيديو وصفها باستخدام نموذج رؤية، ثم تابع باستخدام نموذج النص المحدد.",
+    "modalityBridgeVideoRuntimeReady": "بيئة التشغيل جاهزة",
+    "modalityBridgeVideoRuntimeUnavailable": "بيئة التشغيل غير متاحة",
+    "modalityBridgeVideoRuntimeInstall": "ثبّت FFmpeg وffprobe في PATH الخاص بالخادم لتمكين استخراج الفيديو.",
+    "modalityBridgeVideoEnabled": "تفعيل جسر الفيديو",
+    "modalityBridgeVideoEnabledDesc": "استبدل أجزاء الفيديو بأوصاف مؤقتة للإطارات عندما يتعذر على النموذج الهدف معالجة الفيديو.",
+    "modalityBridgeVideoModel": "نموذج وصف الإطارات",
+    "modalityBridgeVideoModelInherited": "استخدام نموذج جسر الرؤية",
+    "modalityBridgeVideoFrameCount": "الإطارات لكل فيديو",
+    "modalityBridgeVideoMaxVideos": "الحد الأقصى لمقاطع الفيديو لكل طلب",
     "modelRoutingDescriptionPlaceholder": "توجيه نماذج أوبوس إلى مجموعة الحدود",
     "cliproxyapiFallbackCodes": "رموز التراجع لـ Cliproxyapi",
     "cliproxyapiFallbackDescription": "وصف النسخة الاحتياطية لـ Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "رابط شريك",
     "dismissAriaLabel": "تجاهل"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute يعمل الآن داخل VS Code Copilot Chat",
+    "description": "ثبّت امتداد OmniCopilot المجاني وستظهر جميع نماذج OmniRoute مباشرة في منتقي النماذج في Copilot Chat الذي تستخدمه بالفعل.",
+    "cta": "احصل على الامتداد",
+    "secondaryNote": "متوفر أيضًا على Open VSX (Cursor، Windsurf، VSCodium…)",
+    "dismissAriaLabel": "تجاهل"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "قم بالإعلان عن معرفات المرايا <gateway-alias>/<model> على /v1/models للنماذج التي ليس لديها مالك قانوني لديه بيانات اعتماد نشطة ولكن بوابة تمرير مع بيانات اعتماد نشطة توجهها. تحذير: يضيف إدخالات الكتالوج لجميع العملاء عند تمكينه عالميًا.",
   "radarPage": {
     "title": "كتالوج الرادار",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "إعداد المزود",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "هذه الصفحة متاحة فقط من localhost أو الشبكة المحلية (LOCAL_ONLY).",
     "pollErrorStopped": "توقف الاستطلاع: رفض الخادم الطلب (404/403).",
     "pollErrorTransient": "خطأ في جلب البيانات: إعادة المحاولة تلقائيًا.",
-    "degraded": "بيانات جزئية: مصادر غير متاحة: {sources}",
-    "degraded.source.database": "قاعدة البيانات",
-    "degraded.source.circuitBreaker": "قاطع الدائرة",
-    "degraded.source.modelLockouts": "حظر النماذج",
-    "degraded.source.count": "عدد الاتصالات"
+    "degraded": {
+      "message": "بيانات جزئية: مصادر غير متاحة: {sources}",
+      "source": {
+        "database": "قاعدة البيانات",
+        "circuitBreaker": "قاطع الدائرة",
+        "modelLockouts": "حظر النماذج",
+        "count": "عدد الاتصالات"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "رفض الطلبات قبل الإرسال عندما يفتقر النموذج المستهدف إلى القدرات المطلوبة (الرؤية، الأدوات، المخرجات المنظمة، نافذة السياق). يحمي الطلبات المباشرة من مزود واحد التي تتجاوز فلتر توافق الطبقة المجمعة.",
-  "capabilityFilter.visionMismatch": "المزود لا يدعم الرؤية لطلب الصورة هذا",
-  "capabilityFilter.toolsMismatch": "المزود لا يدعم استدعاء الأداة",
-  "capabilityFilter.structuredOutputMismatch": "المزود لا يدعم الإخراج المنظم",
-  "capabilityFilter.contextWindowMismatch": "تجاوز الطلب نافذة سياق المزود",
   "publicSystem": {
     "notFound": {
       "title": "الصفحة غير موجودة",
@@ -13624,5 +13657,49 @@
     "hint": "عند التمكين، تظهر النماذج المكتشفة في اختيارات المزود عبر OmniRoute.",
     "updateFailed": "فشل في التحديث (HTTP {status})",
     "networkError": "خطأ في الشبكة - لم يتمكن من تحديث إعدادات تعرض المزود"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "المزود لا يدعم الرؤية لطلب الصورة هذا",
+    "toolsMismatch": "المزود لا يدعم استدعاء الأداة",
+    "structuredOutputMismatch": "المزود لا يدعم الإخراج المنظم",
+    "contextWindowMismatch": "تجاوز الطلب نافذة سياق المزود"
   }
 }

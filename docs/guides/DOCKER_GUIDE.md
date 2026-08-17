@@ -14,6 +14,7 @@ lastUpdated: 2026-06-28
 - [With Environment File](#with-environment-file)
 - [Docker Compose](#docker-compose)
 - [Available Profiles](#available-profiles)
+- [Configuring host CLI tools when OmniRoute runs in Docker](#configuring-host-cli-tools-when-omniroute-runs-in-docker)
 - [Redis Sidecar](#redis-sidecar)
 - [Production Compose](#production-compose)
 - [Dockerfile Stages](#dockerfile-stages)
@@ -81,6 +82,61 @@ OmniRoute ships four Compose profiles. Pick the one that matches your environmen
 | `cliproxyapi`    | `cliproxyapi`    | Run the [CLIProxyAPI](https://github.com/router-for-me/CLIProxyAPI) sidecar on port `8317` for upstream CLI proxying              | `docker compose --profile cliproxyapi up -d` |
 
 > Multiple profiles can be combined: `docker compose --profile cli --profile cliproxyapi up -d`.
+
+## Configuring host CLI tools when OmniRoute runs in Docker
+
+`omniroute setup-codex`, `setup-claude`, `config set <tool>` and the dashboard's
+**Save config** button all write files like `~/.codex/*.config.toml`. Those paths
+only mean something on the machine where the CLI actually runs. Run them inside
+the container and the write lands in the container's own home (`/home/node` —
+the image runs `USER node`), where no host CLI will ever read it and where it is
+discarded the moment the container is recreated.
+
+OmniRoute detects this and refuses the write with instructions instead of
+reporting a success you cannot use: the CLI exits `2`, and the API answers `422`
+with `containerEphemeralTarget: true`.
+
+### Recommended: run the CLI on the host, OmniRoute in Docker
+
+The container serves the API; the CLI configures your host tools.
+
+```bash
+docker compose --profile base up -d
+
+npm install -g omniroute
+omniroute connect http://localhost:20128   # point the CLI at the container
+omniroute setup-codex                      # writes the real ~/.codex on your host
+```
+
+This is the right choice when Codex, Claude Code, Cursor or similar run on your
+laptop — which is the usual setup.
+
+### Alternative: bind-mount the host config dirs (`host` profile)
+
+If you want the container itself to write your host config, mount the
+directories in and point `CLI_CONFIG_HOME` at the mount root. The `host` profile
+already does this:
+
+```yaml
+environment:
+  - CLI_CONFIG_HOME=/host-home
+  - CLI_ALLOW_CONFIG_WRITES=true
+volumes:
+  - ~/.codex:/host-home/.codex:rw
+  - ~/.claude:/host-home/.claude:rw
+```
+
+A bind mount is what makes the path trustworthy: OmniRoute reads
+`/proc/self/mountinfo` and allows writes to mounted paths (and to directories
+whose children are mounts, which is exactly the `/host-home` shape above) while
+still refusing unmounted ones.
+
+### Escape hatch: configure the container's own CLIs
+
+When the CLIs genuinely live inside the container (the `cli` profile), the write
+is intentional. Pass `--allow-container-write` to any `setup-*` command, or set
+`OMNIROUTE_ALLOW_CONTAINER_CONFIG_WRITE=true` for the server. The write proceeds
+with a warning that it will not survive the container.
 
 ## Redis Sidecar
 
@@ -229,8 +285,12 @@ Next.js `basePath` is compiled into the standalone bundle. OmniRoute records the
 value in a sentinel file at the app root (written during `npm run build`; read by
 `scripts/docker/ensure-docker-base-path.mjs`) and compares it with
 `OMNIROUTE_BASE_PATH` when the container starts. When they differ and the image was
-built for the domain root, the entrypoint rewrites the standalone manifests and embedded
-`basePath` literals before `node dev/run-standalone.mjs` runs.
+built for the domain root, the entrypoint rewrites the standalone manifests, the
+embedded `basePath`/`assetPrefix` literals (Next 16 renders SSR asset URLs from
+`assetPrefix` alone — the patcher mirrors the subpath into it), the baked
+`/_next/static` asset URLs (client-reference manifests, media imports, prerendered
+error pages) and the client `process.env` shim before `node dev/run-standalone.mjs`
+runs.
 
 ### Compose build (recommended)
 
@@ -270,7 +330,22 @@ prefix). Traefik should route `PathPrefix(`/omniroute`)` to the container withou
 `/omniroute/_next/...`.
 
 The Docker healthcheck probes `/api/monitoring/health` prefixed with the active
-`OMNIROUTE_BASE_PATH`.
+`OMNIROUTE_BASE_PATH`. That path is a **deep** check (DB + monitoring summary). It is
+appropriate for Docker’s infrequent `HEALTHCHECK`, but **not** for Kubernetes
+`livenessProbe` intervals.
+
+For orchestrators (Kubernetes, Nomad, etc.):
+
+| Probe | Prefer | Avoid |
+| --- | --- | --- |
+| Liveness | TCP on the main port (`PORT`, default `20128`), or soft HTTP `/healthz` | `/api/monitoring/health` as liveness |
+| Readiness | HTTP `GET /healthz` | Tight timeouts that treat event-loop busy as dead |
+| Deep / blackbox | `/api/monitoring/health` | — |
+
+`/healthz` only reports process lifecycle (`ok` / `starting` / `stopping`). It still
+runs on the same Node event loop as request handling, so CPU-bound catalog or
+compression work can delay it — busy ≠ dead. Full probe guidance:
+[Monitoring guide — Kubernetes probe recommendations](../ops/MONITORING_GUIDE.md#kubernetes-probe-recommendations).
 
 ## Docker Compose with Caddy (HTTPS Auto-TLS)
 

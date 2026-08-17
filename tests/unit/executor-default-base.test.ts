@@ -1063,6 +1063,68 @@ test("DefaultExecutor.transformRequest appends the json_schema prompt to an exis
   assert.equal(body.messages[0].content, "You are concise.");
 });
 
+// kilocode's DeepSeek V4 Flash rejects ANY `response_format` with HTTP 400
+// (verified live 2026-08-15: both json_schema AND json_object 400 with
+// `param: response_format`) — same class as the opencode #9992 fix, but the
+// default executor's gate only covered `openai-compatible-*`, so kilocode
+// forwarded the unsupported format raw. For kilocode the format must be
+// STRIPPED entirely (schema injected into the system prompt), because even
+// the json_object downgrade is rejected.
+test("DefaultExecutor.transformRequest strips response_format for kilocode (DeepSeek 400 regression)", () => {
+  const executor = new DefaultExecutor("kilocode");
+  const schema = {
+    type: "object",
+    properties: { answer: { type: "string" } },
+    required: ["answer"],
+  };
+  const body = {
+    model: "deepseek/deepseek-v4-flash",
+    messages: [{ role: "user", content: "give me JSON" }],
+    response_format: {
+      type: "json_schema",
+      json_schema: { name: "answer_schema", schema },
+    },
+  };
+
+  const result = executor.transformRequest("deepseek/deepseek-v4-flash", body, true, {
+    providerSpecificData: { baseUrl: "https://api.kilo.ai/v1" },
+  }) as unknown as {
+    response_format?: { type?: string };
+    messages: Array<{ role: string; content: string }>;
+  };
+
+  // response_format is REMOVED entirely (kilocode rejects json_object too).
+  assert.equal(result.response_format, undefined);
+  assert.equal(result.messages[0].role, "system");
+  assert.match(result.messages[0].content, /strictly follows this JSON schema/);
+  assert.ok(result.messages[0].content.includes('"answer"'));
+  assert.equal(result.messages[1].role, "user");
+  assert.equal(result.messages[1].content, "give me JSON");
+  // Original body is not mutated.
+  assert.equal(body.response_format.type, "json_schema");
+  assert.equal(body.messages.length, 1);
+});
+
+test("DefaultExecutor.transformRequest strips response_format for kilocode json_object requests too", () => {
+  const executor = new DefaultExecutor("kilocode");
+  const body = {
+    model: "deepseek/deepseek-v4-flash",
+    messages: [{ role: "user", content: "give me JSON" }],
+    response_format: { type: "json_object" },
+  };
+
+  const result = executor.transformRequest("deepseek/deepseek-v4-flash", body, true, {
+    providerSpecificData: { baseUrl: "https://api.kilo.ai/v1" },
+  }) as unknown as {
+    response_format?: { type?: string };
+    messages: Array<{ role: string; content: string }>;
+  };
+
+  assert.equal(result.response_format, undefined);
+  assert.equal(result.messages[0].role, "system");
+  assert.match(result.messages[0].content, /valid JSON only/);
+});
+
 test("DefaultExecutor.transformRequest leaves json_schema response_format untouched for native providers", () => {
   const executor = new DefaultExecutor("openai");
   const responseFormat = {

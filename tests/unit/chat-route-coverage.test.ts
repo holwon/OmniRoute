@@ -202,6 +202,7 @@ test("handleChat rejects requests without a model", async () => {
 test("handleChat applies task-aware routing when a semantic override is enabled", async () => {
   await seedConnection("deepseek", { apiKey: "sk-deepseek-task-route" });
   const seenAuthHeaders = [];
+  const seenRequestBodies = [];
   setTaskRoutingConfig({
     enabled: true,
     detectionEnabled: true,
@@ -214,7 +215,26 @@ test("handleChat applies task-aware routing when a semantic override is enabled"
   globalThis.fetch = async (_url, init = {}) => {
     const headers = toPlainHeaders(init.headers);
     seenAuthHeaders.push(headers.Authorization ?? headers.authorization);
-    return buildOpenAIResponse("Task-routed response", "deepseek/deepseek-chat");
+    seenRequestBodies.push(JSON.parse(String(init.body)));
+    return new Response(
+      JSON.stringify({
+        id: "resp_task_route",
+        object: "response",
+        status: "completed",
+        model: "deepseek-v4-flash",
+        output: [
+          {
+            id: "msg_task_route",
+            type: "message",
+            role: "assistant",
+            status: "completed",
+            content: [{ type: "output_text", text: "Task-routed response", annotations: [] }],
+          },
+        ],
+        usage: { input_tokens: 4, output_tokens: 2, total_tokens: 6 },
+      }),
+      { status: 200, headers: { "Content-Type": "application/json" } }
+    );
   };
 
   const response = await handleChat(
@@ -230,6 +250,8 @@ test("handleChat applies task-aware routing when a semantic override is enabled"
 
   assert.equal(response.status, 200);
   assert.deepEqual(seenAuthHeaders, ["Bearer sk-deepseek-task-route"]);
+  assert.equal(seenRequestBodies[0].messages, undefined);
+  assert.equal(seenRequestBodies[0].input[0].role, "user");
   assert.equal(json.choices[0].message.content, "Task-routed response");
 });
 

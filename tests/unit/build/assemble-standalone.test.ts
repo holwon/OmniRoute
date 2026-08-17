@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 import {
   assembleStandalone,
   patchTurbopackChunks,
@@ -197,7 +198,7 @@ test("the TPROXY addon source is skipped gracefully when it was not built (non-L
 // the requirement from the source itself: EVERY relative import in
 // standalone-server-ws.mjs must be shipped into the bundle by the extra-module sync.
 test("every relative import of standalone-server-ws.mjs is shipped into the bundle", async () => {
-  const repoRoot = path.resolve(new URL(".", import.meta.url).pathname, "../../..");
+  const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
   const serverWsSrc = fs.readFileSync(
     path.join(repoRoot, "scripts/dev/standalone-server-ws.mjs"),
     "utf8"

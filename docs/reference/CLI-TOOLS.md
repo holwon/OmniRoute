@@ -69,6 +69,20 @@ with the right env injected and write no config at all.
 > local vs remote, and which tools want a `/v1` suffix — lives in
 > **[CLI Integrations](../guides/CLI-INTEGRATIONS.md)**.
 
+### Running these inside a container
+
+A `setup-*` command executed inside the OmniRoute container writes into the
+container's own home, which no host CLI reads and which disappears with the
+container. OmniRoute detects that and exits `2` with instructions rather than
+writing. Two supported ways forward — install the CLI on the host and
+`omniroute connect` to the container, or bind-mount the config dirs and set
+`CLI_CONFIG_HOME` (the compose `host` profile). Every `setup-*` command, plus
+`omniroute configure` and `omniroute config set`, accepts
+`--allow-container-write` when configuring the container's own CLIs is what you
+actually meant; `OMNIROUTE_ALLOW_CONTAINER_CONFIG_WRITE=true` does the same for
+the server. See
+[Docker Guide → Configuring host CLI tools](../guides/DOCKER_GUIDE.md#configuring-host-cli-tools-when-omniroute-runs-in-docker).
+
 ---
 
 ## Source of Truth
@@ -94,33 +108,33 @@ Entries with `baseUrlSupport: "none"` are **not shown** in the dashboard pages �
 
 All tools that appear in `/dashboard/cli-code`. Those with `baseUrlSupport: none` are wired through MITM or a manual guide instead of a custom base URL:
 
-| id | name | vendor | baseUrlSupport | configType | acpSpawnable |
-|----|------|--------|---------------|-----------|-------------|
-| claude | Claude Code | Anthropic | full | env | true |
-| codex | OpenAI Codex CLI | OpenAI | full | custom | true |
-| cline | Cline | OSS (ex-Claude Dev) | full | custom | true |
-| kilo | Kilo Code | Kilo-Org | full | custom | false |
-| roo | Roo Code | Roo (OSS) | full | guide | false |
-| continue | Continue | continue.dev | full | guide | false |
-| aider | Aider | OSS (P. Gauthier) | full | guide | true |
-| forge | ForgeCode | Antinomy HQ | full | custom | true |
-| jcode | jcode | 1jehuang (OSS) | full | custom | false |
-| deepseek-tui | DeepSeek TUI | Hunter Bown (OSS) | full | custom | false |
-| codewhale | CodeWhale | Hmbown (OSS) | full | custom | false |
-| opencode | OpenCode | Anomaly (ex-SST) | full | guide | true |
-| droid | Factory Droid | Factory AI | partial | guide | false |
-| copilot | GitHub Copilot CLI | GitHub/MS | full | custom | false |
-| cursor-cli | Cursor CLI | Anysphere | partial | guide | true |
-| smelt | Smelt | leonardcser (OSS) | full | custom | false |
-| pi | Pi (pi-coding-agent) | M. Zechner (OSS) | full | custom | false |
-| grok-build | Grok Build | xAI | full | custom | false |
-| crush | Crush | OSS (Charm) | full | custom | false |
-| qwen | Qwen Code | Alibaba | full | guide | true |
-| cursor | Cursor | Anysphere | none | guide | false |
-| antigravity | Antigravity | Google | none | mitm | false |
-| hermes | Hermes | Nous Research | none | guide | false |
-| kiro | Kiro AI | Amazon | none | mitm | false |
-| custom | Custom CLI | — | full | custom-builder | false |
+| id           | name                 | vendor              | baseUrlSupport | configType     | acpSpawnable |
+| ------------ | -------------------- | ------------------- | -------------- | -------------- | ------------ |
+| claude       | Claude Code          | Anthropic           | full           | env            | true         |
+| codex        | OpenAI Codex CLI     | OpenAI              | full           | custom         | true         |
+| cline        | Cline                | OSS (ex-Claude Dev) | full           | custom         | true         |
+| kilo         | Kilo Code            | Kilo-Org            | full           | custom         | false        |
+| roo          | Roo Code             | Roo (OSS)           | full           | guide          | false        |
+| continue     | Continue             | continue.dev        | full           | guide          | false        |
+| aider        | Aider                | OSS (P. Gauthier)   | full           | guide          | true         |
+| forge        | ForgeCode            | Antinomy HQ         | full           | custom         | true         |
+| jcode        | jcode                | 1jehuang (OSS)      | full           | custom         | false        |
+| deepseek-tui | DeepSeek TUI         | Hunter Bown (OSS)   | full           | custom         | false        |
+| codewhale    | CodeWhale            | Hmbown (OSS)        | full           | custom         | false        |
+| opencode     | OpenCode             | Anomaly (ex-SST)    | full           | guide          | true         |
+| droid        | Factory Droid        | Factory AI          | partial        | guide          | false        |
+| copilot      | GitHub Copilot CLI   | GitHub/MS           | full           | custom         | false        |
+| cursor-cli   | Cursor CLI           | Anysphere           | partial        | guide          | true         |
+| smelt        | Smelt                | leonardcser (OSS)   | full           | custom         | false        |
+| pi           | Pi (pi-coding-agent) | M. Zechner (OSS)    | full           | custom         | false        |
+| grok-build   | Grok Build           | xAI                 | full           | custom         | false        |
+| crush        | Crush                | OSS (Charm)         | full           | custom         | false        |
+| qwen         | Qwen Code            | Alibaba             | full           | guide          | true         |
+| cursor       | Cursor               | Anysphere           | none           | guide          | false        |
+| antigravity  | Antigravity          | Google              | none           | mitm           | false        |
+| hermes       | Hermes               | Nous Research       | none           | guide          | false        |
+| kiro         | Kiro AI              | Amazon              | none           | mitm           | false        |
+| custom       | Custom CLI           | —                   | full           | custom-builder | false        |
 
 Tools with `baseUrlSupport: "partial"` show a badge "⚠ Base URL parcial" in the dashboard card.
 ---
@@ -201,16 +215,16 @@ interface ToolBatchStatus {
 
 New tools with `configType: "custom"` have dedicated settings API routes:
 
-| Route                                       | Tool                           |
-| ------------------------------------------- | ------------------------------ |
-| `POST /api/cli-tools/forge-settings`        | ForgeCode (.forge.toml)        |
-| `POST /api/cli-tools/jcode-settings`        | jcode (--base-url flag)        |
-| `POST /api/cli-tools/deepseek-tui-settings` | DeepSeek TUI (OPENAI_BASE_URL, legacy) |
+| Route                                       | Tool                                                             |
+| ------------------------------------------- | ---------------------------------------------------------------- |
+| `POST /api/cli-tools/forge-settings`        | ForgeCode (.forge.toml)                                          |
+| `POST /api/cli-tools/jcode-settings`        | jcode (--base-url flag)                                          |
+| `POST /api/cli-tools/deepseek-tui-settings` | DeepSeek TUI (OPENAI_BASE_URL, legacy)                           |
 | `POST /api/cli-tools/codewhale-settings`    | CodeWhale (OPENAI_BASE_URL, primary + legacy `~/.deepseek` sync) |
-| `POST /api/cli-tools/smelt-settings`        | Smelt                          |
-| `POST /api/cli-tools/pi-settings`           | Pi coding agent                |
-| `POST /api/cli-tools/grok-build-settings`   | Grok Build (~/.grok/config.toml, `[model.omniroute]`) |
-| `POST /api/cli-tools/qwen-settings`         | Qwen Code (`~/.qwen/settings.json` + dedicated `.env` key) |
+| `POST /api/cli-tools/smelt-settings`        | Smelt                                                            |
+| `POST /api/cli-tools/pi-settings`           | Pi coding agent                                                  |
+| `POST /api/cli-tools/grok-build-settings`   | Grok Build (~/.grok/config.toml, `[model.omniroute]`)            |
+| `POST /api/cli-tools/qwen-settings`         | Qwen Code (`~/.qwen/settings.json` + dedicated `.env` key)       |
 
 All routes use `sanitizeErrorMessage()` for error responses (Hard Rule #12).
 

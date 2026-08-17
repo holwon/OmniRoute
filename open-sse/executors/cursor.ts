@@ -681,13 +681,26 @@ export function processFrame(
       // after text means the model finished and the server is saving the
       // turn. Phase 8 keeps both signals as defense-in-depth.
       //
-      // Safe vs tool calls: when the model invokes a tool, the exec_mcp event
-      // always arrives at or before this kv checkpoint (verified across many
-      // live composer-2.5 trials — a tool call never follows kv_after_text), so
-      // endReason is already "tool_calls" by the time we get here. Ending on
-      // kv_after_text therefore never truncates a pending tool call.
+      // Safe vs tool calls (composer family only): when the model invokes a
+      // tool, the exec_mcp event always arrives at or before this kv
+      // checkpoint (verified across many live composer-2.5 trials — a tool call
+      // never follows kv_after_text), so endReason is already "tool_calls" by
+      // the time we get here. Ending on kv_after_text therefore never truncates
+      // a pending tool call on composer.
+      //
+      // Non-composer models (cursor/grok-4.5-high, auto, ...) emit the KV
+      // checkpoint as a blob-store side-channel frame (envelope field 4,
+      // kv_get_blob/kv_set_blob) with NO turn-completion semantics, and it can
+      // arrive while the model is still streaming a long preamble BEFORE a
+      // pending exec_mcp. Ending the turn there drops that exec_mcp, leaving a
+      // narration-only finish_reason "stop" with zero tool_calls (#10215). On
+      // this family only the real terminal signals (turn_ended,
+      // tool_call_completed, server_end) decide — kvAfterTextSeen is kept purely
+      // as an observational flag, never as the turn terminator.
       ctx.kvAfterTextSeen = true;
-      ctx.endReason = "kv_after_text";
+      if (isComposerModel(ctx.model)) {
+        ctx.endReason = "kv_after_text";
+      }
     }
   }
 }

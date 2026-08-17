@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getProviderConnections, getCachedSettings } from "@/lib/localDb";
 import { buildHealthPayload } from "@/lib/monitoring/observability";
+import { readRunningBuildSha } from "@/lib/monitoring/buildSha";
 import { APP_CONFIG } from "@/shared/constants/config";
 import { AI_PROVIDERS } from "@/shared/constants/providers";
 import { isAuthenticated } from "@/shared/utils/apiAuth";
@@ -158,6 +159,9 @@ export async function GET() {
 
     const payload = buildHealthPayload({
       appVersion: APP_CONFIG.version,
+      // #10427: surface the artifact's git SHA so a deployment can be audited over HTTP
+      // instead of SSH + grepping compiled chunks (the 2026-08-14 gateway outage).
+      buildSha: readRunningBuildSha(),
       catalogCount: Object.keys(AI_PROVIDERS).length,
       settings,
       connections,

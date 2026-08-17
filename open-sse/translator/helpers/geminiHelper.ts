@@ -58,6 +58,11 @@ export const GEMINI_UNSUPPORTED_SCHEMA_KEYS = new Set([
   "contains",
   "minContains",
   "maxContains",
+  // #9617: array uniqueness keyword — agentic-CLI tool schemas (JSON-Schema
+  // generators) set this routinely and Gemini's schema parser has no field for
+  // it, rejecting the whole request with "Unknown name \"uniqueItems\"".
+  // Upstream 9router already strips it alongside `contains` for the same error.
+  "uniqueItems",
   // Complex schema keywords (handled by flattenAnyOfOneOf/mergeAllOf)
   "anyOf",
   "oneOf",

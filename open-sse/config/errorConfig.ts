@@ -77,6 +77,10 @@ export const COOLDOWN_MS = {
   rateLimit: 2 * 60 * 1000,
   serviceUnavailable: 2 * 1000,
   authExpired: 2 * 60 * 1000,
+  // Google regional-availability refusal: nothing changes region-wise on the
+  // account, so re-probe only after a long window (or when the operator routes
+  // egress through a supported-region proxy).
+  geoBlocked: 24 * 60 * 60 * 1000,
 };
 
 /**

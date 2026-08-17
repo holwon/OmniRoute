@@ -315,20 +315,20 @@ export const DEFAULT_PRICING_FRONTIER = {
       reasoning: 2.19,
       cache_creation: 0.55,
     },
-    // DeepSeek V4 Pro — promo until 2026-05-31, then list ($0.145 / $3.48)
+    // DeepSeek official API list prices, checked 2026-08-13.
     "deepseek-v4-pro": {
       input: 0.435,
       output: 0.87,
-      cached: 0.0036,
+      cached: 0.003625,
       reasoning: 0.87,
       cache_creation: 0.435,
     },
     "deepseek-v4-flash": {
-      input: 0.07,
+      input: 0.14,
       output: 0.28,
-      cached: 0.014,
+      cached: 0.0028,
       reasoning: 0.28,
-      cache_creation: 0.07,
+      cache_creation: 0.14,
     },
   },
   blackbox: {
@@ -340,6 +340,15 @@ export const DEFAULT_PRICING_FRONTIER = {
     "blackboxai-pro": { input: 0, output: 0, cached: 0, reasoning: 0, cache_creation: 0 },
   },
   xai: {
+    // The static rate covers prompts below 200K tokens. xAI's provider-reported
+    // cost_in_usd_ticks remains authoritative for the >=200K pricing tier.
+    "grok-4.6": {
+      input: 2.0,
+      output: 6.0,
+      cached: 0.5,
+      reasoning: 6.0,
+      cache_creation: 2.0,
+    },
     "grok-3": {
       input: 3.0,
       output: 15.0,

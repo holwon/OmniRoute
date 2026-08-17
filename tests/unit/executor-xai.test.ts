@@ -6,6 +6,7 @@ import { getExecutor, hasSpecializedExecutor } from "../../open-sse/executors/in
 import { xaiProvider } from "../../open-sse/config/providers/registry/xai/index.ts";
 
 // Real xai catalog ids (open-sse/config/providers/registry/xai/index.ts):
+//   grok-4.6                          — Responses-first flagship with vision + reasoning
 //   grok-4.3                          — plain, reasoning-capable
 //   grok-build-0.1                    — build/tool model, no reasoning mode
 //   grok-4.20-multi-agent-0309        — neutral (not in either allow/deny list)
@@ -26,6 +27,21 @@ test("XaiExecutor can target the separate xAI OAuth provider config", () => {
   // #10170 declares grok-4.5 as a native Responses model in xai-oauth's own
   // catalog, so provider-scoped target-format resolution must select that URL.
   assert.equal(executor.buildUrl("grok-4.5", false), "https://api.x.ai/v1/responses");
+});
+
+test("Grok 4.6 advertises its official capabilities and uses native Responses", () => {
+  const model = xaiProvider.models.find((entry) => entry.id === "grok-4.6");
+  assert.ok(model);
+  assert.equal(model.contextLength, 500000);
+  assert.equal(model.supportsVision, true);
+  assert.equal(model.supportsReasoning, true);
+  assert.equal(model.toolCalling, true);
+  assert.equal(model.supportsXHighEffort, true);
+  assert.deepEqual(model.supportedThinkingEfforts, ["low", "medium", "high", "xhigh"]);
+  assert.equal(model.targetFormat, "openai-responses");
+
+  const executor = new XaiExecutor();
+  assert.equal(executor.buildUrl("grok-4.6", true), "https://api.x.ai/v1/responses");
 });
 
 test("strips a -{level} suffix from an allow-listed model and sets reasoning_effort", () => {

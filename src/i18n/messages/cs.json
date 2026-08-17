@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Odstraní klíče API, tokeny, soukromé klíče a JWT ze zpráv, volání nástrojů a odpovědí.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Propojte multimodální obsah s textem, než dosáhne modelů pouze pro text. Vize je živá; Zvuk přichází s AudioBridge; Video je na cestě.",
+    "modalityBridgeIntro": "Převeďte multimodální obsah na text dříve, než se dostane k modelům pouze pro text. Mosty pro obraz, zvuk a video jsou dostupné a konfigurovatelné.",
     "modalityBridgeVisionTab": "Vize",
     "modalityBridgeAudioTab": "Zvuk",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Pokročilé",
     "modalityBridgeTimeoutMs": "Časový limit (ms)",
     "modalityBridgeMaxImages": "Max obrázků na požadavek",
+    "visionMaxCharsLabel": "Max počet znaků pro popis",
+    "visionMaxCharsHint": "Omezení délky popisu modelu pro rozpoznávání obrazu. 0 = neomezeno — zvyšte pro úkoly OCR s vysokým detailem.",
     "modalityBridgeCacheEnabled": "Popisy mezipaměti",
     "modalityBridgeCacheEnabledDesc": "Znovu použít popisy pro identické obrázky (SHA-256 klíčované, v paměti).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minuty)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Most nebyl aktivován (model může nativně podporovat zrak nebo je most deaktivován)",
     "modalityBridgeTestError": "Test selhal: {message}",
     "modalityBridgeAudioComingSoon": "Audio most (řeč → text přes /v1/audio/transcriptions) bude součástí další verze. Jeho klíče nastavení jsou již rezervovány.",
-    "modalityBridgeVideoComingSoon": "Video bridging (frame sampling + captioning) je na backlogu — viz problém #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge přesunuto",
     "modalityBridgeMovedBody": "Nastavení Vision Bridge nyní žije na vyhrazené stránce Modality Bridge.",
     "modalityBridgeMovedCta": "Otevřít nastavení Modality Bridge",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} klip(y) přepsány pomocí {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge se nepodařilo aktivovat (cílové zařízení může podporovat audio, žádný poskytovatel STT není připojen, nebo je most deaktivován)",
     "modalityBridgeAudioTestError": "Test zvuku selhal: {message}",
+    "modalityBridgeVideoTitle": "Video Bridge",
+    "modalityBridgeVideoDesc": "Odeberte snímky z videa, popište je modelem pro zpracování obrazu a pokračujte zvoleným textovým modelem.",
+    "modalityBridgeVideoRuntimeReady": "Běhové prostředí je připraveno",
+    "modalityBridgeVideoRuntimeUnavailable": "Běhové prostředí není dostupné",
+    "modalityBridgeVideoRuntimeInstall": "Nainstalujte FFmpeg a ffprobe do PATH serveru, aby bylo možné extrahovat video.",
+    "modalityBridgeVideoEnabled": "Povolit Video Bridge",
+    "modalityBridgeVideoEnabledDesc": "Když cílový model neumí zpracovat video, nahraďte části videa popisy snímků s časovými značkami.",
+    "modalityBridgeVideoModel": "Model pro popis snímků",
+    "modalityBridgeVideoModelInherited": "Převzít model z Vision Bridge",
+    "modalityBridgeVideoFrameCount": "Snímků na video",
+    "modalityBridgeVideoMaxVideos": "Maximum videí na požadavek",
     "modelRoutingDescriptionPlaceholder": "Smerujte modely Opus na kombinaci frontier",
     "cliproxyapiFallbackCodes": "Cliproxyapi Záložní Kódy",
     "cliproxyapiFallbackDescription": "Popis záložního režimu Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Partnerský odkaz",
     "dismissAriaLabel": "Zavřít"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute nyní běží přímo ve VS Code Copilot Chat",
+    "description": "Nainstalujte si bezplatné rozšíření OmniCopilot a všechny modely OmniRoute se objeví přímo ve výběru modelů Copilot Chat, který už používáte.",
+    "cta": "Získat rozšíření",
+    "secondaryNote": "Také na Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Zavřít"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Inzerujte <gateway-alias>/<model> zrcadlové ID na /v1/models pro modely, jejichž kanonický vlastník nemá aktivní pověření, ale passtrhough brána s aktivním pověřením je směruje. Upozornění: při globálním povolení přidává katalogové položky pro všechny klienty.",
   "radarPage": {
     "title": "Radar katalog",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Nastavení poskytovatele",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Tato stránka je přístupná pouze z localhost nebo LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Dotazování zastaveno: server odmítl požadavek (404/403).",
     "pollErrorTransient": "Chyba při načítání dat: automatické opakování.",
-    "degraded": "Částečná data: nedostupné zdroje: {sources}",
-    "degraded.source.database": "Databáze",
-    "degraded.source.circuitBreaker": "Jistič",
-    "degraded.source.modelLockouts": "Uzamčení Modelu",
-    "degraded.source.count": "Počet Připojení"
+    "degraded": {
+      "message": "Částečná data: nedostupné zdroje: {sources}",
+      "source": {
+        "database": "Databáze",
+        "circuitBreaker": "Jistič",
+        "modelLockouts": "Uzamčení Modelu",
+        "count": "Počet Připojení"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Odmítnout požadavky před odesláním, když cílový model postrádá požadované schopnosti (vidění, nástroje, strukturovaný výstup, kontextové okno). Chrání přímé požadavky od jednotlivých poskytovatelů, které obcházejí filtr kompatibility kombinované vrstvy.",
-  "capabilityFilter.visionMismatch": "Poskytovatel nepodporuje zobrazení pro tento požadavek na obrázek",
-  "capabilityFilter.toolsMismatch": "Poskytovatel nepodporuje volání nástroje",
-  "capabilityFilter.structuredOutputMismatch": "Poskytovatel nepodporuje strukturovaný výstup",
-  "capabilityFilter.contextWindowMismatch": "Žádost překračuje kontextové okno poskytovatele",
   "publicSystem": {
     "notFound": {
       "title": "Stránka nebyla nalezena",
@@ -13624,5 +13657,49 @@
     "hint": "Když je povoleno, objevené modely se zobrazují v selektorech poskytovatele napříč OmniRoute.",
     "updateFailed": "Nepodařilo se aktualizovat (HTTP {status})",
     "networkError": "Chyba sítě — nelze aktualizovat nastavení expozice poskytovatele"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Poskytovatel nepodporuje zobrazení pro tento požadavek na obrázek",
+    "toolsMismatch": "Poskytovatel nepodporuje volání nástroje",
+    "structuredOutputMismatch": "Poskytovatel nepodporuje strukturovaný výstup",
+    "contextWindowMismatch": "Žádost překračuje kontextové okno poskytovatele"
   }
 }

@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "کلیدهای API، توکن‌ها، کلیدهای خصوصی و JWTها را از پیام‌ها، فراخوانی‌های ابزار و پاسخ‌ها پاک می‌کند.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "محتوای چندرسانه‌ای را به متن تبدیل کنید قبل از اینکه به مدل‌های فقط متنی برسد. بینایی فعال است؛ صدا با AudioBridge می‌رسد؛ و ویدیو در نقشه راه است.",
+    "modalityBridgeIntro": "محتوای چندرسانه‌ای را پیش از رسیدن به مدل‌های فقط متنی به متن تبدیل کنید. پل‌های بینایی، صدا و ویدیو در دسترس و قابل پیکربندی هستند.",
     "modalityBridgeVisionTab": "بینش",
     "modalityBridgeAudioTab": "صوت",
     "modalityBridgeVideoTab": "ویدیو",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "پیشرفته",
     "modalityBridgeTimeoutMs": "زمان‌سنجی (میلی‌ثانیه)",
     "modalityBridgeMaxImages": "حداکثر تصاویر در هر درخواست",
+    "visionMaxCharsLabel": "حداکثر کاراکترهای توضیحات",
+    "visionMaxCharsHint": "طول توضیحات مدل بینایی را محدود کنید. 0 = نامحدود — برای وظایف OCR با جزئیات زیاد افزایش دهید.",
     "modalityBridgeCacheEnabled": "توضیحات کش",
     "modalityBridgeCacheEnabledDesc": "توصیف‌ها را برای تصاویر یکسان (کلیددار با SHA-256، در حافظه) دوباره استفاده کنید.",
     "modalityBridgeCacheTtlMinutes": "مدت زمان نگهداری کش (دقیقه)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "پل فعال نشد (مدل ممکن است به طور بومی از بینایی پشتیبانی کند یا پل غیرفعال است)",
     "modalityBridgeTestError": "آزمون ناموفق: {message}",
     "modalityBridgeAudioComingSoon": "پل صوتی (گفتار → متن از طریق /v1/audio/transcriptions) در نسخه بعدی منتشر می‌شود. کلیدهای تنظیمات آن قبلاً رزرو شده‌اند.",
-    "modalityBridgeVideoComingSoon": "پل‌سازی ویدئو (نمونه‌برداری فریم + زیرنویس) در لیست کارها قرار دارد — به مشکل #9760 مراجعه کنید.",
     "modalityBridgeMovedTitle": "پل بینایی جابجا شد",
     "modalityBridgeMovedBody": "تنظیمات Vision Bridge اکنون در صفحه اختصاصی Modality Bridge فعال است.",
     "modalityBridgeMovedCta": "تنظیمات پل مدالیته را باز کنید",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "پل صوتی OK — {count} کلیپ(ها) توسط {model} رونویسی شد",
     "modalityBridgeAudioTestNoop": "پل صوتی فعال نشد (ممکن است هدف از صوت پشتیبانی کند، هیچ ارائه‌دهنده STT متصل نیست، یا پل غیرفعال است)",
     "modalityBridgeAudioTestError": "آزمون صدا ناموفق بود: {message}",
+    "modalityBridgeVideoTitle": "پل ویدیو",
+    "modalityBridgeVideoDesc": "از فریم‌های ویدیو نمونه بگیرید، آن‌ها را با یک مدل بینایی توصیف کنید و با مدل متنی انتخاب‌شده ادامه دهید.",
+    "modalityBridgeVideoRuntimeReady": "محیط اجرا آماده است",
+    "modalityBridgeVideoRuntimeUnavailable": "محیط اجرا در دسترس نیست",
+    "modalityBridgeVideoRuntimeInstall": "برای فعال‌کردن استخراج ویدیو، FFmpeg و ffprobe را در PATH سرور نصب کنید.",
+    "modalityBridgeVideoEnabled": "فعال‌کردن پل ویدیو",
+    "modalityBridgeVideoEnabledDesc": "وقتی مدل مقصد نمی‌تواند ویدیو را پردازش کند، بخش‌های ویدیو را با توضیحات فریم دارای زمان جایگزین کنید.",
+    "modalityBridgeVideoModel": "مدل توضیح فریم",
+    "modalityBridgeVideoModelInherited": "استفاده از مدل پل بینایی",
+    "modalityBridgeVideoFrameCount": "فریم در هر ویدیو",
+    "modalityBridgeVideoMaxVideos": "حداکثر ویدیو در هر درخواست",
     "modelRoutingDescriptionPlaceholder": "مدل‌های Route Opus را به ترکیب frontier هدایت کنید",
     "cliproxyapiFallbackCodes": "کدهای پشتیبان Cliproxyapi",
     "cliproxyapiFallbackDescription": "توضیحات پشتیبان Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "لینک همکاری",
     "dismissAriaLabel": "بستن"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute اکنون درون VS Code Copilot Chat اجرا می‌شود",
+    "description": "افزونه رایگان OmniCopilot را نصب کنید تا همه مدل‌های OmniRoute مستقیماً در انتخابگر مدل Copilot Chat که از قبل استفاده می‌کنید نمایش داده شوند.",
+    "cta": "دریافت افزونه",
+    "secondaryNote": "همچنین در Open VSX (Cursor، Windsurf، VSCodium…)",
+    "dismissAriaLabel": "بستن"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "آگهی <gateway-alias>/<model> شناسه‌های آینه‌ای در /v1/models برای مدل‌هایی که مالک قانونی آن‌ها هیچ اعتبار فعالی ندارد اما یک دروازه عبوری با اعتبار فعال آن‌ها را مسیریابی می‌کند. هشدار: در صورت فعال‌سازی جهانی، ورودی‌های کاتالوگ را برای تمام مشتریان اضافه می‌کند.",
   "radarPage": {
     "title": "کاتالوگ رادار",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "راه‌اندازی تأمین‌کننده",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "این صفحه فقط از localhost یا LAN قابل دسترسی است (LOCAL_ONLY).",
     "pollErrorStopped": "نظرسنجی متوقف شد: سرور درخواست را رد کرد (404/403).",
     "pollErrorTransient": "خطا در دریافت داده: تلاش مجدد خودکار.",
-    "degraded": "داده ناقص: منابع در دسترس نیست: {sources}",
-    "degraded.source.database": "پایگاه داده",
-    "degraded.source.circuitBreaker": "قطع‌کننده مدار",
-    "degraded.source.modelLockouts": "قفل‌های مدل",
-    "degraded.source.count": "تعداد اتصالات"
+    "degraded": {
+      "message": "داده ناقص: منابع در دسترس نیست: {sources}",
+      "source": {
+        "database": "پایگاه داده",
+        "circuitBreaker": "قطع‌کننده مدار",
+        "modelLockouts": "قفل‌های مدل",
+        "count": "تعداد اتصالات"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "درخواست‌ها را قبل از ارسال رد کنید زمانی که مدل هدف قابلیت‌های مورد نیاز (بینایی، ابزارها، خروجی ساختاریافته، پنجره زمینه) را ندارد. از درخواست‌های مستقیم تک‌تأمین‌کننده که فیلتر سازگاری لایه ترکیبی را دور می‌زنند، محافظت می‌کند.",
-  "capabilityFilter.visionMismatch": "ارائه‌دهنده برای این درخواست تصویر از بینایی پشتیبانی نمی‌کند",
-  "capabilityFilter.toolsMismatch": "ارائه‌دهنده از فراخوانی ابزار پشتیبانی نمی‌کند",
-  "capabilityFilter.structuredOutputMismatch": "ارائه‌دهنده خروجی ساختاریافته را پشتیبانی نمی‌کند",
-  "capabilityFilter.contextWindowMismatch": "درخواست از حد مجاز پنجره زمینه ارائه‌دهنده فراتر می‌رود",
   "publicSystem": {
     "notFound": {
       "title": "صفحه پیدا نشد",
@@ -13624,5 +13657,49 @@
     "hint": "زمانی که فعال شود، مدل‌های کشف‌شده در انتخاب‌های ارائه‌دهنده در سرتاسر OmniRoute ظاهر می‌شوند.",
     "updateFailed": "به‌روزرسانی ناموفق بود (HTTP {status})",
     "networkError": "خطای شبکه — نمی‌توان تنظیمات نمایان‌سازی ارائه‌دهنده را به‌روزرسانی کرد"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "ارائه‌دهنده برای این درخواست تصویر از بینایی پشتیبانی نمی‌کند",
+    "toolsMismatch": "ارائه‌دهنده از فراخوانی ابزار پشتیبانی نمی‌کند",
+    "structuredOutputMismatch": "ارائه‌دهنده خروجی ساختاریافته را پشتیبانی نمی‌کند",
+    "contextWindowMismatch": "درخواست از حد مجاز پنجره زمینه ارائه‌دهنده فراتر می‌رود"
   }
 }

@@ -303,6 +303,8 @@ export default function DefaultToolCard({
           text:
             (typeof data.error === "string" ? data.error : data.error?.message) ||
             t("failedToSave"),
+          // 422 from the container guard: the body is host-CLI guidance, not a failure.
+          containerEphemeralTarget: Boolean(data.containerEphemeralTarget),
         });
       }
     } catch (error) {
@@ -588,12 +590,16 @@ export default function DefaultToolCard({
           <div className="mt-2">
             {message && (
               <div
-                className={`flex items-center gap-2 px-2 py-1.5 rounded text-xs mb-2 ${message.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}
+                className={`flex gap-2 px-2 py-1.5 rounded text-xs mb-2 ${message.containerEphemeralTarget ? "items-start" : "items-center"} ${message.type === "success" ? "bg-green-500/10 text-green-600" : "bg-red-500/10 text-red-600"}`}
               >
                 <span className="material-symbols-outlined text-[14px]">
                   {message.type === "success" ? "check_circle" : "error"}
                 </span>
-                <span>{message.text}</span>
+                {/* The container refusal is a multi-line runbook — keep its line
+                    breaks instead of collapsing it into one unreadable line. */}
+                <span className={message.containerEphemeralTarget ? "whitespace-pre-line" : ""}>
+                  {message.text}
+                </span>
               </div>
             )}
             <div className="flex items-center gap-2">

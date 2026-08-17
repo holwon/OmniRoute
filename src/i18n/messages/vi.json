@@ -1736,6 +1736,8 @@
     "quotaShare": "Chia sẻ hạn mức",
     "discovery": "Khám phá",
     "freeProviderRankings": "Xếp hạng nhà cung cấp miễn phí",
+    "radar": "Radar",
+    "setup": "Thiết lập",
     "freeTiers": "Gói miễn phí",
     "gamification": "Trò chơi hóa",
     "leaderboard": "Bảng xếp hạng",
@@ -8018,7 +8020,7 @@
     "enableCredentialRedactionDesc": "Scrubs API keys, tokens, private keys, and JWTs from messages, tool calls, and responses.",
     "pricingAutoSyncDisabled": "Đã tắt đồng bộ hóa tự động",
     "pricingAutoSyncEnabled": "Đã bật đồng bộ hóa tự động",
-    "modalityBridgeIntro": "Kết nối nội dung đa phương thức với văn bản trước khi nó đến các mô hình chỉ văn bản. Hình ảnh đang hoạt động; Âm thanh đến với AudioBridge; Video đang trong lộ trình.",
+    "modalityBridgeIntro": "Chuyển nội dung đa phương thức thành văn bản trước khi nội dung đến các mô hình chỉ xử lý văn bản. Các cầu nối thị giác, âm thanh và video đều có sẵn và có thể cấu hình.",
     "modalityBridgeVisionTab": "Tầm Nhìn",
     "modalityBridgeAudioTab": "Âm thanh",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8042,8 @@
     "modalityBridgeAdvanced": "Nâng Cao",
     "modalityBridgeTimeoutMs": "Thời Gian Chờ (ms)",
     "modalityBridgeMaxImages": "Số hình ảnh tối đa mỗi yêu cầu",
+    "visionMaxCharsLabel": "Số ký tự mô tả tối đa",
+    "visionMaxCharsHint": "Giới hạn độ dài mô tả của mô hình thị giác. 0 = không giới hạn — tăng lên cho các tác vụ OCR nhiều chi tiết.",
     "modalityBridgeCacheEnabled": "Mô tả bộ nhớ đệm",
     "modalityBridgeCacheEnabledDesc": "Tái sử dụng mô tả cho các hình ảnh giống hệt nhau (khóa SHA-256, trong bộ nhớ).",
     "modalityBridgeCacheTtlMinutes": "Thời Gian Sống Bộ Nhớ Đệm (phút)",
@@ -8056,7 +8060,6 @@
     "modalityBridgeTestNoop": "Cầu không được kích hoạt (mô hình có thể hỗ trợ tầm nhìn một cách tự nhiên hoặc cầu đã bị vô hiệu hóa)",
     "modalityBridgeTestError": "Kiểm tra không thành công: {message}",
     "modalityBridgeAudioComingSoon": "Cầu nối Âm thanh (nói → văn bản qua /v1/audio/transcriptions) sẽ được phát hành trong bản tiếp theo. Các khóa cài đặt của nó đã được đặt trước.",
-    "modalityBridgeVideoComingSoon": "Video bridging (frame sampling + captioning) đang ở trong danh sách chờ — xem vấn đề #9760.",
     "modalityBridgeMovedTitle": "Vision Bridge đã được di chuyển",
     "modalityBridgeMovedBody": "Cài đặt Vision Bridge hiện đã có trên trang Modality Bridge chuyên dụng.",
     "modalityBridgeMovedCta": "Mở cài đặt Cầu Modality",
@@ -8072,6 +8075,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clip(s) đã được chuyển ngữ bởi {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge không được kích hoạt (mục tiêu có thể hỗ trợ âm thanh, không có nhà cung cấp STT nào được kết nối, hoặc cầu nối bị vô hiệu hóa)",
     "modalityBridgeAudioTestError": "Kiểm tra âm thanh không thành công: {message}",
+    "modalityBridgeVideoTitle": "Cầu nối video",
+    "modalityBridgeVideoDesc": "Lấy mẫu các khung hình video, mô tả chúng bằng mô hình thị giác rồi tiếp tục bằng mô hình văn bản đã chọn.",
+    "modalityBridgeVideoRuntimeReady": "Môi trường chạy đã sẵn sàng",
+    "modalityBridgeVideoRuntimeUnavailable": "Môi trường chạy không khả dụng",
+    "modalityBridgeVideoRuntimeInstall": "Cài đặt FFmpeg và ffprobe trong PATH của máy chủ để bật tính năng trích xuất video.",
+    "modalityBridgeVideoEnabled": "Bật Cầu nối video",
+    "modalityBridgeVideoEnabledDesc": "Thay thế các phần video bằng mô tả khung hình có dấu thời gian khi mô hình đích không thể xử lý video.",
+    "modalityBridgeVideoModel": "Mô hình mô tả khung hình",
+    "modalityBridgeVideoModelInherited": "Dùng mô hình của Cầu nối thị giác",
+    "modalityBridgeVideoFrameCount": "Số khung hình mỗi video",
+    "modalityBridgeVideoMaxVideos": "Số video tối đa mỗi yêu cầu",
     "modelRoutingDescriptionPlaceholder": "Định tuyến các mô hình Opus đến combo frontier",
     "cliproxyapiFallbackCodes": "Mã dự phòng Cliproxyapi",
     "cliproxyapiFallbackDescription": "Mô tả dự phòng Cliproxyapi",
@@ -12425,6 +12439,11 @@
       "rare": "Thành tích hiếm"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "Người ủng hộ Radar",
+        "description": "Đã xác minh nguồn dữ liệu trực tiếp dành cho người ủng hộ OmniRoute Radar",
+        "criteria": "Xác minh nguồn dữ liệu Radar trực tiếp đã được ký dành cho người ủng hộ."
+      },
       "first-token": {
         "name": "Token đầu tiên",
         "description": "Đã thực hiện yêu cầu API đầu tiên",
@@ -13069,6 +13088,13 @@
     "partnerLinkNote": "Partner link",
     "dismissAriaLabel": "Dismiss"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute giờ đây chạy ngay trong VS Code Copilot Chat",
+    "description": "Cài đặt tiện ích mở rộng OmniCopilot miễn phí và mọi mô hình OmniRoute sẽ xuất hiện ngay trong bộ chọn mô hình Copilot Chat mà bạn đang dùng.",
+    "cta": "Nhận tiện ích mở rộng",
+    "secondaryNote": "Cũng có trên Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Đóng"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Công bố các id phản chiếu &lt;gateway-alias&gt;/&lt;model&gt; trên /v1/models cho các mô hình có chủ sở hữu chuẩn không có thông tin xác thực hoạt động nhưng một cổng chuyển tiếp có thông tin xác thực hoạt động định tuyến được chúng. Cảnh báo: khi bật, số mục trong danh mục tăng lên với mọi client.",
   "radarPage": {
     "title": "Danh mục Radar",
@@ -13124,7 +13150,22 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers",
+    "intel": "Thông tin chuyên sâu"
   },
   "radarSetupPage": {
     "title": "Thiết lập nhà cung cấp",
@@ -13239,17 +13280,17 @@
     "pollErrorLocalOnly": "Trang này chỉ có thể truy cập từ localhost hoặc LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Đã dừng thăm dò: máy chủ đã từ chối yêu cầu (404/403).",
     "pollErrorTransient": "Lỗi khi lấy dữ liệu: tự động thử lại.",
-    "degraded": "Dữ liệu một phần: nguồn không khả dụng: {sources}",
-    "degraded.source.database": "Cơ Sở Dữ Liệu",
-    "degraded.source.circuitBreaker": "Cầu Dao Mạch",
-    "degraded.source.modelLockouts": "Khóa Mô Hình",
-    "degraded.source.count": "Số Lượng Kết Nối"
+    "degraded": {
+      "message": "Dữ liệu một phần: nguồn không khả dụng: {sources}",
+      "source": {
+        "database": "Cơ Sở Dữ Liệu",
+        "circuitBreaker": "Cầu Dao Mạch",
+        "modelLockouts": "Khóa Mô Hình",
+        "count": "Số Lượng Kết Nối"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Từ chối yêu cầu trước khi gửi đi khi mô hình đích thiếu các khả năng bắt buộc (thị giác, công cụ, đầu ra có cấu trúc, cửa sổ ngữ cảnh). Bảo vệ các yêu cầu trực tiếp đến một nhà cung cấp khi chúng bỏ qua bộ lọc tương thích của combo.",
-  "capabilityFilter.visionMismatch": "Nhà cung cấp không hỗ trợ thị giác cho yêu cầu hình ảnh này",
-  "capabilityFilter.toolsMismatch": "Nhà cung cấp không hỗ trợ gọi công cụ",
-  "capabilityFilter.structuredOutputMismatch": "Nhà cung cấp không hỗ trợ đầu ra có cấu trúc",
-  "capabilityFilter.contextWindowMismatch": "Yêu cầu vượt quá cửa sổ ngữ cảnh của nhà cung cấp",
   "publicSystem": {
     "notFound": {
       "title": "Không tìm thấy trang",
@@ -13624,5 +13665,82 @@
     "hint": "Khi được kích hoạt, các mô hình đã phát hiện sẽ xuất hiện trong các lựa chọn nhà cung cấp trên toàn bộ OmniRoute.",
     "updateFailed": "Cập nhật không thành công (HTTP {status})",
     "networkError": "Lỗi mạng — không thể cập nhật cài đặt hiển thị nhà cung cấp"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarIntelPage": {
+    "title": "Thông tin chuyên sâu Radar",
+    "subtitle": "Xếp hạng ELO do Radar quản lý và biến động thực tế của danh mục.",
+    "backToRadar": "Quay lại Radar",
+    "loading": "Đang tải thông tin chuyên sâu...",
+    "refresh": "Làm mới thông tin chuyên sâu",
+    "syncing": "Đang làm mới...",
+    "loadFailed": "Không thể làm mới thông tin chuyên sâu. Bộ nhớ đệm cục bộ đã xác minh gần nhất được giữ lại.",
+    "empty": "Chưa có bản chụp thông tin chuyên sâu đã xác minh.",
+    "supporterBadge": "Người ủng hộ Radar",
+    "methodology": "Phương pháp",
+    "eloMethod": "ELO, khởi tạo {initial}, K={factor}",
+    "freshness": "Độ mới của danh mục",
+    "ageDays": "{days, plural, one {# ngày tuổi} other {# ngày tuổi}}",
+    "trend": "Xu hướng danh mục",
+    "modelDelta": "{current} mô hình, +{added} / -{removed}",
+    "ranking": "Xếp hạng mô hình",
+    "noRankings": "Chưa có phép so sánh nào được xác nhận.",
+    "model": "Mô hình",
+    "category": "Danh mục",
+    "rating": "Điểm",
+    "matches": "Lượt so sánh",
+    "freshnessValues": {
+      "fresh": "Mới",
+      "aging": "Đang cũ dần",
+      "stale": "Đã cũ"
+    },
+    "trendValues": {
+      "growing": "Đang tăng",
+      "stable": "Ổn định",
+      "shrinking": "Đang giảm"
+    }
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Nhà cung cấp không hỗ trợ thị giác cho yêu cầu hình ảnh này",
+    "toolsMismatch": "Nhà cung cấp không hỗ trợ gọi công cụ",
+    "structuredOutputMismatch": "Nhà cung cấp không hỗ trợ đầu ra có cấu trúc",
+    "contextWindowMismatch": "Yêu cầu vượt quá cửa sổ ngữ cảnh của nhà cung cấp"
   }
 }

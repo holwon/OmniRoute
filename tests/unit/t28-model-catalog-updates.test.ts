@@ -24,6 +24,8 @@ test("T28: antigravity static catalog exposes only callable Gemini tier IDs", ()
   const staticIds = (getStaticModelsForProvider("antigravity") || []).map((m) => m.id);
 
   assert.ok(!staticIds.includes("gemini-3-pro-preview"));
+  assert.ok(staticIds.includes("gemini-3.7-flash-high"));
+  assert.ok(staticIds.includes("gemini-3.7-flash-medium"));
   assert.ok(staticIds.includes("gemini-3.6-flash-high"));
   assert.ok(staticIds.includes("gemini-3.6-flash-medium"));
   assert.ok(staticIds.includes("gemini-3.6-flash-low"));

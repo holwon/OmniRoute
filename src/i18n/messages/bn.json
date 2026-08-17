@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "বার্তা, টুল কল এবং প্রতিক্রিয়া থেকে API কী, টোকেন, প্রাইভেট কী এবং JWT মুছে ফেলে।",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "বহুমাত্রিক কন্টেন্টকে টেক্সটে সংযুক্ত করুন যাতে এটি টেক্সট-শুধু মডেলগুলিতে পৌঁছানোর আগে। ভিশন লাইভ; অডিও অডিওব্রিজের সাথে আসে; ভিডিও রোডম্যাপে রয়েছে।",
+    "modalityBridgeIntro": "শুধু-টেক্সট মডেলে পৌঁছানোর আগে মাল্টিমোডাল বিষয়বস্তুকে টেক্সটে রূপান্তর করুন। ভিশন, অডিও ও ভিডিও ব্রিজ উপলভ্য এবং কনফিগারযোগ্য।",
     "modalityBridgeVisionTab": "দৃষ্টি",
     "modalityBridgeAudioTab": "অডিও",
     "modalityBridgeVideoTab": "ভিডিও",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "অগ্রসর",
     "modalityBridgeTimeoutMs": "টাইমআউট (মি.সে.)",
     "modalityBridgeMaxImages": "প্রতি অনুরোধে সর্বাধিক ছবি",
+    "visionMaxCharsLabel": "সর্বাধিক বর্ণনা অক্ষর",
+    "visionMaxCharsHint": "দৃষ্টি মডেলের বর্ণনার দৈর্ঘ্য সীমাবদ্ধ করুন। 0 = অসীম — বিস্তারিত-ভিত্তিক OCR কাজের জন্য বাড়ান।",
     "modalityBridgeCacheEnabled": "ক্যাশের বর্ণনা",
     "modalityBridgeCacheEnabledDesc": "একই চিত্রের জন্য বর্ণনা পুনরায় ব্যবহার করুন (SHA-256 কীযুক্ত, মেমরিতে)।",
     "modalityBridgeCacheTtlMinutes": "ক্যাশে TTL (মিনিট)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "ব্রিজ সক্রিয় হয়নি (মডেলটি নেটিভভাবে ভিশন সমর্থন করতে পারে অথবা ব্রিজ অক্ষম করা হয়েছে)",
     "modalityBridgeTestError": "পরীক্ষা ব্যর্থ: {message}",
     "modalityBridgeAudioComingSoon": "অডিও ব্রিজ (স্পিচ → টেক্সট মাধ্যমে /v1/audio/transcriptions) পরবর্তী রিলিজে আসছে। এর সেটিংস কী ইতিমধ্যেই সংরক্ষিত।",
-    "modalityBridgeVideoComingSoon": "ভিডিও ব্রিজিং (ফ্রেম স্যাম্পলিং + ক্যাপশনিং) ব্যাকলগে রয়েছে — সমস্যা #9760 দেখুন।",
     "modalityBridgeMovedTitle": "ভিশন ব্রিজ স্থানান্তরিত হয়েছে",
     "modalityBridgeMovedBody": "ভিশন ব্রিজের সেটিংস এখন নির্দিষ্ট মডালিটি ব্রিজ পৃষ্ঠায় লাইভ।",
     "modalityBridgeMovedCta": "মোডালিটি ব্রিজ সেটিংস খুলুন",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "অডিও ব্রিজ ঠিক আছে — {count} ক্লিপ(গুলি) {model} দ্বারা ট্রান্সক্রাইব করা হয়েছে",
     "modalityBridgeAudioTestNoop": "অডিও ব্রিজ সক্রিয় হয়নি (লক্ষ্য অডিও সমর্থন করতে পারে, কোন STT প্রদানকারী সংযুক্ত নয়, অথবা ব্রিজ নিষ্ক্রিয় রয়েছে)",
     "modalityBridgeAudioTestError": "অডিও পরীক্ষা ব্যর্থ: {message}",
+    "modalityBridgeVideoTitle": "ভিডিও ব্রিজ",
+    "modalityBridgeVideoDesc": "ভিডিও ফ্রেমের নমুনা নিন, ভিশন মডেল দিয়ে সেগুলো বর্ণনা করুন এবং নির্বাচিত টেক্সট মডেল দিয়ে চালিয়ে যান।",
+    "modalityBridgeVideoRuntimeReady": "রানটাইম প্রস্তুত",
+    "modalityBridgeVideoRuntimeUnavailable": "রানটাইম উপলভ্য নয়",
+    "modalityBridgeVideoRuntimeInstall": "ভিডিও এক্সট্র্যাকশন চালু করতে সার্ভারের PATH-এ FFmpeg ও ffprobe ইনস্টল করুন।",
+    "modalityBridgeVideoEnabled": "ভিডিও ব্রিজ চালু করুন",
+    "modalityBridgeVideoEnabledDesc": "লক্ষ্য মডেল ভিডিও প্রক্রিয়া করতে না পারলে ভিডিও অংশগুলো সময়চিহ্নযুক্ত ফ্রেমের বর্ণনা দিয়ে প্রতিস্থাপন করুন।",
+    "modalityBridgeVideoModel": "ফ্রেম বর্ণনার মডেল",
+    "modalityBridgeVideoModelInherited": "ভিশন ব্রিজ মডেল ব্যবহার করুন",
+    "modalityBridgeVideoFrameCount": "প্রতি ভিডিওতে ফ্রেম",
+    "modalityBridgeVideoMaxVideos": "প্রতি অনুরোধে সর্বাধিক ভিডিও",
     "modelRoutingDescriptionPlaceholder": "ফ্রন্টিয়ার কম্বোর জন্য রুট অপাস মডেলগুলি",
     "cliproxyapiFallbackCodes": "Cliproxyapi ফ্যালব্যাক কোডস",
     "cliproxyapiFallbackDescription": "ক্লিপ্রক্সি এপিআই ফ্যালব্যাক বর্ণনা",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "পার্টনার লিঙ্ক",
     "dismissAriaLabel": "খারিজ করুন"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute এখন VS Code Copilot Chat-এর ভেতরে চলে",
+    "description": "বিনামূল্যের OmniCopilot এক্সটেনশন ইনস্টল করুন এবং আপনার ইতিমধ্যে ব্যবহৃত Copilot Chat মডেল পিকারেই সব OmniRoute মডেল দেখা যাবে।",
+    "cta": "এক্সটেনশনটি নিন",
+    "secondaryNote": "Open VSX-এও পাওয়া যায় (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "খারিজ করুন"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "/gateway-alias/<model> মিরর আইডি গুলি /v1/models এ বিজ্ঞাপন দিন তাদের জন্য মডেল যাদের ক্যানোনিকাল মালিকের কোনো সক্রিয় শংসাপত্র নেই কিন্তু একটি পাসথ্রু গেটওয়ে তাদের সক্রিয় শংসাপত্র দ্বারা রাউট করে। সতর্কতা: এটি বিশ্বব্যাপী সক্ষম হলে সমস্ত ক্লায়েন্টের জন্য ক্যাটালগ এন্ট্রি যোগ করে।",
   "radarPage": {
     "title": "রাডার ক্যাটালগ",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "প্রদানকারী সেটআপ",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "এই পৃষ্ঠাটি শুধুমাত্র localhost বা LAN থেকে অ্যাক্সেসযোগ্য (LOCAL_ONLY)।",
     "pollErrorStopped": "পোলিং বন্ধ: সার্ভার অনুরোধ প্রত্যাখ্যান করেছে (404/403)।",
     "pollErrorTransient": "ডেটা আনতে ত্রুটি: স্বয়ংক্রিয়ভাবে পুনরায় চেষ্টা করা হচ্ছে।",
-    "degraded": "আংশিক ডেটা: অনুপলব্ধ উৎস: {sources}",
-    "degraded.source.database": "ডাটাবেস",
-    "degraded.source.circuitBreaker": "সার্কিট ব্রেকার",
-    "degraded.source.modelLockouts": "মডেল লকআউট",
-    "degraded.source.count": "সংযোগ সংখ্যা"
+    "degraded": {
+      "message": "আংশিক ডেটা: অনুপলব্ধ উৎস: {sources}",
+      "source": {
+        "database": "ডাটাবেস",
+        "circuitBreaker": "সার্কিট ব্রেকার",
+        "modelLockouts": "মডেল লকআউট",
+        "count": "সংযোগ সংখ্যা"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "লক্ষ্য মডেলের প্রয়োজনীয় সক্ষমতা (দৃষ্টি, সরঞ্জাম, কাঠামোবদ্ধ আউটপুট, প্রসঙ্গ উইন্ডো) অনুপস্থিত থাকলে প্রেরণের আগে অনুরোধগুলি প্রত্যাখ্যান করুন। এটি কম্বো-লেয়ার সামঞ্জস্য ফিল্টারকে বাইপাস করা সরাসরি একক-প্রদানকারী অনুরোধগুলি রক্ষা করে।",
-  "capabilityFilter.visionMismatch": "এই চিত্রের অনুরোধের জন্য প্রদানকারী ভিশন সমর্থন করে না",
-  "capabilityFilter.toolsMismatch": "প্রদানকারী টুল কলিং সমর্থন করে না",
-  "capabilityFilter.structuredOutputMismatch": "প্রোভাইডার স্ট্রাকচারড আউটপুট সমর্থন করে না",
-  "capabilityFilter.contextWindowMismatch": "অনুরোধটি প্রদানকারীর প্রসঙ্গ উইন্ডো অতিক্রম করেছে",
   "publicSystem": {
     "notFound": {
       "title": "পৃষ্ঠা পাওয়া যায়নি",
@@ -13624,5 +13657,49 @@
     "hint": "যখন সক্ষম করা হয়, আবিষ্কৃত মডেলগুলি OmniRoute জুড়ে প্রদানকারী নির্বাচনে প্রদর্শিত হয়।",
     "updateFailed": "আপডেট করতে ব্যর্থ (HTTP {status})",
     "networkError": "নেটওয়ার্ক ত্রুটি — প্রদানকারী এক্সপোজার সেটিং আপডেট করা যায়নি"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "এই চিত্রের অনুরোধের জন্য প্রদানকারী ভিশন সমর্থন করে না",
+    "toolsMismatch": "প্রদানকারী টুল কলিং সমর্থন করে না",
+    "structuredOutputMismatch": "প্রোভাইডার স্ট্রাকচারড আউটপুট সমর্থন করে না",
+    "contextWindowMismatch": "অনুরোধটি প্রদানকারীর প্রসঙ্গ উইন্ডো অতিক্রম করেছে"
   }
 }

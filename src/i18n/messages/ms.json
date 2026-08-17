@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Membersihkan kunci API, token, kunci peribadi, dan JWT daripada mesej, panggilan alat, dan respons.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Jambatan kandungan multimodal kepada teks sebelum ia sampai ke model hanya teks. Visi sedang aktif; Audio tiba dengan AudioBridge; Video ada dalam pelan.",
+    "modalityBridgeIntro": "Tukarkan kandungan berbilang mod kepada teks sebelum sampai kepada model teks sahaja. Jambatan penglihatan, audio dan video tersedia serta boleh dikonfigurasi.",
     "modalityBridgeVisionTab": "Visi",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Lanjutan",
     "modalityBridgeTimeoutMs": "Masa Tamat (ms)",
     "modalityBridgeMaxImages": "Max imej setiap permintaan",
+    "visionMaxCharsLabel": "Max karakter penerangan",
+    "visionMaxCharsHint": "Hadkan panjang penerangan model visi. 0 = tidak terhad — tingkatkan untuk tugas OCR yang memerlukan butiran.",
     "modalityBridgeCacheEnabled": "Deskripsi cache",
     "modalityBridgeCacheEnabledDesc": "Gunakan semula penerangan untuk imej yang sama (kunci SHA-256, dalam ingatan).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minit)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Jambatan tidak diaktifkan (model mungkin menyokong visi secara asli atau jambatan dinyahaktifkan)",
     "modalityBridgeTestError": "Ujian gagal: {message}",
     "modalityBridgeAudioComingSoon": "Jambatan Audio (ucapan → teks melalui /v1/audio/transcriptions) akan dilancarkan dalam versi seterusnya. Kunci tetapan sudah pun ditempah.",
-    "modalityBridgeVideoComingSoon": "Jambatan video (pengambilan bingkai + penulisan) berada dalam senarai tunggu — lihat isu #9760.",
     "modalityBridgeMovedTitle": "Jambatan Visi dipindahkan",
     "modalityBridgeMovedBody": "Tetapan Vision Bridge kini tersedia di halaman Modality Bridge yang khusus.",
     "modalityBridgeMovedCta": "Buka tetapan Jambatan Modality",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Jambatan Audio OK — {count} klip telah ditranskripsikan oleh {model}",
     "modalityBridgeAudioTestNoop": "Audio Bridge tidak diaktifkan (sasaran mungkin menyokong audio, tiada penyedia STT yang disambungkan, atau jambatan dinyahdayakan)",
     "modalityBridgeAudioTestError": "Ujian audio gagal: {message}",
+    "modalityBridgeVideoTitle": "Jambatan Video",
+    "modalityBridgeVideoDesc": "Ambil sampel bingkai video, huraikannya dengan model penglihatan dan teruskan dengan model teks yang dipilih.",
+    "modalityBridgeVideoRuntimeReady": "Runtime sedia",
+    "modalityBridgeVideoRuntimeUnavailable": "Runtime tidak tersedia",
+    "modalityBridgeVideoRuntimeInstall": "Pasang FFmpeg dan ffprobe dalam PATH pelayan untuk mendayakan pengekstrakan video.",
+    "modalityBridgeVideoEnabled": "Dayakan Jambatan Video",
+    "modalityBridgeVideoEnabledDesc": "Gantikan bahagian video dengan huraian bingkai bercap masa apabila model sasaran tidak dapat memproses video.",
+    "modalityBridgeVideoModel": "Model huraian bingkai",
+    "modalityBridgeVideoModelInherited": "Gunakan model Jambatan Penglihatan",
+    "modalityBridgeVideoFrameCount": "Bingkai bagi setiap video",
+    "modalityBridgeVideoMaxVideos": "Video maksimum bagi setiap permintaan",
     "modelRoutingDescriptionPlaceholder": "Route Opus models ke frontier combo",
     "cliproxyapiFallbackCodes": "Kod Sandaran Cliproxyapi",
     "cliproxyapiFallbackDescription": "Deskripsi Fallback Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Pautan rakan kongsi",
     "dismissAriaLabel": "Tutup"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute kini berfungsi dalam VS Code Copilot Chat",
+    "description": "Pasang sambungan OmniCopilot percuma dan setiap model OmniRoute akan muncul terus dalam pemilih model Copilot Chat yang anda sudah gunakan.",
+    "cta": "Dapatkan Sambungan",
+    "secondaryNote": "Juga di Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Tutup"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Iklankan <gateway-alias>/<model> mirror ids pada /v1/models untuk model yang pemilik kanoniknya tiada kelayakan aktif tetapi gateway passthrough dengan kelayakan aktif mengarahkannya. Amaran: menambah entri katalog untuk semua klien apabila diaktifkan secara global.",
   "radarPage": {
     "title": "Katalog Radar",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Penyediaan Penyedia",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Halaman ini hanya boleh diakses dari localhost atau LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Polling dihentikan: pelayan menolak permintaan (404/403).",
     "pollErrorTransient": "Ralat mengambil data: cuba semula secara automatik.",
-    "degraded": "Data separa: sumber tidak tersedia: {sources}",
-    "degraded.source.database": "Pangkalan Data",
-    "degraded.source.circuitBreaker": "Circuit Breaker",
-    "degraded.source.modelLockouts": "Penguncian Model",
-    "degraded.source.count": "Bilangan Sambungan"
+    "degraded": {
+      "message": "Data separa: sumber tidak tersedia: {sources}",
+      "source": {
+        "database": "Pangkalan Data",
+        "circuitBreaker": "Circuit Breaker",
+        "modelLockouts": "Penguncian Model",
+        "count": "Bilangan Sambungan"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Tolak permintaan sebelum penghantaran apabila model sasaran tidak mempunyai keupayaan yang diperlukan (penglihatan, alat, output terstruktur, tetingkap konteks). Melindungi permintaan penyedia tunggal secara langsung yang mengabaikan penapis keserasian lapisan gabungan.",
-  "capabilityFilter.visionMismatch": "Penyedia tidak menyokong penglihatan untuk permintaan imej ini",
-  "capabilityFilter.toolsMismatch": "Penyedia tidak menyokong panggilan alat",
-  "capabilityFilter.structuredOutputMismatch": "Penyedia tidak menyokong output berstruktur",
-  "capabilityFilter.contextWindowMismatch": "Permintaan melebihi tetingkap konteks penyedia",
   "publicSystem": {
     "notFound": {
       "title": "Halaman tidak ditemui",
@@ -13624,5 +13657,49 @@
     "hint": "Apabila diaktifkan, model yang ditemui akan muncul dalam pilihan penyedia di seluruh OmniRoute.",
     "updateFailed": "Gagal untuk mengemas kini (HTTP {status})",
     "networkError": "Ralat rangkaian — tidak dapat mengemas kini tetapan pendedahan penyedia"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Penyedia tidak menyokong penglihatan untuk permintaan imej ini",
+    "toolsMismatch": "Penyedia tidak menyokong panggilan alat",
+    "structuredOutputMismatch": "Penyedia tidak menyokong output berstruktur",
+    "contextWindowMismatch": "Permintaan melebihi tetingkap konteks penyedia"
   }
 }

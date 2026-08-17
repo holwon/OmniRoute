@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "메시지, 도구 호출 및 응답에서 API 키, 토큰, 개인 키, JWT를 제거합니다.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "텍스트 전용 모델에 도달하기 전에 다중 모드 콘텐츠를 텍스트로 변환합니다. 비전은 실시간이며, 오디오는 AudioBridge로 도착하고, 비디오는 로드맵에 있습니다.",
+    "modalityBridgeIntro": "멀티모달 콘텐츠가 텍스트 전용 모델에 도달하기 전에 텍스트로 변환합니다. 비전, 오디오 및 비디오 브리지를 사용하고 구성할 수 있습니다.",
     "modalityBridgeVisionTab": "비전",
     "modalityBridgeAudioTab": "오디오",
     "modalityBridgeVideoTab": "비디오",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "고급",
     "modalityBridgeTimeoutMs": "타임아웃 (ms)",
     "modalityBridgeMaxImages": "요청당 최대 이미지 수",
+    "visionMaxCharsLabel": "최대 설명 문자 수",
+    "visionMaxCharsHint": "비전 모델의 설명 길이를 제한합니다. 0 = 무제한 — 세부 정보가 많은 OCR 작업에 대해 늘리세요.",
     "modalityBridgeCacheEnabled": "캐시 설명",
     "modalityBridgeCacheEnabledDesc": "동일한 이미지에 대한 설명 재사용 (SHA-256 키 기반, 메모리 내).",
     "modalityBridgeCacheTtlMinutes": "캐시 TTL (분)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "브리지가 활성화되지 않았습니다(모델이 기본적으로 비전을 지원하거나 브리지가 비활성화되어 있을 수 있습니다)",
     "modalityBridgeTestError": "테스트 실패: {message}",
     "modalityBridgeAudioComingSoon": "오디오 브릿지(음성 → 텍스트 via /v1/audio/transcriptions)는 다음 릴리스에 포함됩니다. 설정 키는 이미 예약되었습니다.",
-    "modalityBridgeVideoComingSoon": "비디오 브리징(프레임 샘플링 + 캡셔닝)은 백로그에 있습니다 — 이슈 #9760을 참조하세요.",
     "modalityBridgeMovedTitle": "비전 브리지 이동됨",
     "modalityBridgeMovedBody": "Vision Bridge 설정이 이제 전용 Modality Bridge 페이지에 있습니다.",
     "modalityBridgeMovedCta": "모달리티 브리지 설정 열기",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "오디오 브리지 확인 — {count} 클립이 {model}에 의해 전사되었습니다",
     "modalityBridgeAudioTestNoop": "오디오 브리지가 활성화되지 않았습니다(대상이 오디오를 지원할 수 있지만 STT 공급자가 연결되어 있지 않거나 브리지가 비활성화되어 있습니다)",
     "modalityBridgeAudioTestError": "오디오 테스트 실패: {message}",
+    "modalityBridgeVideoTitle": "비디오 브리지",
+    "modalityBridgeVideoDesc": "비디오 프레임을 샘플링하고 비전 모델로 설명한 다음 선택한 텍스트 모델로 계속 처리합니다.",
+    "modalityBridgeVideoRuntimeReady": "런타임 준비 완료",
+    "modalityBridgeVideoRuntimeUnavailable": "런타임을 사용할 수 없음",
+    "modalityBridgeVideoRuntimeInstall": "비디오 추출을 사용하려면 서버의 PATH에 FFmpeg와 ffprobe를 설치하세요.",
+    "modalityBridgeVideoEnabled": "비디오 브리지 사용",
+    "modalityBridgeVideoEnabledDesc": "대상 모델이 비디오를 처리할 수 없으면 비디오 부분을 타임스탬프가 있는 프레임 설명으로 바꿉니다.",
+    "modalityBridgeVideoModel": "프레임 설명 모델",
+    "modalityBridgeVideoModelInherited": "비전 브리지 모델 상속",
+    "modalityBridgeVideoFrameCount": "비디오당 프레임 수",
+    "modalityBridgeVideoMaxVideos": "요청당 최대 비디오 수",
     "modelRoutingDescriptionPlaceholder": "프론티어 콤보로 Opus 모델 라우팅",
     "cliproxyapiFallbackCodes": "Cliproxyapi 대체 코드",
     "cliproxyapiFallbackDescription": "Cliproxyapi 대체 설명",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "파트너 링크",
     "dismissAriaLabel": "닫기"
   },
+  "vscodeCopilotBanner": {
+    "title": "이제 OmniRoute가 VS Code Copilot Chat 안에서 실행됩니다",
+    "description": "무료 OmniCopilot 확장 프로그램을 설치하면 이미 사용 중인 Copilot Chat 모델 선택기에 모든 OmniRoute 모델이 바로 나타납니다.",
+    "cta": "확장 프로그램 받기",
+    "secondaryNote": "Open VSX(Cursor, Windsurf, VSCodium 등)에서도 이용 가능",
+    "dismissAriaLabel": "닫기"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "<gateway-alias>/<model> 미러 ID를 /v1/models에서 광고합니다. 이는 정식 소유자가 활성 자격 증명이 없지만 패스스루 게이트웨이가 활성 자격 증명으로 라우팅하는 모델에 해당합니다. 경고: 전역적으로 활성화되면 모든 클라이언트에 대한 카탈로그 항목이 추가됩니다.",
   "radarPage": {
     "title": "레이더 카탈로그",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "제공자 설정",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "이 페이지는 localhost 또는 LAN에서만 접근 가능합니다(LOCAL_ONLY).",
     "pollErrorStopped": "폴링 중지됨: 서버가 요청을 거부했습니다(404/403).",
     "pollErrorTransient": "데이터 가져오기 오류: 자동으로 재시도합니다.",
-    "degraded": "부분 데이터: 사용할 수 없는 소스: {sources}",
-    "degraded.source.database": "데이터베이스",
-    "degraded.source.circuitBreaker": "회로 차단기",
-    "degraded.source.modelLockouts": "모델 잠금",
-    "degraded.source.count": "연결 수"
+    "degraded": {
+      "message": "부분 데이터: 사용할 수 없는 소스: {sources}",
+      "source": {
+        "database": "데이터베이스",
+        "circuitBreaker": "회로 차단기",
+        "modelLockouts": "모델 잠금",
+        "count": "연결 수"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "대상 모델에 필수 기능(비전, 도구, 구조화된 출력, 컨텍스트 창)이 부족할 경우 요청을 발송 전에 거부합니다. 콤보 레이어 호환성 필터를 우회하는 직접 단일 공급자 요청을 보호합니다.",
-  "capabilityFilter.visionMismatch": "제공자가 이 이미지 요청에 대한 비전을 지원하지 않습니다.",
-  "capabilityFilter.toolsMismatch": "공급자가 도구 호출을 지원하지 않습니다.",
-  "capabilityFilter.structuredOutputMismatch": "제공자가 구조화된 출력을 지원하지 않습니다",
-  "capabilityFilter.contextWindowMismatch": "요청이 공급자 컨텍스트 창을 초과했습니다",
   "publicSystem": {
     "notFound": {
       "title": "페이지를 찾을 수 없습니다",
@@ -13624,5 +13657,49 @@
     "hint": "활성화되면 발견된 모델이 OmniRoute 전역의 공급자 선택 목록에 나타납니다.",
     "updateFailed": "업데이트 실패 (HTTP {status})",
     "networkError": "네트워크 오류 — 공급자 노출 설정을 업데이트할 수 없습니다."
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "제공자가 이 이미지 요청에 대한 비전을 지원하지 않습니다.",
+    "toolsMismatch": "공급자가 도구 호출을 지원하지 않습니다.",
+    "structuredOutputMismatch": "제공자가 구조화된 출력을 지원하지 않습니다",
+    "contextWindowMismatch": "요청이 공급자 컨텍스트 창을 초과했습니다"
   }
 }

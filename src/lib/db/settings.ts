@@ -212,7 +212,9 @@ export async function getSettings() {
     idempotencyWindowMs: 5000,
     wsAuth: false,
     maxBodySizeMb: requestBodyLimitMbFromEnv(process.env.MAX_BODY_SIZE_BYTES),
-    debugMode: true,
+    // #10312: opt-in only — a fresh install (or one missing the persisted key)
+    // must not run in debug mode; installs that persisted `true` keep it.
+    debugMode: false,
     // Opt-in diagnostic: when true, the chat handler emits a `log.debug("TOOLS", …)`
     // line per request summarizing tool count + MCP/hosted/client source breakdown.
     logToolSources: false,

@@ -97,6 +97,15 @@ const AGENT_DEFINITIONS: Omit<CliAgentInfo, "version" | "installed">[] = [
     protocol: "stdio",
   },
   {
+    id: "zcode",
+    name: "ZCode (GLM Coding Plan)",
+    binary: "zcode",
+    versionCommand: "zcode --version",
+    providerAlias: "zcode",
+    spawnArgs: ["app-server"],
+    protocol: "stdio",
+  },
+  {
     id: "opencode",
     name: "OpenCode",
     binary: "opencode",

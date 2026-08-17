@@ -5468,14 +5468,77 @@ paths:
     get:
       tags: [System]
       summary: Get Modality Bridge telemetry
-      description: In-memory per-modality bridge counters (bridged, cacheHits, failures, lastUsedAt). Counters reset on process restart.
+      description: In-memory per-modality bridge counters (attempts, successes, bridged, cacheHits, failures, totalLatencyMs, latencySamples, averageLatencyMs, lastUsedAt). The bridged field is the backward-compatible success count. Latency averages include sampled operations only; an unsampled Vision or Audio operation does not fabricate a zero-millisecond sample. Counters reset on process restart.
       security:
         - ManagementSessionAuth: []
       responses:
         "200":
-          description: Per-modality bridge stats (vision, audio)
+          description: Per-modality bridge stats (vision, audio, video)
         "401":
           description: Unauthorized
+
+  /api/modality-bridge/video/runtime:
+    get:
+      x-loopback-only: true
+      tags: [System]
+      summary: Get Video Bridge runtime status
+      description: Requires trusted loopback locality before authentication or probing, then management authentication. Returns sanitized FFmpeg and ffprobe availability and versions. The response never contains commands, paths, or stderr.
+      security:
+        - ManagementSessionAuth: []
+      responses:
+        "200":
+          description: Video Bridge runtime availability
+        "401":
+          description: Unauthorized
+        "403":
+          description: Localhost access required
+
+  /api/modality-bridge/video/extract:
+    post:
+      x-loopback-only: true
+      tags: [System]
+      summary: Extract bounded Video Bridge frames through the internal broker
+      description: Internal per-process-authenticated trusted-loopback broker. Accepts at most 50 MiB of video bytes; URLs, paths, executable names, and command arguments are not part of the contract. The body pipeline and streamed handler reader both enforce the input cap. The broker applies fixed FFmpeg/ffprobe confinement, a single extraction slot with four pending jobs/100 MiB queued input, a 4 MiB per-frame cap, and a 32 MiB total response cap. This is not a public upload API.
+      security: []
+      parameters:
+        - in: query
+          name: frames
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 16
+      requestBody:
+        required: true
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+              maxLength: 52428800
+      responses:
+        "200":
+          description: Sanitized duration and bounded JPEG data-URI frames
+        "400":
+          description: Invalid fixed broker contract
+        "403":
+          description: Authenticated trusted-loopback broker identity required
+        "413":
+          description: Input exceeds the 50 MiB byte limit
+        "422":
+          description: Media rejected or extraction failed
+        "499":
+          description: Client request aborted
+        "503":
+          description: Queue capacity is exhausted, or FFmpeg/ffprobe is unavailable on PATH
+          headers:
+            Retry-After:
+              description: Present with value 1 when queue capacity is exhausted
+              schema:
+                type: integer
+                minimum: 1
+        "504":
+          description: Fixed 120-second broker extraction deadline exceeded
 
   /api/cache/stats:
     get:
@@ -6840,9 +6903,18 @@ paths:
         - Images
       summary: Document OCR
       description: >-
-        Mistral OCR–compatible document OCR endpoint. Accepts a JSON body
-        referencing a document/image and returns extracted text. Success
-        responses carry the `X-OmniRoute-*` cost-telemetry headers.
+        Multi-provider document OCR endpoint (Mistral OCR–compatible request
+        and response shape). Accepts a JSON body referencing a document/image
+        and returns extracted text. `model` selects the provider via a
+        `provider/model` prefix (e.g. `mistral/mistral-ocr-latest`,
+        `azure-document-intelligence/prebuilt-read`,
+        `vertex-deepseek-ocr/deepseek-ocr-maas`); a bare model id (e.g.
+        `mistral-ocr-latest`) resolves to its registered provider, and an
+        omitted `model` defaults to Mistral. Azure Document Intelligence is
+        asynchronous upstream — the handler polls the returned operation
+        until it succeeds or fails before responding, so this endpoint can
+        take longer to return for that provider. Success responses carry the
+        `X-OmniRoute-*` cost-telemetry headers.
       security:
         - BearerAuth: []
       requestBody:
@@ -6854,6 +6926,12 @@ paths:
               properties:
                 model:
                   type: string
+                  description: >-
+                    `provider/model` id or bare model id. Registered ids:
+                    `mistral/mistral-ocr-latest`,
+                    `azure-document-intelligence/prebuilt-read`,
+                    `vertex-deepseek-ocr/deepseek-ocr-maas`. Defaults to
+                    `mistral-ocr-latest` when omitted.
                 document:
                   type: object
       responses:

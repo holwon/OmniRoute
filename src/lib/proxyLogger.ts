@@ -105,6 +105,45 @@ function loadFromDb() {
 
 loadFromDb();
 
+// Default-off override that restores the verbose [ProxyEgress] console line (raw
+// client/egress IPs + account prefix). Kept OFF by default so the process log leaks
+// neither IPs nor the account prefix. Deliberately NOT coupled to debugMode
+// (src/lib/db/settings.ts defaults debugMode to true) — this verbosity is opt-in only.
+// Storage (in-memory ring buffer + SQLite) is untouched and always keeps full IPs.
+const PROXY_LOG_INCLUDE_IPS =
+  process.env.PROXY_LOG_INCLUDE_IPS === "true" ||
+  process.env.PROXY_LOG_INCLUDE_IPS === "1";
+
+/**
+ * Pure formatter for the [ProxyEgress] process-log line (#10348). At the default level it
+ * emits a short, IP/prefix-free summary; when details are opted in it restores the full
+ * verbose line including client/egress IPs and the account. Extracted as a separate
+ * function so it is unit-testable without patching console.log and so the change never
+ * grows logProxyEvent itself.
+ */
+export function formatProxyEgressConsoleLine(params: {
+  provider: string | null;
+  account: string | null;
+  clientIp: string | null;
+  egressIp: string | null;
+  level: string;
+  proxyHost: string | null | undefined;
+  status: string;
+  includeDetails?: boolean;
+}): string {
+  const provider = params.provider || "-";
+  const status = params.status;
+  if (!params.includeDetails) {
+    return `[ProxyEgress] ${provider} status=${status}`;
+  }
+  const proxy = params.proxyHost ? `:${params.proxyHost}` : "";
+  return (
+    `[ProxyEgress] ${provider}/${params.account || "-"} ` +
+    `in=${params.clientIp || "?"} out=${params.egressIp || "?"} ` +
+    `proxy=${params.level}${proxy} status=${status}`
+  );
+}
+
 // ──────────────── Log a proxy event ────────────────
 
 export function logProxyEvent(entry: ProxyLogInput) {
@@ -131,9 +170,16 @@ export function logProxyEvent(entry: ProxyLogInput) {
   // IP each account is entering (clientIp) and leaving (egressIp) by.
   if (log.proxy || log.egressIp) {
     console.log(
-      `[ProxyEgress] ${log.provider || "-"}/${log.account || "-"} ` +
-        `in=${log.clientIp || "?"} out=${log.egressIp || "?"} ` +
-        `proxy=${log.level}${log.proxy ? `:${log.proxy.host}` : ""} status=${log.status}`
+      formatProxyEgressConsoleLine({
+        provider: log.provider,
+        account: log.account,
+        clientIp: log.clientIp,
+        egressIp: log.egressIp,
+        level: log.level,
+        proxyHost: log.proxy?.host,
+        status: log.status,
+        includeDetails: PROXY_LOG_INCLUDE_IPS,
+      })
     );
   }
 

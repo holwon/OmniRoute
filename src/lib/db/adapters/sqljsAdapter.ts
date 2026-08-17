@@ -127,10 +127,62 @@ export async function createSqlJsAdapter(filePath: string): Promise<SqliteAdapte
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let _isOpen = true;
 
+  /**
+   * Writes the whole database image out atomically: temp file in the SAME
+   * directory, fsync, then `rename()` over the destination.
+   *
+   * WHY NOT `writeFileSync(filePath, …)` DIRECTLY
+   * ---------------------------------------------
+   * sql.js has no incremental write path — every save rewrites the entire image.
+   * `writeFileSync` opens the destination with `O_TRUNC`, so for the whole
+   * duration of the write the on-disk database is 0 bytes and then partial. The
+   * window scales with the database size and recurs on every save, so on a busy
+   * instance it is open a significant fraction of the time.
+   *
+   * Unlike better-sqlite3 / node:sqlite, that window is not protected by SQLite's
+   * locking protocol, so it is visible to every OTHER process that reads the same
+   * file — a backup job, a metrics exporter, an operator running `sqlite3`. Those
+   * readers get `SQLITE_CORRUPT` ("database disk image is malformed") even though
+   * `PRAGMA integrity_check` passes moments later, which makes the failure look
+   * random and points the blame at the reader.
+   *
+   * `rename()` within a directory is atomic on POSIX and on Windows for a
+   * same-volume replace, so a reader now sees either the previous image or the
+   * new one — never a truncated one. It also removes the total-loss window: a
+   * crash mid-write used to leave the real database truncated, while it now only
+   * leaves a stale temp file behind.
+   */
   function persist(): void {
     if (filePath === ":memory:") return;
     const data = db.export();
-    fs.writeFileSync(filePath, Buffer.from(data));
+    // Same directory, so `rename` stays within one filesystem — a temp file in
+    // os.tmpdir() would make it a cross-device copy, which is not atomic.
+    const tmpPath = `${filePath}.tmp-${process.pid}-${Date.now()}`;
+    let fd: number | null = null;
+    try {
+      fd = fs.openSync(tmpPath, "w");
+      fs.writeFileSync(fd, Buffer.from(data));
+      // The rename is atomic, but only orders against data that already reached
+      // the disk; without this an unclean shutdown can publish an empty file.
+      fs.fsyncSync(fd);
+      fs.closeSync(fd);
+      fd = null;
+      fs.renameSync(tmpPath, filePath);
+    } catch (err) {
+      if (fd !== null) {
+        try {
+          fs.closeSync(fd);
+        } catch {
+          /* already closed */
+        }
+      }
+      try {
+        fs.unlinkSync(tmpPath);
+      } catch {
+        /* never created, or already gone */
+      }
+      throw err;
+    }
     dirty = false;
   }
 

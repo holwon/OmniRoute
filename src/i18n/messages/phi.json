@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Nililinis ang mga API key, token, private key, at JWT mula sa mga mensahe, tool call, at tugon.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "I-bridge ang multimodal na nilalaman sa teksto bago ito umabot sa mga text-only na modelo. Ang Vision ay live; Ang Audio ay dumarating kasama ang AudioBridge; Ang Video ay nasa roadmap.",
+    "modalityBridgeIntro": "Gawing teksto ang multimodal na nilalaman bago ito makarating sa mga modelong text-only. Available at nako-configure ang mga tulay para sa paningin, audio, at video.",
     "modalityBridgeVisionTab": "Bisyon",
     "modalityBridgeAudioTab": "Audio",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Sopistikado",
     "modalityBridgeTimeoutMs": "Timeout (ms)",
     "modalityBridgeMaxImages": "Max na mga larawan bawat kahilingan",
+    "visionMaxCharsLabel": "Max na mga karakter sa paglalarawan",
+    "visionMaxCharsHint": "I-cap ang haba ng paglalarawan ng modelo ng bisyon. 0 = walang limitasyon — itaas para sa mga detalyadong gawain ng OCR.",
     "modalityBridgeCacheEnabled": "Mga paglalarawan ng cache",
     "modalityBridgeCacheEnabledDesc": "Gamitin muli ang mga paglalarawan para sa mga magkaparehong larawan (SHA-256 na nakabatay, nasa memorya).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (minuto)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Hindi na-activate ang tulay (maaaring suportahan ng modelo ang bisyon nang katutubo o naka-disable ang tulay)",
     "modalityBridgeTestError": "Nabigo ang pagsubok: {message}",
     "modalityBridgeAudioComingSoon": "Ang Audio bridge (speech → text sa pamamagitan ng /v1/audio/transcriptions) ay ilalabas sa susunod na bersyon. Ang mga susi ng mga setting nito ay nakalaan na.",
-    "modalityBridgeVideoComingSoon": "Ang video bridging (frame sampling + captioning) ay nasa backlog — tingnan ang isyu #9760.",
     "modalityBridgeMovedTitle": "Inilipat ang Vision Bridge",
     "modalityBridgeMovedBody": "Ang mga setting ng Vision Bridge ay ngayon nasa nakalaang pahina ng Modality Bridge.",
     "modalityBridgeMovedCta": "Buksan ang mga setting ng Modality Bridge",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Audio Bridge OK — {count} clip(s) na na-transcribe ng {model}",
     "modalityBridgeAudioTestNoop": "Hindi na-activate ang Audio Bridge (maaaring sinusuportahan ng target ang audio, walang nakakonektang STT provider, o naka-disable ang bridge)",
     "modalityBridgeAudioTestError": "Nabigo ang pagsubok sa audio: {message}",
+    "modalityBridgeVideoTitle": "Tulay ng Video",
+    "modalityBridgeVideoDesc": "Kumuha ng mga sample na frame ng video, ilarawan ang mga ito gamit ang vision model, at magpatuloy sa napiling text model.",
+    "modalityBridgeVideoRuntimeReady": "Handa ang runtime",
+    "modalityBridgeVideoRuntimeUnavailable": "Hindi available ang runtime",
+    "modalityBridgeVideoRuntimeInstall": "I-install ang FFmpeg at ffprobe sa PATH ng server para paganahin ang pagkuha ng video.",
+    "modalityBridgeVideoEnabled": "Paganahin ang Tulay ng Video",
+    "modalityBridgeVideoEnabledDesc": "Palitan ang mga bahagi ng video ng mga paglalarawan ng frame na may timestamp kapag hindi kayang iproseso ng target na modelo ang video.",
+    "modalityBridgeVideoModel": "Modelo sa paglalarawan ng frame",
+    "modalityBridgeVideoModelInherited": "Gamitin ang modelo ng Tulay ng Paningin",
+    "modalityBridgeVideoFrameCount": "Mga frame bawat video",
+    "modalityBridgeVideoMaxVideos": "Pinakamaraming video bawat kahilingan",
     "modelRoutingDescriptionPlaceholder": "I-route ang mga modelo ng Opus sa frontier combo",
     "cliproxyapiFallbackCodes": "Cliproxyapi Fallback Codes",
     "cliproxyapiFallbackDescription": "Cliproxyapi Fallback Deskripsyon",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Link ng kasosyo",
     "dismissAriaLabel": "I-dismiss"
   },
+  "vscodeCopilotBanner": {
+    "title": "Ang OmniRoute ay gumagana na ngayon sa loob ng VS Code Copilot Chat",
+    "description": "I-install ang libreng OmniCopilot extension at lalabas ang bawat OmniRoute model diretso sa Copilot Chat model picker na ginagamit mo na.",
+    "cta": "Kunin ang Extension",
+    "secondaryNote": "Nasa Open VSX din (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "I-dismiss"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "I-anunsyo ang <gateway-alias>/<model> mirror ids sa /v1/models para sa mga modelong ang canonical owner ay walang aktibong credential ngunit may passthrough gateway na may aktibong credential na nagruruta sa kanila. Babala: nagdadagdag ng mga entry sa katalogo para sa lahat ng kliyente kapag pinagana nang globally.",
   "radarPage": {
     "title": "Radar Catalog",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Provider Setup",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Ang pahinang ito ay maa-access lamang mula sa localhost o LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Huminto ang polling: tinanggihan ng server ang kahilingan (404/403).",
     "pollErrorTransient": "Error sa pagkuha ng data: awtomatikong sinusubukan muli.",
-    "degraded": "Bahagyang data: hindi available na pinagmulan: {sources}",
-    "degraded.source.database": "Database",
-    "degraded.source.circuitBreaker": "Circuit Breaker",
-    "degraded.source.modelLockouts": "Mga Lockout ng Modelo",
-    "degraded.source.count": "Bilang ng Koneksyon"
+    "degraded": {
+      "message": "Bahagyang data: hindi available na pinagmulan: {sources}",
+      "source": {
+        "database": "Database",
+        "circuitBreaker": "Circuit Breaker",
+        "modelLockouts": "Mga Lockout ng Modelo",
+        "count": "Bilang ng Koneksyon"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "Tanggihan ang mga kahilingan bago ang pagpapadala kapag ang target na modelo ay kulang sa mga kinakailangang kakayahan (paningin, mga tool, nakabalangkas na output, bintana ng konteksto). Pinoprotektahan ang mga direktang kahilingan mula sa isang tagapagbigay na lumalampas sa filter ng pagiging tugma ng combo-layer.",
-  "capabilityFilter.visionMismatch": "Hindi sinusuportahan ng provider ang vision para sa kahilingang ito ng larawan",
-  "capabilityFilter.toolsMismatch": "Hindi sinusuportahan ng provider ang pagtawag sa tool",
-  "capabilityFilter.structuredOutputMismatch": "Hindi sinusuportahan ng provider ang nakabalangkas na output",
-  "capabilityFilter.contextWindowMismatch": "Lumampas ang kahilingan sa konteksto ng tagapagbigay",
   "publicSystem": {
     "notFound": {
       "title": "Hindi matagpuan ang pahina",
@@ -13624,5 +13657,49 @@
     "hint": "Kapag naka-enable, ang mga natuklasang modelo ay lilitaw sa mga provider select sa buong OmniRoute.",
     "updateFailed": "Nabigong i-update (HTTP {status})",
     "networkError": "Error sa Network — hindi ma-update ang setting ng provider exposure"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Hindi sinusuportahan ng provider ang vision para sa kahilingang ito ng larawan",
+    "toolsMismatch": "Hindi sinusuportahan ng provider ang pagtawag sa tool",
+    "structuredOutputMismatch": "Hindi sinusuportahan ng provider ang nakabalangkas na output",
+    "contextWindowMismatch": "Lumampas ang kahilingan sa konteksto ng tagapagbigay"
   }
 }

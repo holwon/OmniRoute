@@ -328,6 +328,8 @@ export function validateProviderSpecificData(
     "usageCookie",
     "alibabaConsoleCookie",
     "alibabaConsoleSecToken",
+    "qwenCloudCookie",
+    "qwenCloudSecToken",
   ] as const) {
     const value = data[key];
     if (value !== undefined && value !== null && typeof value !== "string") {

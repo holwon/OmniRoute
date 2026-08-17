@@ -51,6 +51,8 @@ export interface ProviderCatalogMetadata {
   riskNoticeVariant?: RiskNoticeVariant;
   apiType?: string;
   baseUrl?: string;
+  /** Backend OAuth provider ID when one dashboard card fronts both auth modes. */
+  oauthProviderId?: string;
   hiddenFromDashboard?: boolean;
   /** Optional operator-supplied remote icon URL (#2166) for compatible provider nodes. */
   iconUrl?: string;

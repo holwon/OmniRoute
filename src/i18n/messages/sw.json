@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "Husafisha funguo za API, tokeni, funguo za faragha, na JWT kutoka kwa ujumbe, miito ya zana, na majibu.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "Panga maudhui ya njia nyingi kuwa maandiko kabla ya kufikia mifano ya maandiko pekee. Maono yanaishi; Sauti inakuja na AudioBridge; Video iko kwenye ramani ya barabara.",
+    "modalityBridgeIntro": "Badilisha maudhui ya aina nyingi kuwa maandishi kabla hayajafikia modeli za maandishi pekee. Madaraja ya kuona, sauti na video yanapatikana na yanaweza kusanidiwa.",
     "modalityBridgeVisionTab": "Maono",
     "modalityBridgeAudioTab": "Sauti",
     "modalityBridgeVideoTab": "Video",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "Juu",
     "modalityBridgeTimeoutMs": "Muda wa Kukatika (ms)",
     "modalityBridgeMaxImages": "Picha nyingi zaidi kwa ombi",
+    "visionMaxCharsLabel": "Max wahusika wa maelezo",
+    "visionMaxCharsHint": "Punguza urefu wa maelezo ya mfano wa maono. 0 = isiyo na kikomo — pandisha kwa kazi za OCR zenye maelezo mengi.",
     "modalityBridgeCacheEnabled": "Maelezo ya cache",
     "modalityBridgeCacheEnabledDesc": "Tumia maelezo tena kwa picha sawa (SHA-256 iliyofungiwa, katika kumbukumbu).",
     "modalityBridgeCacheTtlMinutes": "Cache TTL (dakika)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "Daraja halikufanya kazi (mfano unaweza kusaidia maono kiasili au daraja limezimwa)",
     "modalityBridgeTestError": "Jaribio limefeli: {message}",
     "modalityBridgeAudioComingSoon": "Daraja la Sauti (hotuba → maandiko kupitia /v1/audio/transcriptions) litapatikana katika toleo linalofuata. Funguo zake za mipangilio tayari zimehifadhiwa.",
-    "modalityBridgeVideoComingSoon": "Kuhusisha video (uchukuaji wa fremu + uandishi wa maandiko) iko kwenye orodha ya kazi — angalia suala #9760.",
     "modalityBridgeMovedTitle": "Daraja la Maono limehamishwa",
     "modalityBridgeMovedBody": "Mipangilio ya Vision Bridge sasa ipo kwenye ukurasa maalum wa Modality Bridge.",
     "modalityBridgeMovedCta": "Fungua mipangilio ya Daraja la Modality",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "Daraja la Sauti Sawa — {count} kipande(kipande) kilichotafsiriwa na {model}",
     "modalityBridgeAudioTestNoop": "Daraja la Sauti halikufanya kazi (lengo linaweza kusaidia sauti, hakuna mtoa huduma wa STT aliyeunganishwa, au daraja limezuiliwa)",
     "modalityBridgeAudioTestError": "Jaribio la sauti limefeli: {message}",
+    "modalityBridgeVideoTitle": "Daraja la video",
+    "modalityBridgeVideoDesc": "Chukua sampuli za fremu za video, zieleze kwa modeli ya kuona, kisha uendelee na modeli ya maandishi iliyochaguliwa.",
+    "modalityBridgeVideoRuntimeReady": "Mazingira ya utekelezaji yako tayari",
+    "modalityBridgeVideoRuntimeUnavailable": "Mazingira ya utekelezaji hayapatikani",
+    "modalityBridgeVideoRuntimeInstall": "Sakinisha FFmpeg na ffprobe kwenye PATH ya seva ili kuwezesha uchimbaji wa video.",
+    "modalityBridgeVideoEnabled": "Washa Daraja la video",
+    "modalityBridgeVideoEnabledDesc": "Badilisha sehemu za video kwa maelezo ya fremu yenye mihuri ya muda wakati modeli lengwa haiwezi kuchakata video.",
+    "modalityBridgeVideoModel": "Modeli ya maelezo ya fremu",
+    "modalityBridgeVideoModelInherited": "Tumia modeli ya Daraja la kuona",
+    "modalityBridgeVideoFrameCount": "Fremu kwa kila video",
+    "modalityBridgeVideoMaxVideos": "Idadi ya juu ya video kwa kila ombi",
     "modelRoutingDescriptionPlaceholder": "Route Opus models to frontier combo",
     "cliproxyapiFallbackCodes": "M codes ya Kuanguka ya Cliproxyapi",
     "cliproxyapiFallbackDescription": "Maelezo ya Kurejelea ya Cliproxyapi",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "Kiungo cha mshirika",
     "dismissAriaLabel": "Ondoa"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute sasa inafanya kazi ndani ya VS Code Copilot Chat",
+    "description": "Sakinisha kiendelezi cha bure cha OmniCopilot na kila mfano wa OmniRoute utaonekana moja kwa moja kwenye kichagua-mfano cha Copilot Chat unachotumia tayari.",
+    "cta": "Pata Kiendelezi",
+    "secondaryNote": "Pia kwenye Open VSX (Cursor, Windsurf, VSCodium…)",
+    "dismissAriaLabel": "Ondoa"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "Tangaza <gateway-alias>/<model> vitambulisho vya kioo kwenye /v1/models kwa ajili ya mifano ambayo mmiliki wake wa kanuni hana akreditivu hai lakini lango la kupitisha lenye akreditivu hai linaelekeza kwao. Onyo: inaongeza orodha za katalogi kwa wateja wote inapowezeshwa kimataifa.",
   "radarPage": {
     "title": "Radar Katalog",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "Leverantörsinstallation",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "Ukurasa huu unafikiwa tu kutoka localhost au LAN (LOCAL_ONLY).",
     "pollErrorStopped": "Uchunguzi umesimamishwa: seva ilikataa ombi (404/403).",
     "pollErrorTransient": "Hitilafu katika kupata data: inajaribu tena kiotomatiki.",
-    "degraded": "Data isiyokamilika: vyanzo visivyopatikana: {sources}",
-    "degraded.source.database": "Hifadhidata",
-    "degraded.source.circuitBreaker": "Kivunja Mzunguko",
-    "degraded.source.modelLockouts": "Kufuli za Mfano",
-    "degraded.source.count": "Idadi ya Miunganisho"
+    "degraded": {
+      "message": "Data isiyokamilika: vyanzo visivyopatikana: {sources}",
+      "source": {
+        "database": "Hifadhidata",
+        "circuitBreaker": "Kivunja Mzunguko",
+        "modelLockouts": "Kufuli za Mfano",
+        "count": "Idadi ya Miunganisho"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "kataa maombi kabla ya kutuma wakati mfano wa lengo hauna uwezo unaohitajika (maono, zana, matokeo yaliyoandikwa, dirisha la muktadha). Inalinda maombi ya moja kwa moja kutoka kwa mtoa huduma mmoja ambayo yanapita chujio cha ulinganifu wa safu ya mchanganyiko.",
-  "capabilityFilter.visionMismatch": "Mtoa huduma haitoi msaada wa kuona kwa ombi hili la picha",
-  "capabilityFilter.toolsMismatch": "Mtoa huduma haitoi msaada wa kuita zana",
-  "capabilityFilter.structuredOutputMismatch": "Mtoa huduma haitoi matokeo yaliyoandikwa kwa muundo",
-  "capabilityFilter.contextWindowMismatch": "Omba inazidi dirisha la muktadha wa mtoa huduma",
   "publicSystem": {
     "notFound": {
       "title": "Ukurasa haukupatikana",
@@ -13624,5 +13657,49 @@
     "hint": "Wakati imewezeshwa, mifano iliyogunduliwa inaonekana katika chaguo za mtoa huduma katika OmniRoute.",
     "updateFailed": "Imeshindikana kuboresha (HTTP {status})",
     "networkError": "Kosa la mtandao — haiwezekani kuboresha mipangilio ya kufichua mtoa huduma"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "Mtoa huduma haitoi msaada wa kuona kwa ombi hili la picha",
+    "toolsMismatch": "Mtoa huduma haitoi msaada wa kuita zana",
+    "structuredOutputMismatch": "Mtoa huduma haitoi matokeo yaliyoandikwa kwa muundo",
+    "contextWindowMismatch": "Omba inazidi dirisha la muktadha wa mtoa huduma"
   }
 }

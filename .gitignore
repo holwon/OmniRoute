@@ -1,6 +1,7 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # project-specific directories
+/output/
 .slim/deepwork/
 .omnivscodeagent/
 omnirouteCloud/
@@ -69,6 +70,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# Local gitleaks artifacts (do not commit)
+gitleaks-local.json
 !.env.example
 !.env.homolog.example
 !.env.devin-bridge.example

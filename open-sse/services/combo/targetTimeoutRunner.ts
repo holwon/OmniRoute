@@ -10,6 +10,10 @@
  * See _tasks/superpowers/plans/2026-07-03-blocoJ-combo-hotpath-decomposition.md (Task 1).
  */
 import { buildErrorBody, errorResponse, sanitizeErrorMessage } from "../../utils/error.ts";
+import {
+  COMBO_HEDGE_CANCELLED_REASON,
+  COMBO_PER_MODEL_TIMEOUT_REASON,
+} from "./comboAbortReasons.ts";
 import type { HandleSingleModel, SingleModelTarget, ComboLogger } from "./types.ts";
 
 /** Stable internal classification for OmniRoute's own combo per-target timer. */
@@ -46,7 +50,7 @@ export function buildTargetTimeoutRunner(deps: {
           "COMBO",
           `Model ${modelStr} exceeded ${comboTargetTimeoutMs}ms timeout — falling back`
         );
-        timeoutController.abort(new Error("combo-per-model-timeout"));
+        timeoutController.abort(new Error(COMBO_PER_MODEL_TIMEOUT_REASON));
         // HTTP 504 (not proprietary 524): this is OmniRoute's own per-target timer.
         // Typed as combo_target_timeout so request-scoped classification can keep the
         // connection eligible for fallback instead of treating it like Cloudflare 524
@@ -75,10 +79,10 @@ export function buildTargetTimeoutRunner(deps: {
     let onParentHedgeAbort: (() => void) | null = null;
     if (parentHedgeSignal) {
       if (parentHedgeSignal.aborted) {
-        timeoutController.abort(new Error("hedge-cancelled"));
+        timeoutController.abort(new Error(COMBO_HEDGE_CANCELLED_REASON));
       } else {
         onParentHedgeAbort = () => {
-          timeoutController.abort(new Error("hedge-cancelled"));
+          timeoutController.abort(new Error(COMBO_HEDGE_CANCELLED_REASON));
         };
         parentHedgeSignal.addEventListener("abort", onParentHedgeAbort, { once: true });
       }

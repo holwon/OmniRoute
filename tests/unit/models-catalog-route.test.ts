@@ -1398,8 +1398,15 @@ test("v1 models catalog skips duplicate built-ins and custom models from inactiv
   const duplicateBuiltins = body.data.filter((item) => item.id === "openai/gpt-4o-2024-11-20");
 
   assert.equal(response.status, 200);
+  // Still exactly one entry: the custom row overlays the built-in, it does not duplicate it.
   assert.equal(duplicateBuiltins.length, 1);
-  assert.equal(duplicateBuiltins[0].custom === true, false);
+  // #10248 changed the contract: a custom row for an id that already exists is the
+  // operator-owned overlay for that model (catalog.ts:1330) — its explicitly stored
+  // fields win over the discovered metadata, and the merged entry is flagged `custom`.
+  // Before #10248 the duplicate was skipped outright, so this asserted `false`.
+  assert.equal(duplicateBuiltins[0].custom, true);
+  // The overlay must keep the catalog identity rather than becoming a detached entry.
+  assert.equal(duplicateBuiltins[0].id, "openai/gpt-4o-2024-11-20");
   assert.equal(
     body.data.some((item) => item.id === "cl/inactive-only" || item.id === "cline/inactive-only"),
     false

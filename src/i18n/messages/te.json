@@ -8018,7 +8018,7 @@
     "enableCredentialRedactionDesc": "సందేశాలు, టూల్ కాల్‌లు మరియు ప్రతిస్పందనల నుండి API కీలు, టోకెన్‌లు, ప్రైవేట్ కీలు మరియు JWTలను తొలగిస్తుంది.",
     "pricingAutoSyncDisabled": "Automatic Sync Disabled",
     "pricingAutoSyncEnabled": "Automatic Sync Enabled",
-    "modalityBridgeIntro": "బ్రిడ్జ్ బహుమాధ్యమ కంటెంట్‌ను టెక్స్ట్‌గా మార్చండి, ఇది టెక్స్ట్-మాత్రం మోడళ్లకు చేరుకునే ముందు. విజన్ ప్రత్యక్షంగా ఉంది; ఆడియో ఆడియోబ్రిడ్జ్‌తో వస్తుంది; వీడియో రోడ్‌మ్యాప్‌లో ఉంది.",
+    "modalityBridgeIntro": "బహుళమాధ్యమ కంటెంట్ టెక్స్ట్-మాత్రమే మోడళ్లకు చేరకముందే దాన్ని టెక్స్ట్‌గా మార్చండి. విజన్, ఆడియో మరియు వీడియో బ్రిడ్జ్‌లు అందుబాటులో ఉన్నాయి మరియు కాన్ఫిగర్ చేయవచ్చు.",
     "modalityBridgeVisionTab": "దృష్టి",
     "modalityBridgeAudioTab": "ఆడియో",
     "modalityBridgeVideoTab": "వీడియో",
@@ -8040,6 +8040,8 @@
     "modalityBridgeAdvanced": "అధిక నిపుణత",
     "modalityBridgeTimeoutMs": "టైమ్‌ఔట్ (మి)",
     "modalityBridgeMaxImages": "ప్రతి అభ్యర్థనకు గరిష్ట చిత్రాలు",
+    "visionMaxCharsLabel": "గరిష్ట వివరణ అక్షరాలు",
+    "visionMaxCharsHint": "దృష్టి మోడల్ యొక్క వివరణ పొడవును పరిమితం చేయండి. 0 = పరిమితి లేదు — వివరాల పుష్కలమైన OCR పనుల కోసం పెంచండి.",
     "modalityBridgeCacheEnabled": "కాష్ వివరణలు",
     "modalityBridgeCacheEnabledDesc": "ఒకే చిత్రాలకు (SHA-256 కీడ్, మెమరీలో) సమానమైన వివరణలను పునఃఉపయోగించండి.",
     "modalityBridgeCacheTtlMinutes": "కాష్ TTL (నిమిషాలు)",
@@ -8056,7 +8058,6 @@
     "modalityBridgeTestNoop": "బ్రిడ్జ్ చలనం చేయలేదు (మోడల్ సహజంగా విజన్‌ను మద్దతు ఇవ్వవచ్చు లేదా బ్రిడ్జ్ అచేతనంగా ఉంది)",
     "modalityBridgeTestError": "పరీక్ష విఫలమైంది: {message}",
     "modalityBridgeAudioComingSoon": "ఆడియో బ్రిడ్జ్ (స్పీచ్ → టెక్స్ట్ /v1/audio/transcriptions ద్వారా) తదుపరి విడుదలలో అందించబడుతుంది. దీని సెట్టింగ్ కీలు ఇప్పటికే రిజర్వ్ చేయబడ్డాయి.",
-    "modalityBridgeVideoComingSoon": "వీడియో బ్రిడ్జింగ్ (ఫ్రేమ్ నమూనా + శీర్షికలు) బ్యాక్‌లాగ్‌లో ఉంది — సమస్య #9760ని చూడండి.",
     "modalityBridgeMovedTitle": "విజన్ బ్రిడ్జ్ మోవ్డ్",
     "modalityBridgeMovedBody": "విజన్ బ్రిడ్జ్ సెట్టింగ్స్ ఇప్పుడు ప్రత్యేకమైన మోడాలిటీ బ్రిడ్జ్ పేజీలో లైవ్ ఉన్నాయి.",
     "modalityBridgeMovedCta": "మోడాలిటీ బ్రిడ్జ్ సెట్టింగ్స్‌ను తెరవండి",
@@ -8072,6 +8073,17 @@
     "modalityBridgeAudioTestOk": "ఆడియో బ్రిడ్జ్ బాగుంది — {count} క్లిప్(లు) {model} ద్వారా ట్రాన్స్‌క్రైబ్ చేయబడ్డాయి",
     "modalityBridgeAudioTestNoop": "ఆడియో బ్రిడ్జ్ చెల్లించబడలేదు (లక్ష్యము ఆడియోను మద్దతు ఇవ్వవచ్చు, ఎలాంటి STT ప్రొవైడర్ కనెక్ట్ చేయబడలేదు, లేదా బ్రిడ్జ్ అచేతనంగా ఉంది)",
     "modalityBridgeAudioTestError": "ఆడియో పరీక్ష విఫలమైంది: {message}",
+    "modalityBridgeVideoTitle": "వీడియో బ్రిడ్జ్",
+    "modalityBridgeVideoDesc": "వీడియో ఫ్రేమ్‌లను నమూనాగా తీసుకుని, విజన్ మోడల్‌తో వాటిని వివరించి, ఎంచుకున్న టెక్స్ట్ మోడల్‌తో కొనసాగించండి.",
+    "modalityBridgeVideoRuntimeReady": "రన్‌టైమ్ సిద్ధంగా ఉంది",
+    "modalityBridgeVideoRuntimeUnavailable": "రన్‌టైమ్ అందుబాటులో లేదు",
+    "modalityBridgeVideoRuntimeInstall": "వీడియో వెలికితీతను ప్రారంభించడానికి సర్వర్ PATH లో FFmpeg మరియు ffprobe ను ఇన్‌స్టాల్ చేయండి.",
+    "modalityBridgeVideoEnabled": "వీడియో బ్రిడ్జ్‌ను ప్రారంభించండి",
+    "modalityBridgeVideoEnabledDesc": "లక్ష్య మోడల్ వీడియోను ప్రాసెస్ చేయలేనప్పుడు వీడియో భాగాలను సమయముద్ర గల ఫ్రేమ్ వివరణలతో భర్తీ చేయండి.",
+    "modalityBridgeVideoModel": "ఫ్రేమ్ వివరణ మోడల్",
+    "modalityBridgeVideoModelInherited": "విజన్ బ్రిడ్జ్ మోడల్‌ను ఉపయోగించండి",
+    "modalityBridgeVideoFrameCount": "ఒక్కో వీడియోకు ఫ్రేమ్‌లు",
+    "modalityBridgeVideoMaxVideos": "ఒక్కో అభ్యర్థనకు గరిష్ట వీడియోలు",
     "modelRoutingDescriptionPlaceholder": "ఫ్రంట్‌యిర్ కాంబోకు రూట్ ఒపస్ మోడల్స్",
     "cliproxyapiFallbackCodes": "క్లిప్రాక్సీAPI ఫాల్బాక్ కోడ్స్",
     "cliproxyapiFallbackDescription": "క్లిప్రాక్సీAPI ఫాల్బ్యాక్ వివరణ",
@@ -13069,6 +13081,13 @@
     "partnerLinkNote": "భాగస్వామి లింక్",
     "dismissAriaLabel": "తీసివేయి"
   },
+  "vscodeCopilotBanner": {
+    "title": "OmniRoute ఇప్పుడు VS Code Copilot Chatలో నడుస్తుంది",
+    "description": "ఉచిత OmniCopilot పొడిగింపును ఇన్‌స్టాల్ చేయండి, మీరు ఇప్పటికే ఉపయోగిస్తున్న Copilot Chat మోడల్ పికర్‌లో ప్రతి OmniRoute మోడల్ నేరుగా కనిపిస్తుంది.",
+    "cta": "పొడిగింపును పొందండి",
+    "secondaryNote": "Open VSX (Cursor, Windsurf, VSCodium…)లో కూడా అందుబాటులో ఉంది",
+    "dismissAriaLabel": "తీసివేయి"
+  },
   "featureFlagExposeFunctionalGatewayMirrorsDescription": "/gateway-alias/<model> మిర్రర్ ఐడీలను /v1/models లో ప్రచారం చేయండి, కానోనికల్ యజమాని యాక్టివ్ క్రెడెన్షియల్ లేకపోతే కానీ యాక్టివ్ క్రెడెన్షియల్ రూట్ చేసే పాస్త్రూ గేట్వే ఉన్న మోడల్స్ కోసం. హెచ్చరిక: ఇది గ్లోబల్‌గా ఎనేబుల్ చేసినప్పుడు అన్ని క్లయింట్ల కోసం కాటలాగ్ ఎంట్రీలను జోడిస్తుంది.",
   "radarPage": {
     "title": "రాడార్ కాటలాగ్",
@@ -13124,7 +13143,21 @@
     "campaignsTitle": "Limited-time campaigns",
     "campaignsEmpty": "No active campaigns right now — check back later.",
     "campaignsUpsellCommunity": "Limited-time campaigns are a supporter extra. Everything on this page's fixed links stays free for everyone.",
-    "campaignsValidUntil": "Valid until {date}"
+    "campaignsValidUntil": "Valid until {date}",
+    "colActions": "Actions",
+    "localBadge": "local",
+    "editModel": "Edit",
+    "saveModel": "Save",
+    "cancelEdit": "Cancel",
+    "resetModel": "Reset local changes",
+    "hideModel": "Hide",
+    "restoreModel": "Restore",
+    "hiddenModelsTitle": "Hidden models",
+    "modelDisplayName": "Local display name",
+    "modelEnabled": "Enabled locally",
+    "localStateSaveFailed": "Failed to save local Radar settings",
+    "guidedCombos": "Guided combos",
+    "offers": "Offers"
   },
   "radarSetupPage": {
     "title": "ప్రొవైడర్ సెటప్",
@@ -13239,17 +13272,17 @@
     "pollErrorLocalOnly": "ఈ పేజీ localhost లేదా LAN నుండి మాత్రమే యాక్సెస్ చేయబడుతుంది (LOCAL_ONLY).",
     "pollErrorStopped": "పోలింగ్ ఆగింది: సర్వర్ అభ్యర్థనను తిరస్కరించింది (404/403).",
     "pollErrorTransient": "డేటాను పొందడంలో లోపం: స్వయంచాలకంగా మళ్లీ ప్రయత్నిస్తోంది.",
-    "degraded": "పాక్షిక డేటా: అందుబాటులో లేని మూలాలు: {sources}",
-    "degraded.source.database": "డేటాబేస్",
-    "degraded.source.circuitBreaker": "సర్క్యూట్ బ్రేకర్",
-    "degraded.source.modelLockouts": "మోడల్ లాక్‌అవుట్‌లు",
-    "degraded.source.count": "కనెక్షన్ల సంఖ్య"
+    "degraded": {
+      "message": "పాక్షిక డేటా: అందుబాటులో లేని మూలాలు: {sources}",
+      "source": {
+        "database": "డేటాబేస్",
+        "circuitBreaker": "సర్క్యూట్ బ్రేకర్",
+        "modelLockouts": "మోడల్ లాక్‌అవుట్‌లు",
+        "count": "కనెక్షన్ల సంఖ్య"
+      }
+    }
   },
   "featureFlagCapabilityFilterEnabledDescription": "ప్రయోజనాలు అవసరమైన సామర్థ్యాలు (దృష్టి, సాధనాలు, నిర్మిత అవుట్‌పుట్, సందర్భం విండో) లేని లక్ష్య మోడల్ ముందు పంపిణీకి అభ్యర్థనలను తిరస్కరించండి. కాంబో-లేయర్ అనుకూలత ఫిల్టర్‌ను దాటించే ప్రత్యక్ష సింగిల్-ప్రొవైడర్ అభ్యర్థనలను రక్షిస్తుంది.",
-  "capabilityFilter.visionMismatch": "ఈ చిత్రం అభ్యర్థనకు ప్రొవైడర్ దృష్టిని మద్దతు ఇవ్వడం లేదు",
-  "capabilityFilter.toolsMismatch": "ప్రొవైడర్ టూల్ కాలింగ్‌ను మద్దతు ఇవ్వదు",
-  "capabilityFilter.structuredOutputMismatch": "ప్రొవైడర్ నిర్మిత అవుట్‌పుట్‌ను మద్దతు ఇవ్వదు",
-  "capabilityFilter.contextWindowMismatch": "అనువర్తన ప్రదాత యొక్క సందర్భం కిటికీని మించు కోరింపు",
   "publicSystem": {
     "notFound": {
       "title": "పేజీ కనుగొనబడలేదు",
@@ -13624,5 +13657,49 @@
     "hint": "చాలా సులభంగా, కనుగొనబడిన మోడల్స్ OmniRoute లో ప్రొవైడర్ ఎంపికలలో కనిపిస్తాయి.",
     "updateFailed": "అప్‌డేట్ చేయడంలో విఫలమైంది (HTTP {status})",
     "networkError": "నెట్‌వర్క్ లోపం — ప్రొవైడర్ ఎక్స్‌పోజర్ సెటింగ్‌ను నవీకరించలేకపోయింది"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
+  },
+  "radarOffersPage": {
+    "title": "Supporter offers",
+    "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading offers...",
+    "refresh": "Refresh offers",
+    "refreshing": "Refreshing...",
+    "loadFailed": "We couldn't refresh offers. The last verified local cache is kept.",
+    "empty": "No active offers are available right now.",
+    "keyRequiredTitle": "A supporter key is required",
+    "keyRequiredDescription": "Offers are a live Radar benefit. Add an existing supporter key on the Radar screen, verify your contributor status, or support the project to obtain one.",
+    "contributorButton": "I'm a contributor",
+    "supporterButton": "Support the project",
+    "partnerBadge": "Partner",
+    "officialBadge": "Official",
+    "conditionsLabel": "Conditions:",
+    "validUntil": "Valid until {date}",
+    "noExpiry": "No announced expiry",
+    "openOffer": "View offer",
+    "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "capabilityFilter": {
+    "visionMismatch": "ఈ చిత్రం అభ్యర్థనకు ప్రొవైడర్ దృష్టిని మద్దతు ఇవ్వడం లేదు",
+    "toolsMismatch": "ప్రొవైడర్ టూల్ కాలింగ్‌ను మద్దతు ఇవ్వదు",
+    "structuredOutputMismatch": "ప్రొవైడర్ నిర్మిత అవుట్‌పుట్‌ను మద్దతు ఇవ్వదు",
+    "contextWindowMismatch": "అనువర్తన ప్రదాత యొక్క సందర్భం కిటికీని మించు కోరింపు"
   }
 }

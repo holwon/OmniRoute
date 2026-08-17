@@ -8,7 +8,7 @@ import { getAntigravityContentHeaders } from "@omniroute/open-sse/services/antig
 import { resolveAntigravityClientVersion } from "@omniroute/open-sse/services/antigravityClientProfile.ts";
 import {
   getClientVisibleAntigravityModelName,
-  isUserCallableAntigravityModelId,
+  isDiscoverableAntigravityModelId,
   toClientAntigravityModelId,
 } from "@omniroute/open-sse/config/antigravityModelAliases.ts";
 import {
@@ -81,7 +81,7 @@ export function filterUserCallableAntigravityModels(
       model.isInternal !== true &&
       (provider === "agy"
         ? isDiscoverableAgyModelId(model.id)
-        : isUserCallableAntigravityModelId(model.id))
+        : isDiscoverableAntigravityModelId(model.id))
   );
 }
 

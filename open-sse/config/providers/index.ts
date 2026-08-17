@@ -75,6 +75,7 @@ import { g4f_pollinationsProvider } from "./registry/g4f-pollinations/index.ts";
 import { g4f_ollamaProvider } from "./registry/g4f-ollama/index.ts";
 import { g4f_nvidiaProvider } from "./registry/g4f-nvidia/index.ts";
 import { tencentProvider } from "./registry/tencent/index.ts";
+import { tencent_aistudio_webProvider } from "./registry/tencent-aistudio-web/index.ts";
 import { cozeProvider } from "./registry/coze/index.ts";
 import { ai21Provider } from "./registry/ai21/index.ts";
 import { publicaiProvider } from "./registry/publicai/index.ts";
@@ -144,8 +145,7 @@ import { vertex_partnerProvider } from "./registry/vertex/partner/index.ts";
 import { vertexProvider } from "./registry/vertex/index.ts";
 import { duckduckgo_webProvider } from "./registry/duckduckgo-web/index.ts";
 import { felo_webProvider } from "./registry/felo-web/index.ts";
-import { xaiProvider } from "./registry/xai/index.ts";
-import { xai_oauthProvider } from "./registry/xai-oauth/index.ts";
+import { xaiProvider, xai_oauthProvider } from "./registry/xai/index.ts";
 import { morphProvider } from "./registry/morph/index.ts";
 import { siliconflowProvider } from "./registry/siliconflow/index.ts";
 import { gitlab_duoProvider } from "./registry/gitlab-duo/index.ts";
@@ -153,6 +153,7 @@ import { command_codeProvider } from "./registry/command-code/index.ts";
 import { novitaProvider } from "./registry/novita/index.ts";
 import { regoloProvider } from "./registry/regolo/index.ts";
 import { devin_desktopProvider } from "./registry/devin-desktop/index.ts";
+import { zcodeProvider } from "./registry/zcode/index.ts";
 import { zed_hostedProvider } from "./registry/zed-hosted/index.ts";
 import { nanogptProvider } from "./registry/nanogpt/index.ts";
 import { scalewayProvider } from "./registry/scaleway/index.ts";
@@ -411,6 +412,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   novita: novitaProvider,
   regolo: regoloProvider,
   "devin-desktop": devin_desktopProvider,
+  zcode: zcodeProvider,
   "zed-hosted": zed_hostedProvider,
   nanogpt: nanogptProvider,
   scaleway: scalewayProvider,
@@ -418,6 +420,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   zai: zaiProvider,
   huggingchat: huggingchatProvider,
   "yuanbao-web": yuanbao_webProvider,
+  "tencent-aistudio-web": tencent_aistudio_webProvider,
   galadriel: galadrielProvider,
   qianfan: qianfanProvider,
   "meta-llama": meta_llamaProvider,

@@ -100,6 +100,25 @@ test("streaming path bounds the aggregate size of many small upstream response h
   assert.equal(getHeaderValue(out, "x-request-id"), "req-many-small-headers");
 });
 
+test("streaming path keeps Codex quota headers and drops x-codex-turn-state", () => {
+  const upstream = new Headers();
+  upstream.set("x-codex-turn-state", "s".repeat(300));
+  upstream.set("content-security-policy", "default-src 'none'");
+  upstream.set("cf-ray", "abcdefghijklmnopqrstuvwxyz");
+  upstream.set("date", "Thu, 13 Aug 2026 21:00:00 GMT");
+  upstream.set("x-codex-primary-used-percent", "41");
+  upstream.set("x-codex-primary-reset-after-seconds", "120");
+  upstream.set("x-codex-credits-has-credits", "true");
+  upstream.set("x-request-id", "req-codex-quota");
+
+  const out = buildStreamingResponseHeaders(upstream, {}, null);
+  assert.equal(getHeaderValue(out, "x-request-id"), "req-codex-quota");
+  assert.equal(getHeaderValue(out, "x-codex-primary-used-percent"), "41");
+  assert.equal(getHeaderValue(out, "x-codex-primary-reset-after-seconds"), "120");
+  assert.equal(getHeaderValue(out, "x-codex-credits-has-credits"), "true");
+  assert.equal(getHeaderValue(out, "x-codex-turn-state"), undefined);
+});
+
 test("streaming path prioritizes request and rate-limit headers over diagnostics", () => {
   const upstream = new Headers();
   for (let index = 0; index < 20; index += 1) {

@@ -245,6 +245,21 @@ export const WEB_COOKIE_PROVIDERS = {
       "Log in to yuanbao.tencent.com, then paste the full Cookie header (DevTools → Network → any /api request → Request Headers → Cookie). It must contain hy_user and hy_token.",
     riskNoticeVariant: "webCookie",
   },
+  "tencent-aistudio-web": {
+    id: "tencent-aistudio-web",
+    alias: "tasw",
+    name: "Tencent AI Studio (Free)",
+    icon: "auto_awesome",
+    color: "#0052D9",
+    textIcon: "TAS",
+    website: "https://aistudio.tencent.ai",
+    hasFree: true,
+    freeNote:
+      "Free web session on Tencent AI Studio (aistudio.tencent.ai) — Direct chat with Hunyuan models (hy3-g, HunyuanDefault, Hunyuan3D). Cookie authentication.",
+    authHint:
+      "Log in to aistudio.tencent.ai, open DevTools -> Network, copy any request Cookie header containing session tokens.",
+    riskNoticeVariant: "webCookie",
+  },
   huggingchat: {
     id: "huggingchat",
     // "hc" belongs to the hackclub provider; huggingchat uses its own id as alias.
