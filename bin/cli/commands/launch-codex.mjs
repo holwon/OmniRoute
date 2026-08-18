@@ -170,8 +170,8 @@ export function buildCodexEnv(baseEnv, authToken) {
  * @param {string} baseUrl  OmniRoute root URL (no /v1)
  * @returns {string[]}
  */
-export function buildCodexProviderArgs(baseUrl) {
-  return [
+export function buildCodexProviderArgs(baseUrl, model) {
+  const args = [
     "-c",
     tomlAssign("model_provider", "omniroute"),
     "-c",
@@ -185,6 +185,15 @@ export function buildCodexProviderArgs(baseUrl) {
     "-c",
     tomlAssign("model_providers.omniroute.requires_openai_auth", false),
   ];
+
+  if (model) {
+    const normalized = String(model).trim();
+    if (normalized) {
+      args.push("-c", tomlAssign("model_providers.omniroute.model", normalized));
+    }
+  }
+
+  return args;
 }
 
 /**
@@ -207,7 +216,7 @@ export async function runLaunchCodexCommand(opts = {}, codexArgs = []) {
 
   // Provider injected via -c (works without config.toml); then the profile (model),
   // then the user's pass-through args.
-  const providerArgs = buildCodexProviderArgs(baseUrl);
+  const providerArgs = buildCodexProviderArgs(baseUrl, opts.model);
   const profileArgs = opts.profile ? ["--profile", opts.profile] : [];
   const extraArgs = [...providerArgs, ...profileArgs, ...codexArgs];
   const env = buildCodexEnv(process.env, authToken);

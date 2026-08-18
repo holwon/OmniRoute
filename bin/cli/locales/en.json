@@ -1287,6 +1287,9 @@
     "notRunning": "OmniRoute is not reachable at {port}. Start it with 'omniroute serve'.",
     "notFound": "The 'claude' CLI was not found in PATH."
   },
+  "run": {
+    "description": "Launch a supported CLI target through OmniRoute"
+  },
   "setupClaude": {
     "description": "Generate ~/.claude/profiles Claude Code profiles from the OmniRoute model catalog"
   },

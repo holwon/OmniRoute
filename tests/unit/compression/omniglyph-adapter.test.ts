@@ -19,6 +19,50 @@ function claudeBody(): Record<string, unknown> {
   };
 }
 const OK = { model: "claude-fable-5", supportsVision: true, providerTransport: "direct" as const };
+const GPT_OK = {
+  model: "gpt-5.6",
+  supportsVision: true,
+  providerTransport: "direct" as const,
+  sourceFormat: "openai" as const,
+  targetFormat: "openai" as const,
+  compressionStage: "post-translation" as const,
+};
+
+function openaiChatBody(): Record<string, unknown> {
+  return {
+    model: "gpt-5.6",
+    messages: [
+      { role: "system", content: DENSE },
+      { role: "user", content: "oi" },
+    ],
+    tools: [
+      {
+        type: "function",
+        function: {
+          name: "inspect_repository",
+          description: DENSE,
+          parameters: { type: "object", properties: { path: { type: "string" } } },
+        },
+      },
+    ],
+  };
+}
+
+function openaiResponsesBody(): Record<string, unknown> {
+  return {
+    model: "gpt-5.6",
+    instructions: DENSE,
+    input: [{ type: "message", role: "user", content: [{ type: "input_text", text: "oi" }] }],
+    tools: [
+      {
+        type: "function",
+        name: "inspect_repository",
+        description: DENSE,
+        parameters: { type: "object", properties: { path: { type: "string" } } },
+      },
+    ],
+  };
+}
 
 test("happy path: comprime corpo claude denso em blocos de imagem", async () => {
   const r = await omniglyphEngine.applyAsync!(claudeBody(), OK);
@@ -79,4 +123,27 @@ test("fail-open: erro no transform vira skip, nunca propaga", async () => {
   const r = await omniglyphEngine.applyAsync!(body, OK);
   assert.equal(r.compressed, false);
   assert.deepEqual(r.body, body); // corpo original devolvido intacto
+});
+
+test("versão atual: transforma Chat Completions OpenAI no wire pós-tradução", async () => {
+  const r = await omniglyphEngine.applyAsync!(openaiChatBody(), GPT_OK);
+  assert.equal(r.compressed, true);
+  assert.ok(JSON.stringify(r.body).includes('"type":"image_url"'));
+});
+
+test("versão atual: transforma OpenAI Responses preservando input[]", async () => {
+  const options = { ...GPT_OK, targetFormat: "openai-responses" as const };
+  const r = await omniglyphEngine.applyAsync!(openaiResponsesBody(), options);
+  assert.equal(r.compressed, true);
+  assert.ok(JSON.stringify(r.body).includes('"type":"input_image"'));
+  assert.ok(Array.isArray((r.body as { input?: unknown }).input));
+});
+
+test("OpenAI não roda no estágio pré-tradução", async () => {
+  const r = await omniglyphEngine.applyAsync!(openaiChatBody(), {
+    ...GPT_OK,
+    compressionStage: "pre-translation",
+  });
+  assert.equal(r.compressed, false);
+  assert.ok(r.stats?.techniquesUsed.includes("skip:requires_post_translation"));
 });

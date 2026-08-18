@@ -107,6 +107,8 @@ test("opencode-go family: context/output caps match upstream provider docs", () 
   assert.equal(getModelSpec("qwen3.8-max-preview").supportsThinking, true);
   assert.equal(getModelSpec("qwen3.8-max-preview").supportsTools, true);
   assert.equal(getModelSpec("qwen3.8-max-preview").supportsVision, true);
+  assert.equal(getModelSpec("qwen3.8-max").contextWindow, 1000000);
+  assert.equal(getModelSpec("qwen3.8-max").maxOutputTokens, 65536);
   assert.equal(getModelSpec("qwen3.7-max").contextWindow, 1000000);
   assert.equal(getModelSpec("qwen3-max-2026-01-23").contextWindow, 1000000);
   assert.equal(getModelSpec("qwen3.6-plus").contextWindow, 1000000);

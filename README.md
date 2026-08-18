@@ -1048,31 +1048,69 @@ same process on one port, so there is no separate CLI-only package today.
 
 </div>
 
+## 📹 Video Guides
+
 <div align="center">
+
+<sub>Dados de cobertura social em 2026-08-17 · YT: 741 | TT: 137 | IG: 124 · Frescor (dias): YT 0 · TT 14 · IG 15</sub>
+
 <table>
   <tr>
-    <td align="center" width="264">
-      <a href="https://www.youtube.com/watch?v=Rxdc36yUyOQ"><img src="https://img.youtube.com/vi/Rxdc36yUyOQ/maxresdefault.jpg" alt="Guia em Português" width="260"/></a><br/>
-      <b>🇧🇷 Português</b><br/><sub>Guia completo</sub>
+    <td align="center" width="320">
+      <a href="https://www.instagram.com/reel/Da8ZthUPK98/">
+        <img src="https://placehold.co/320x180/111827/FFFFFF?text=Instagram+Reel+%7C+nick_saraev&font=montserrat&bold=true" alt="Instagram Reel" width="300"/>
+      </a><br/>
+      <b>🎬 #1 — Instagram</b><br/>
+      <sub>nick_saraev — 1,628,910 views</sub>
     </td>
-    <td align="center" width="264">
-      <a href="https://www.youtube.com/watch?v=CMzyOiUyEVc"><img src="https://img.youtube.com/vi/CMzyOiUyEVc/maxresdefault.jpg" alt="English Guide" width="260"/></a><br/>
-      <b>🇺🇸 English</b><br/><sub>Complete walkthrough</sub>
+    <td align="center" width="320">
+      <a href="https://www.youtube.com/watch?v=QucgvbO5gsM">
+        <img src="https://img.youtube.com/vi/QucgvbO5gsM/maxresdefault.jpg" alt="YouTube — Vaibhav Sisinty" width="300"/>
+      </a><br/>
+      <b>🎬 #2 — YouTube</b><br/>
+      <sub>Vaibhav Sisinty — 373,084 views</sub>
     </td>
-    <td align="center" width="264">
-      <a href="https://www.youtube.com/watch?v=il_5Ii6v4-Y"><img src="https://img.youtube.com/vi/il_5Ii6v4-Y/maxresdefault.jpg" alt="Руководство" width="260"/></a><br/>
-      <b>🇷🇺 Русский</b><br/><sub>Полное руководство</sub>
+    <td align="center" width="320">
+      <a href="https://www.youtube.com/shorts/fZIBK_4fKq8">
+        <img src="https://img.youtube.com/vi/fZIBK_4fKq8/maxresdefault.jpg" alt="YouTube Shorts" width="300"/>
+      </a><br/>
+      <b>🎬 #3 — YouTube Shorts</b><br/>
+      <sub>Nick Automates — 207,714 views</sub>
+    </td>
+    <td align="center" width="320">
+      <a href="https://www.tiktok.com/@milesreevesai/video/7667980059189366019">
+        <img src="https://placehold.co/320x180/111827/FFFFFF?text=TikTok+Top+1&font=montserrat&bold=true" alt="TikTok Thumbnail" width="300"/>
+      </a><br/>
+      <b>🎬 #4 — TikTok</b><br/>
+      <sub>milesreevesai — 620,400 views</sub>
+    </td>
+    <td align="center" width="320">
+      <a href="https://www.youtube.com/watch?v=LkP6ocAoQkk">
+        <img src="https://img.youtube.com/vi/LkP6ocAoQkk/maxresdefault.jpg" alt="Valency Labs" width="300"/>
+      </a><br/>
+      <b>🎬 #5 — YouTube</b><br/>
+      <sub>Valency Labs — 135,974 views</sub>
     </td>
   </tr>
 </table>
+
 </div>
 
-<div align="center">
+**Ranking completo (`v > 0`, maior alcance):**
+
+| #1                                                                                     | #2                                                                                                      | #3                                                                                     | #4                                                                                          | #5                                                                                          |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| [nick_saraev — Instagram](https://www.instagram.com/reel/Da8ZthUPK98/) — **1,628,910** | [milesreevesai — TikTok](https://www.tiktok.com/@milesreevesai/video/7667980059189366019) — **620,400** | [Vaibhav Sisinty — YouTube](https://www.youtube.com/watch?v=QucgvbO5gsM) — **373,084** | [Nick Automates — YouTube Shorts](https://www.youtube.com/shorts/fZIBK_4fKq8) — **207,714** | [midudev — TikTok](https://www.tiktok.com/@midudev/video/7664636453544152342) — **177,800** |
+
+| #6                                                                                    | #7                                                                                                  | #8                                                                                  | #9                                                                           | #10                                                                                    |
+| ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| [theopenstack — Instagram](https://www.instagram.com/reel/DaSs65mMrHk/) — **155,453** | [t.ghoush.ai — TikTok](https://www.tiktok.com/@t.ghoush.ai/video/7669497680527248656) — **152,800** | [Valency Labs — YouTube](https://www.youtube.com/watch?v=LkP6ocAoQkk) — **135,974** | [Asati — YouTube](https://www.youtube.com/watch?v=JjPtJcqwhqg) — **126,130** | [Vaibhav Sisinty — YouTube](https://www.youtube.com/watch?v=NuNDpeZYQ28) — **122,672** |
+
+Métricas de validação: 1002 vídeos rastreados · 7,069,190 visualizações conhecidas · 595 perfis/canais · 13+ idiomas · 13+ criadores.
 
 > 🎬 **Made a video about OmniRoute?** Open an [issue](https://github.com/diegosouzapw/OmniRoute/issues/new) or [discussion](https://github.com/diegosouzapw/OmniRoute/discussions) with the link — we'll feature it here.
 
 <br/>
-</div>
 
 <div align="center">
 
@@ -1110,7 +1148,7 @@ same process on one port, so there is no separate CLI-only package today.
   <tr><td nowrap><b>Runtime</b></td><td>Node.js 22.x / 24.x LTS — <code>&gt;=22.22.2 &lt;23 || &gt;=24.0.0 &lt;27</code></td></tr>
   <tr><td nowrap><b>Language</b></td><td>TypeScript 6.0 — <b>100% TypeScript</b> across <code>src/</code> and <code>open-sse/</code> (zero <code>any</code> in core since v2.0)</td></tr>
   <tr><td nowrap><b>Framework</b></td><td>Next.js 16 + React 19 + Tailwind CSS 4</td></tr>
-  <tr><td nowrap><b>Database</b></td><td>better-sqlite3 (SQLite, WAL journaling) + LowDB (JSON legacy) — 117 domain modules, 149 migrations</td></tr>
+  <tr><td nowrap><b>Database</b></td><td>better-sqlite3 (SQLite, WAL journaling) + LowDB (JSON legacy) — 117 domain modules, 150 migrations</td></tr>
   <tr><td nowrap><b>Memory</b></td><td>SQLite FTS5 full-text + int8-quantized vector embeddings, typed decay</td></tr>
   <tr><td nowrap><b>Schemas</b></td><td>Zod 4 — MCP tool I/O validation + API contracts</td></tr>
   <tr><td nowrap><b>Protocols</b></td><td>MCP (stdio / HTTP / SSE) + A2A v0.3 (JSON-RPC 2.0 + SSE)</td></tr>

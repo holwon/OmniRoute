@@ -2,6 +2,11 @@ import type { CompressionConfig, CompressionResult } from "../types.ts";
 
 export type CompressionEngineTarget = "messages" | "tool_results" | "code_blocks";
 
+/** Protocol shape and pipeline stage used by format-sensitive engines. */
+export type CompressionWireFormat = "claude" | "openai" | "openai-responses" | string;
+
+export type CompressionStage = "pre-translation" | "post-translation";
+
 export interface EngineConfigField {
   key: string;
   type: "boolean" | "number" | "string" | "select" | "multiselect";
@@ -27,6 +32,8 @@ export interface CompressionEngineMetadata {
   targetLatencyMs: number;
   supportsPreview: boolean;
   stable: boolean;
+  /** Stages at which this engine can receive a request body. Omitted means pre-translation. */
+  executionStages?: CompressionStage[];
 }
 
 export interface CompressionEngineApplyOptions {
@@ -37,6 +44,12 @@ export interface CompressionEngineApplyOptions {
    *  exige 'direct' — medição 2026-07-06: agregadores redimensionam as páginas
    *  e destroem a legibilidade. undefined = desconhecido = skip (fail-closed). */
   providerTransport?: "direct" | "aggregator";
+  /** Protocol shape before the current compression stage. */
+  sourceFormat?: CompressionWireFormat;
+  /** Protocol shape expected by the upstream provider. */
+  targetFormat?: CompressionWireFormat;
+  /** Whether the body is still client-shaped or already provider-shaped. */
+  compressionStage?: CompressionStage;
   config?: CompressionConfig;
   compressionComboId?: string | null;
   stepConfig?: Record<string, unknown>;

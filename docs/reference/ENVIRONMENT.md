@@ -795,6 +795,7 @@ The logging system writes to both stdout and rotated log files. All configuratio
 | `CALL_LOG_PIPELINE_CAPTURE_STREAM_CHUNKS` | `false`                    | Store stream chunks in pipeline artifacts when `call_log_pipeline_enabled=true`. Opt-in (`true`) — off by default to save disk. |
 | `CALL_LOG_PIPELINE_MAX_SIZE_KB`           | `512`                      | Max pipeline call log artifact size in KB when `call_log_pipeline_enabled=true`.  |
 | `PROXY_LOGS_TABLE_MAX_ROWS`               | `100000`                   | Max rows in the `proxy_logs` SQLite table before pruning.                         |
+| `PROXY_LOG_INCLUDE_IPS`                   | `false`                    | Include client/egress IPs and account prefixes in `[ProxyEgress]` console logs. The dashboard/database proxy-log records retain full details. |
 | `APP_LOG_ROTATION_CHECK_INTERVAL_MS`      | `60000` (1 min)            | How often `src/lib/logRotation.ts` re-checks the active log file size.            |
 | `CHAT_LOG_TEXT_LIMIT`                     | `65536`                    | Max string length retained in chat log artifacts (default 64 KB).                 |
 | `CHAT_LOG_ARRAY_TAIL_ITEMS`               | `128`                      | Number of array items retained from the tail when truncating chat log payloads.   |

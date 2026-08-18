@@ -190,7 +190,10 @@ export async function runLaunchCommand(opts = {}, claudeArgs = []) {
   const configDir = opts.profile
     ? join(opts.claudeHome || join(os.homedir(), ".claude"), "profiles", opts.profile)
     : undefined;
-  const env = buildClaudeEnv(process.env, baseUrl, authToken, { configDir });
+  const env = buildClaudeEnv(process.env, baseUrl, authToken, {
+    configDir,
+    model: opts.model,
+  });
 
   const { command, shell } = await resolveClaudeSpawn(process.platform);
 
