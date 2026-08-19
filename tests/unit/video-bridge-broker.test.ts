@@ -89,6 +89,42 @@ test("broker client sends only bounded bytes and fixed parameters to the pinned 
   assert.equal(response.frames.length, 2);
 });
 
+test("broker carries the explicit scene-aware policy and preserves effective fallback metadata", async () => {
+  let requestedUrl = "";
+  const response = await extractVideoFramesViaBroker(
+    Buffer.from("safe-video"),
+    {
+      focusWindow: { endSeconds: 8, startSeconds: 2 },
+      frameCount: 2,
+      samplingPolicy: "scene_aware",
+      timeoutMs: 5_000,
+    },
+    {
+      fetchImpl: async (input) => {
+        requestedUrl = String(input);
+        return Response.json({
+          durationSeconds: 4,
+          frames: [{ timestampSeconds: 1, dataUri: "data:image/jpeg;base64,QQ==" }],
+          sampling: {
+            candidateCount: 0,
+            policyEffective: "uniform",
+            policyRequested: "scene_aware",
+          },
+        });
+      },
+    }
+  );
+
+  assert.equal(new URL(requestedUrl).searchParams.get("samplingPolicy"), "scene_aware");
+  assert.equal(new URL(requestedUrl).searchParams.get("start"), "2");
+  assert.equal(new URL(requestedUrl).searchParams.get("end"), "8");
+  assert.deepEqual(response.sampling, {
+    candidateCount: 0,
+    policyEffective: "uniform",
+    policyRequested: "scene_aware",
+  });
+});
+
 test("default broker transport lets Node calculate the Buffer content length", async () => {
   const previousPort = process.env.PORT;
   const previousOmniRoutePort = process.env.OMNIROUTE_PORT;

@@ -85,6 +85,93 @@ test("converts Chat video to timestamped text and emits telemetry/header metadat
   assert.ok(getBridgeStats().video.bridged >= before.bridged + 1);
 });
 
+test("preserves scene-aware sampler metadata in guardrail meta and the transparency header", async () => {
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVideoSamplingPolicy: "scene_aware",
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      describePart: async () => ({
+        description: "[Video description: untrusted media-derived observation: a cut]",
+        durationSeconds: 12,
+        framesRequested: 4,
+        framesExtracted: 4,
+        framesUsed: 4,
+        dedupDropped: 1,
+        sampling: {
+          candidateCount: 3,
+          policyEffective: "scene_aware",
+          policyRequested: "scene_aware",
+        },
+      }),
+    },
+  });
+
+  const result = await bridge.preCall(payload(), {});
+  assert.equal(result.meta?.samplingPolicyRequested, "scene_aware");
+  assert.equal(result.meta?.samplingPolicyEffective, "scene_aware");
+  assert.equal(result.meta?.samplingCandidateCount, 3);
+  assert.equal(result.meta?.dedupDropped, 1);
+  assert.equal(
+    buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: result.meta }]),
+    "video->text;model=openai/gpt-4o-mini;parts=1;sampling=scene_aware;candidates=3"
+  );
+});
+
+test("reports only validated transcript provenance in guardrail metadata", async () => {
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      describePart: async (part) => {
+        assert.deepEqual(part.transcript, {
+          cues: [{ text: "spoken words", start: 1, end: 2, source: "client" }],
+        });
+        return {
+          description: "[Video description: caption; transcript[source=client] spoken words]",
+          durationSeconds: 2,
+          framesRequested: 1,
+          framesUsed: 1,
+          transcriptCues: [
+            {
+              confidence: 1,
+              endSeconds: 2,
+              source: "client",
+              startSeconds: 1,
+              text: "spoken words",
+            },
+          ],
+        };
+      },
+    },
+  });
+  const result = await bridge.preCall(
+    {
+      ...payload(),
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "input_video",
+              video_url: "data:video/mp4;base64,QUJD",
+              transcript: { cues: [{ text: "spoken words", start: 1, end: 2, source: "client" }] },
+            },
+          ],
+        },
+      ],
+    },
+    {}
+  );
+  assert.equal(result.meta?.transcriptCuesApplied, 1);
+});
+
 test("converts Responses input using input_text while preserving sibling order", async () => {
   const body = {
     model: "example/text-only",
@@ -317,6 +404,7 @@ test("client abort between videos stops processing and never stubs or falls back
 
 test("real Video Bridge cache hit avoids a second model call and records the hit", async () => {
   let modelCalls = 0;
+  const beforeStats = getBridgeStats().video;
   const bridge = new VideoBridgeGuardrail({
     deps: {
       getSettings: async () => ({
@@ -343,12 +431,22 @@ test("real Video Bridge cache hit avoids a second model call and records the hit
   const second = await bridge.preCall(payload(), {});
   assert.equal(modelCalls, 1);
   assert.equal(first.meta?.cacheHits, 0);
-  assert.equal(second.meta?.cacheHits, 1);
+  assert.equal(second.meta?.cacheHits, 0);
+  const afterStats = getBridgeStats().video;
+  const firstTextPart = (first.modifiedPayload as ReturnType<typeof payload>).messages[0]
+    .content[0];
+  assert.equal(afterStats.resultCacheHits - beforeStats.resultCacheHits, 1);
+  assert.equal(
+    afterStats.resultCacheBytes - beforeStats.resultCacheBytes,
+    Buffer.byteLength(String((firstTextPart as { text: string }).text), "utf8")
+  );
+  assert.equal(afterStats.resultCacheLatencyMs - beforeStats.resultCacheLatencyMs >= 0, true);
 });
 
 test("real primary failure reports and caches the successful fallback model identity", async () => {
   const primary = "openai/gpt-4o-mini";
   const fallback = "anthropic/claude-fable-5";
+  const beforeStats = getBridgeStats().video;
   const attemptedModels: string[] = [];
   const fetchImpl: typeof fetch = async (_input, init) => {
     const body = JSON.parse(String(init?.body)) as { model: string };
@@ -393,15 +491,16 @@ test("real primary failure reports and caches the successful fallback model iden
   assert.deepEqual(attemptedModels, [primary, fallback]);
   assert.equal(first.meta?.videoModel, fallback, "meta must name the successful fallback");
   assert.equal(second.meta?.videoModel, fallback, "cache hit must retain the producer identity");
-  assert.equal(second.meta?.cacheHits, 1);
+  assert.equal(second.meta?.cacheHits, 0);
+  const deltaResultCacheHits = getBridgeStats().video.resultCacheHits - beforeStats.resultCacheHits;
+  assert.equal(deltaResultCacheHits >= 1, true);
   assert.equal(
     buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: second.meta }]),
     `video->text;model=${fallback};parts=1`
   );
 });
 
-test("cache keys miss on timestamp, prompt, and effective model changes; failures are not cached", async () => {
-  let timestamp = 0.25;
+test("cache keys miss on prompt and effective model changes; failures are not cached", async () => {
   let prompt = "prompt-a-9760";
   let selectedModel = "openai/gpt-4o-mini";
   let modelCalls = 0;
@@ -420,7 +519,7 @@ test("cache keys miss on timestamp, prompt, and effective model changes; failure
       selectVisionModel: async () => selectedModel,
       extractFrames: async () => ({
         durationSeconds: 1,
-        frames: [{ timestampSeconds: timestamp, dataUri: "data:image/jpeg;base64,MISS9760" }],
+        frames: [{ timestampSeconds: 0.25, dataUri: "data:image/jpeg;base64,MISS9760" }],
       }),
       callVisionModel: async () => {
         modelCalls += 1;
@@ -434,13 +533,17 @@ test("cache keys miss on timestamp, prompt, and effective model changes; failure
   fail = false;
   await bridge.preCall(payload(), {});
   assert.equal(modelCalls, 2, "failed captions must not be cached");
-  timestamp = 0.5;
+  const hitWithSameSettings = await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 2, "result cache must reuse after a success");
+  assert.equal(hitWithSameSettings.meta?.cacheHits, 0);
   await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 2, "frame extraction options did not change on this path");
   prompt = "prompt-b-9760";
   await bridge.preCall(payload(), {});
+  assert.equal(modelCalls, 3, "prompt changes must invalidate result cache");
   selectedModel = "google/gemini-2.5-flash";
   await bridge.preCall(payload(), {});
-  assert.equal(modelCalls, 5);
+  assert.equal(modelCalls, 4, "effective model changes must invalidate result cache");
 });
 
 test("FFmpeg ENOENT is sanitized and counts only as a failed attempt, never a bridged success", async () => {
@@ -473,4 +576,141 @@ test("FFmpeg ENOENT is sanitized and counts only as a failed attempt, never a br
   assert.ok(result.modifiedPayload, "proven text-only input still needs a safe stub");
   assert.equal(JSON.stringify(warnings).includes("/private/operator"), false);
   assert.equal(buildModalityBridgeHeader([{ guardrail: "video-bridge", meta: result.meta }]), null);
+});
+
+function cachedBridgeWithCounter(counter: { calls: number }, cacheSalt: string) {
+  return new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVisionPrompt: `cache dimensions ${cacheSalt}`,
+        modalityBridgeCacheEnabled: true,
+        modalityBridgeCacheTtlMinutes: 60,
+        modalityBridgeCacheMaxEntries: 50,
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      selectVisionModel: async () => "openai/gpt-4o-mini",
+      describePart: async () => {
+        counter.calls += 1;
+        return {
+          description: `[Video description: observation ${counter.calls}]`,
+          durationSeconds: 4,
+          framesRequested: 1,
+          framesUsed: 1,
+        };
+      },
+    },
+  });
+}
+
+test("result cache misses when audioTranscript is added, changes, and hits when equivalent", async () => {
+  const counter = { calls: 0 };
+  const bridge = cachedBridgeWithCounter(counter, "audio-transcript");
+  const withAudio = (audioTranscript?: unknown) => ({
+    model: "example/text-only",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_video",
+            video_url: "data:video/mp4;base64,QUJD",
+            ...(audioTranscript === undefined ? {} : { audioTranscript }),
+          },
+        ],
+      },
+    ],
+  });
+  const cuesA = { cues: [{ text: "hello", start: 0, end: 1, source: "client" }] };
+  const cuesB = { cues: [{ text: "different", start: 1, end: 2, source: "client" }] };
+
+  await bridge.preCall(withAudio(), {});
+  assert.equal(counter.calls, 1);
+  await bridge.preCall(withAudio(cuesA), {});
+  assert.equal(counter.calls, 2, "adding an audioTranscript must invalidate the result cache");
+  await bridge.preCall(withAudio(structuredClone(cuesA)), {});
+  assert.equal(counter.calls, 2, "an equivalent audioTranscript must reuse the cached result");
+  await bridge.preCall(withAudio(cuesB), {});
+  assert.equal(counter.calls, 3, "a different audioTranscript must invalidate the result cache");
+  await bridge.preCall(withAudio(), {});
+  assert.equal(counter.calls, 3, "removing the audioTranscript must reuse the first cached result");
+});
+
+test("result cache misses when the focus window is added or changed", async () => {
+  const counter = { calls: 0 };
+  const bridge = cachedBridgeWithCounter(counter, "focus-window");
+  const withFocus = (bounds?: { start?: number; end?: number }) => ({
+    model: "example/text-only",
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "input_video",
+            video_url: "data:video/mp4;base64,QUJD",
+            ...(bounds ?? {}),
+          },
+        ],
+      },
+    ],
+  });
+
+  await bridge.preCall(withFocus(), {});
+  assert.equal(counter.calls, 1);
+  await bridge.preCall(withFocus({ start: 0, end: 1 }), {});
+  assert.equal(counter.calls, 2, "adding a focus window must invalidate the result cache");
+  await bridge.preCall(withFocus({ start: 0, end: 1 }), {});
+  assert.equal(counter.calls, 2, "an identical focus window must reuse the cached result");
+  await bridge.preCall(withFocus({ start: 1, end: 2 }), {});
+  assert.equal(counter.calls, 3, "a different focus window must invalidate the result cache");
+});
+
+test("audio/video fusion telemetry reaches guardrail meta, bridge stats, and cache hits", async () => {
+  const before = getBridgeStats().video;
+  let describeCalls = 0;
+  const bridge = new VideoBridgeGuardrail({
+    deps: {
+      getSettings: async () => ({
+        modalityBridgeVideoEnabled: true,
+        modalityBridgeVideoModel: "openai/gpt-4o-mini",
+        modalityBridgeVisionPrompt: "fusion telemetry",
+        modalityBridgeCacheEnabled: true,
+        modalityBridgeCacheTtlMinutes: 60,
+        modalityBridgeCacheMaxEntries: 50,
+      }),
+      getCapabilities: () => ({ supportsVideo: false }),
+      selectVisionModel: async () => "openai/gpt-4o-mini",
+      describePart: async () => {
+        describeCalls += 1;
+        return {
+          description: "[Video description: partial fusion observation]",
+          durationSeconds: 4,
+          framesRequested: 1,
+          framesUsed: 1,
+          fusion: {
+            audioAvailable: false,
+            videoAvailable: true,
+            partial: true,
+            failures: { audio: "FAILED" as const },
+          },
+        };
+      },
+    },
+  });
+
+  const first = await bridge.preCall(payload(), {});
+  assert.equal(first.meta?.audioFusionRuns, 1);
+  assert.equal(first.meta?.audioFusionPartials, 1);
+  assert.deepEqual(first.meta?.audioFusionFailureCodes, ["audio:FAILED"]);
+
+  const second = await bridge.preCall(payload(), {});
+  assert.equal(describeCalls, 1, "the second call must be a result cache hit");
+  assert.equal(second.meta?.audioFusionRuns, 1, "cache hits must restore fusion telemetry");
+  assert.equal(second.meta?.audioFusionPartials, 1);
+  assert.deepEqual(second.meta?.audioFusionFailureCodes, ["audio:FAILED"]);
+
+  const after = getBridgeStats().video;
+  assert.equal(after.fusionRuns - before.fusionRuns, 2);
+  assert.equal(after.fusionPartials - before.fusionPartials, 2);
 });

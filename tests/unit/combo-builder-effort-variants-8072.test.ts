@@ -141,6 +141,7 @@ test("#9485 static DeepSeek effort aliases appear when synced rows omit supporte
     `${flashId}-high`,
     `${flashId}-max`,
     `${proId}-none`,
+    `${proId}-low`,
     `${proId}-high`,
     `${proId}-max`,
   ]);
@@ -150,10 +151,6 @@ test("#9485 static DeepSeek effort aliases appear when synced rows omit supporte
       .filter((id) => id.startsWith(`${flashId}-`) || id.startsWith(`${proId}-`))
   );
   assert.deepEqual(deepSeekAliases, expectedAliases);
-  assert.equal(
-    provider!.models.some((model) => model.id === `${proId}-low`),
-    false
-  );
   assert.equal(
     provider!.models.some((model) => model.id === `${proId}-medium`),
     false

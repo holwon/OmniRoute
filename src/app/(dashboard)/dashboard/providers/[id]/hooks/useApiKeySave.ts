@@ -32,6 +32,19 @@ type UseApiKeySaveParams = {
   t: ProviderMessageTranslator;
 };
 
+// Issue #10096: the unified Kimi Code dashboard card shares one page/providerId
+// ("kimi-coding") between OAuth and API-key auth. "kimi-coding" is an
+// OAuth-primary managed id and is NOT an admitted API-key/dual-auth connection
+// id (see isManagedProviderConnectionId in src/lib/providers/catalog.ts), so
+// posting it here 400s with "Invalid provider". The dedicated managed
+// API-key id "kimi-coding-apikey" IS admitted — remap only the POST payload
+// so the saved connection lands under the correct managed id. The OAuth flow
+// (handleOAuthSuccess in ProviderDetailPageClient.tsx) does not go through
+// this hook, so it keeps posting "kimi-coding" unchanged.
+export function resolveApiKeySaveProviderId(providerId: string): string {
+  return providerId === "kimi-coding" ? "kimi-coding-apikey" : providerId;
+}
+
 export function useApiKeySave({
   providerId,
   fetchConnections,
@@ -48,7 +61,10 @@ export function useApiKeySave({
         const res = await fetch("/api/providers", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: providerId, ...formData }),
+          body: JSON.stringify({
+            provider: resolveApiKeySaveProviderId(providerId),
+            ...formData,
+          }),
         });
         if (res.ok) {
           const connectionData = await res.json();

@@ -16,26 +16,20 @@ import type { FreeModelBudget } from "./freeModelCatalog.ts";
  * rewrites file timestamps on every deploy, which would report a months-old
  * catalog as "updated today". Bump this whenever the entries below change.
  */
-export const FREE_CATALOG_CURATED_AT = "2026-07-22";
+export const FREE_CATALOG_CURATED_AT = "2026-08-16";
 
 export const FREE_MODEL_BUDGETS: FreeModelBudget[] = [
   { provider: "agentrouter", modelId: "claude-opus-4-8", displayName: "Claude Opus 4.8", monthlyTokens: 0, creditTokens: 200000000, freeType: "one-time-initial", poolKey: "agentrouter", tos: "caution" },
   { provider: "agentrouter", modelId: "claude-opus-5", displayName: "Claude Opus 5", monthlyTokens: 0, creditTokens: 200000000, freeType: "one-time-initial", poolKey: "agentrouter", tos: "caution" },
   { provider: "agentrouter", modelId: "gpt-5.6-sol", displayName: "GPT-5.6 Sol", monthlyTokens: 0, creditTokens: 200000000, freeType: "one-time-initial", poolKey: "agentrouter", tos: "caution" },
+  { provider: "agy", modelId: "gemini-3.7-flash-high", displayName: "Gemini 3.7 Flash (High)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
+  { provider: "agy", modelId: "gemini-3.7-flash-medium", displayName: "Gemini 3.7 Flash (Medium)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
+  { provider: "agy", modelId: "gemini-3.7-flash-low", displayName: "Gemini 3.7 Flash (Low)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
+  { provider: "agy", modelId: "gemini-pro-agent", displayName: "Gemini 3.1 Pro (High)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
+  { provider: "agy", modelId: "gemini-3.1-pro-low", displayName: "Gemini 3.1 Pro (Low)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
+  { provider: "agy", modelId: "gemini-3.1-flash-lite", displayName: "Gemini 3.1 Flash Lite", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
   { provider: "agy", modelId: "claude-opus-4-6-thinking", displayName: "Claude Opus 4.6 (Thinking)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
   { provider: "agy", modelId: "claude-sonnet-4-6", displayName: "Claude Sonnet 4.6 (Thinking)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.1-pro-low", displayName: "Gemini 3.1 Pro (Low)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-pro-agent", displayName: "Gemini 3.1 Pro (High)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.6-flash-high", displayName: "Gemini 3.6 Flash (High)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.6-flash-medium", displayName: "Gemini 3.6 Flash (Medium)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.6-flash-low", displayName: "Gemini 3.6 Flash (Low)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3-flash-agent", displayName: "Gemini 3.5 Flash (High)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.5-flash-low", displayName: "Gemini 3.5 Flash (Medium)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.5-flash-extra-low", displayName: "Gemini 3.5 Flash (Low)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-3.1-flash-lite", displayName: "Gemini 3.1 Flash Lite", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-2.5-flash", displayName: "Gemini 2.5 Flash", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-2.5-flash-thinking", displayName: "Gemini 2.5 Flash Thinking", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
-  { provider: "agy", modelId: "gemini-2.5-flash-lite", displayName: "Gemini 2.5 Flash Lite", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
   { provider: "agy", modelId: "gpt-oss-120b-medium", displayName: "GPT-OSS 120B (Medium)", monthlyTokens: 0, creditTokens: 0, freeType: "keyless", poolKey: "agy", tos: "avoid" },
   { provider: "ai21", modelId: "jamba-large-1.7", displayName: "jamba-large-1.7", monthlyTokens: 0, creditTokens: 10000000, freeType: "one-time-initial", poolKey: "ai21", tos: "avoid" },
   { provider: "ai21", modelId: "jamba-mini-2", displayName: "jamba-mini-2", monthlyTokens: 0, creditTokens: 10000000, freeType: "one-time-initial", poolKey: "ai21", tos: "avoid" },
@@ -187,7 +181,6 @@ export const FREE_MODEL_BUDGETS: FreeModelBudget[] = [
   { provider: "gemini", modelId: "gemini-2.5-flash-lite", displayName: "Gemini 2.5 Flash-Lite", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-daily", poolKey: "gemini-free", tos: "caution" },
   { provider: "gemini", modelId: "gemini-3-flash-preview", displayName: "Gemini 3 Flash Preview", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-daily", poolKey: "gemini-free", tos: "caution" },
   { provider: "gemini", modelId: "gemini-3.1-flash-lite", displayName: "Gemini 3.1 Flash-Lite", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-daily", poolKey: "gemini-free", tos: "caution" },
-  { provider: "gemini", modelId: "gemini-3.5-flash", displayName: "Gemini 3.5 Flash", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-daily", poolKey: "gemini-free", tos: "caution" },
   { provider: "glm-cn", modelId: "glm-4-flash", displayName: "GLM-4-Flash", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-uncapped", poolKey: "zhipu-flash-free", tos: "ok" },
   { provider: "glm-cn", modelId: "glm-4.5-flash", displayName: "GLM-4.5-Flash", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-uncapped", poolKey: "zhipu-flash-free", tos: "ok" },
   { provider: "glm-cn", modelId: "glm-4.7-flash", displayName: "GLM-4.7-Flash", monthlyTokens: 0, creditTokens: 0, freeType: "recurring-uncapped", poolKey: "zhipu-flash-free", tos: "ok" },

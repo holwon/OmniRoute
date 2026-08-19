@@ -22,6 +22,7 @@ import {
   getAllImageModels,
   isRegisteredImageModel,
 } from "@omniroute/open-sse/config/imageRegistry";
+import { aiHordeImageCatalog } from "@omniroute/open-sse/services/aihordeImageCatalog";
 import { getAllRerankModels } from "@omniroute/open-sse/config/rerankRegistry";
 import { getAllAudioModels } from "@omniroute/open-sse/config/audioRegistry";
 import { getAllModerationModels } from "@omniroute/open-sse/config/moderationRegistry";
@@ -431,27 +432,12 @@ async function buildUnifiedModelsResponseCore(
       const syncedInputModalities = parseJsonStringArray(synced?.modalities_input);
       const syncedOutputModalities = parseJsonStringArray(synced?.modalities_output);
 
-      const syncedContext = isPositiveFiniteNumber(synced?.limit_context)
-        ? synced.limit_context
-        : undefined;
-      const registryContext = isPositiveFiniteNumber(registryModel?.contextLength)
-        ? registryModel.contextLength
-        : undefined;
-      const specContext = isPositiveFiniteNumber(spec?.contextWindow)
-        ? spec.contextWindow
-        : undefined;
-      const contextLength =
-        syncedContext ??
-        registryContext ??
-        specContext ??
-        (getTokenLimit(providerId, modelId) || undefined);
-      const registryInputLimit = isPositiveFiniteNumber(registryModel?.maxInputTokens)
-        ? registryModel.maxInputTokens
-        : undefined;
-      const syncedInputLimit = isPositiveFiniteNumber(synced?.limit_input)
-        ? synced.limit_input
-        : undefined;
-      const maxInputTokens = registryInputLimit ?? syncedInputLimit ?? contextLength;
+      const contextLength = isPositiveFiniteNumber(canonical.limits.contextWindow)
+        ? canonical.limits.contextWindow
+        : getTokenLimit(providerId, modelId) || undefined;
+      const maxInputTokens = isPositiveFiniteNumber(canonical.limits.maxInputTokens)
+        ? canonical.limits.maxInputTokens
+        : contextLength;
       const maxOutputTokens = isPositiveFiniteNumber(synced?.limit_output)
         ? synced.limit_output
         : isPositiveFiniteNumber(spec?.maxOutputTokens)
@@ -1178,7 +1164,15 @@ async function buildUnifiedModelsResponseCore(
       });
     }
 
-    // Add image models (filtered by active providers)
+    // Add image models (filtered by active providers).
+    // AI Horde image workers come and go — refresh the live detector first.
+    if (isProviderActive("aihorde")) {
+      try {
+        await aiHordeImageCatalog.ensureFresh();
+      } catch {
+        // Keep the last good snapshot (or none) if Horde is unreachable.
+      }
+    }
     for (const imgModel of getAllImageModels()) {
       if (!isProviderActive(imgModel.provider)) continue;
       const rawModelId = getSpecialtyModelRelativeId(imgModel.id, imgModel.provider);

@@ -37,6 +37,11 @@ import { persistResponsesWsCallHistory } from "./history";
 import { applyResponsesWsCompression } from "./compression";
 import { getComboByName } from "@/lib/db/combos";
 import { getComboModelString } from "@/lib/combos/steps";
+import {
+  buildManagedLeaseErrorResponse,
+  isExclusiveLeaseManagedKey,
+  LeaseContextError,
+} from "@/sse/services/leaseContext";
 
 const CODEX_RESPONSES_WS_URL = "wss://chatgpt.com/backend-api/codex/responses";
 const executor = new CodexExecutor();
@@ -418,6 +423,17 @@ async function resolveCodexRequestContext(body: JsonRecord) {
   if (policyResult.rejection) return { error: policyResult.rejection };
   const metadata =
     policyResult.apiKeyInfo ?? (apiKey ? await getApiKeyMetadata(apiKey).catch(() => null) : null);
+  if (isExclusiveLeaseManagedKey(metadata)) {
+    return {
+      error: buildManagedLeaseErrorResponse(
+        new LeaseContextError(
+          409,
+          "LEASE_UNSUPPORTED_TRANSPORT",
+          "Managed leases require the fenced HTTP Responses transport"
+        )
+      ),
+    };
+  }
   const allowedConnections =
     metadata && Array.isArray(metadata.allowedConnections) && metadata.allowedConnections.length > 0
       ? metadata.allowedConnections

@@ -33,6 +33,15 @@ test("#6372: returns null when there are no keys", async () => {
   assert.equal(await apiKeysDb.pickApiKeyForInternalUse("combo-health-check"), null);
 });
 
+test("internal probes never auto-select a hard-lease key", async () => {
+  await apiKeysDb.createApiKey("managed-key", "machine-a", ["manage", "lease:exclusive"], {
+    allowedConnections: ["00000000-0000-4000-8000-000000000001"],
+  });
+
+  assert.equal(await apiKeysDb.pickApiKeyForInternalUse("combo-health-check"), null);
+  assert.equal(await apiKeysDb.pickApiKeyForInternalUse("internal-probe"), null);
+});
+
 test("#6372: prefers a management-scoped key over a plain self:usage key", async () => {
   // Insert the plain (restricted-intent) key FIRST so getApiKeys()[0] would be
   // the wrong one under the old naive selection.

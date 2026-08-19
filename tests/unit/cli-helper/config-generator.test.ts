@@ -110,6 +110,16 @@ describe("config-generator", () => {
       assert.ok("configPath" in result);
     });
 
+    it("accepts the legacy kilocode id while generating the canonical kilo config", async () => {
+      const result = await generator.generateConfig("kilocode", {
+        baseUrl: "http://localhost:20128",
+        apiKey: "sk-test",
+      });
+      assert.strictEqual(result.success, true);
+      assert.ok(result.configPath.includes(".config/kilocode/settings.json"));
+      assert.ok(String(result.content).includes("http://localhost:20128/v1"));
+    });
+
     it("returns success for valid hermes config", async () => {
       const result = await generator.generateConfig("hermes", {
         baseUrl: "http://localhost:20128",

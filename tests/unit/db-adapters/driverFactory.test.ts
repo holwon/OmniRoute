@@ -4,6 +4,9 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createRequire } from "node:module";
+import type * as NodePath from "node:path";
+import { runtimeRequire } from "../../../src/lib/db/adapters/runtimeRequire.ts";
+
 
 const {
   createSyncDriverFactory,
@@ -33,7 +36,12 @@ function createTempDatabasePath(t: TestContext) {
   return databasePath;
 }
 
+
 describe("driverFactory", () => {
+  test("runtimeRequire loads Node built-ins outside webpack", () => {
+    const nodePath = runtimeRequire("node:path") as typeof NodePath;
+    assert.equal(nodePath.basename("/tmp/omniroute.sqlite"), "omniroute.sqlite");
+  });
   test("tryOpenSync retorna adapter síncrono ou null", () => {
     const adapter = tryOpenSync(":memory:");
     if (adapter) {

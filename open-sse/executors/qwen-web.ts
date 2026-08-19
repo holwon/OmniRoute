@@ -58,6 +58,7 @@ const MODEL_ALIASES: Record<string, string> = {
   "qwen3-plus": "qwen3.7-plus",
   "qwen3-max": "qwen3.7-max",
   "qwen3-flash": "qwen3.6-plus",
+  "qwen3.8-max-preview": "qwen3.8-max",
   // Note: `qwen3-coder-plus` is a real upstream model id (Qwen3-Coder) and
   // must NOT be aliased — the previous `"qwen3-coder-plus": "qwen3.7-max"`
   // entry silently rewrote valid coder requests to the wrong model.
@@ -67,7 +68,7 @@ const MODEL_ALIASES: Record<string, string> = {
 };
 
 const DEFAULT_MODEL = "qwen3.7-max";
-const REQUIRED_THINKING_MODELS = new Set(["qwen3.8-max-preview"]);
+const REQUIRED_THINKING_MODELS = new Set(["qwen3.8-max"]);
 
 function mapModel(modelId: string): string {
   return MODEL_ALIASES[modelId] || modelId;

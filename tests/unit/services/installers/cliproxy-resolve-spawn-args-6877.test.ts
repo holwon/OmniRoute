@@ -51,9 +51,8 @@ describe("resolveSpawnArgs (#6877 — real filesystem)", () => {
   });
 
   it("uses the --config long flag and never the -c short flag", async () => {
-    const { resolveSpawnArgs } = await import(
-      "../../../../src/lib/services/installers/cliproxy.ts"
-    );
+    const { resolveSpawnArgs } =
+      await import("../../../../src/lib/services/installers/cliproxy.ts");
 
     const port = 8317;
     const result = resolveSpawnArgs(port);
@@ -61,13 +60,33 @@ describe("resolveSpawnArgs (#6877 — real filesystem)", () => {
     const configPath = path.join(dataDir, "services", "cliproxy", "config.yaml");
 
     assert.deepEqual(result.args, ["--config", configPath]);
+    assert.equal(
+      result.command,
+      path.join(dataDir, "bin", process.platform === "win32" ? "cliproxyapi.exe" : "cliproxyapi")
+    );
     assert.ok(!result.args.includes("-c"), "args must never contain the short -c flag");
   });
 
+  it("uses the .exe command name on Windows", async () => {
+    const originalPlatformDescriptor = Object.getOwnPropertyDescriptor(process, "platform");
+    Object.defineProperty(process, "platform", { value: "win32", configurable: true });
+
+    try {
+      const { resolveSpawnArgs } =
+        await import("../../../../src/lib/services/installers/cliproxy.ts");
+      const result = resolveSpawnArgs(8317);
+
+      assert.equal(result.command, path.join(dataDir, "bin", "cliproxyapi.exe"));
+    } finally {
+      if (originalPlatformDescriptor) {
+        Object.defineProperty(process, "platform", originalPlatformDescriptor);
+      }
+    }
+  });
+
   it("writes the default config.yaml template when none exists yet", async () => {
-    const { resolveSpawnArgs } = await import(
-      "../../../../src/lib/services/installers/cliproxy.ts"
-    );
+    const { resolveSpawnArgs } =
+      await import("../../../../src/lib/services/installers/cliproxy.ts");
 
     const port = 9123;
     const result = resolveSpawnArgs(port);
@@ -81,9 +100,8 @@ describe("resolveSpawnArgs (#6877 — real filesystem)", () => {
   });
 
   it("preserves a pre-existing config.yaml byte-for-byte instead of overwriting it", async () => {
-    const { resolveSpawnArgs } = await import(
-      "../../../../src/lib/services/installers/cliproxy.ts"
-    );
+    const { resolveSpawnArgs } =
+      await import("../../../../src/lib/services/installers/cliproxy.ts");
 
     const configDir = path.join(dataDir, "services", "cliproxy");
     fs.mkdirSync(configDir, { recursive: true });

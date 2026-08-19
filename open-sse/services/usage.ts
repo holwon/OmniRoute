@@ -71,6 +71,7 @@ import { getFirecrawlUsage } from "./usage/firecrawl.ts";
 import { getCommandCodeUsage } from "./usage/command-code.ts";
 import { getQwenTokenPlanUsage } from "./usage/qwen-token-plan.ts";
 import { getConolUsage } from "./conolUsage.ts";
+import { getAgentrouterUsage } from "./usage/agentrouter.ts";
 
 type JsonRecord = Record<string, unknown>;
 type UsageProviderConnection = JsonRecord & {
@@ -138,6 +139,8 @@ export const USAGE_FETCHER_PROVIDERS = [
   "command-code",
   "conol-web",
   "cnl",
+  // AgentRouter (New-API) console balance (GET /api/user/self)
+  "agentrouter",
 ] as const;
 
 export type UsageFetcherProvider = (typeof USAGE_FETCHER_PROVIDERS)[number];
@@ -244,6 +247,8 @@ export async function getUsageForProvider(
     case "conol-web":
     case "cnl":
       return await getConolUsage(apiKey || accessToken, providerSpecificData);
+    case "agentrouter":
+      return await getAgentrouterUsage(id, connection);
     default:
       return { message: `Usage API not implemented for ${provider}` };
   }

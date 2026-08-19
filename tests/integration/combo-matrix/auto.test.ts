@@ -51,7 +51,6 @@ const NO_AUTH_PROVIDER_IDS = [
   "theoldllm",
   "chipotle",
   "veoaifree-web",
-  "mimocode",
   "auggie",
 ];
 

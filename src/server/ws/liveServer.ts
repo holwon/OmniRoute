@@ -428,7 +428,9 @@ function startHeartbeat(server: WebSocketServer): void {
         clients.delete(clientId);
         continue;
       }
-      // Send ping
+      // Send the application-level heartbeat response. Only inbound client
+      // messages (including { type: "ping" }) refresh lastActivity; renewing it
+      // here would keep a half-open socket alive indefinitely (#10452).
       sendTo(client.ws, { type: "pong" } as WsServerMessage);
     }
   }, HEARTBEAT_INTERVAL_MS);

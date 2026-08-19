@@ -55,6 +55,7 @@ import type {
   ResolvedComboUnit,
   SingleModelTarget,
 } from "./types.ts";
+import type { PerTargetAdmissionHook } from "../admission/types.ts";
 
 type ComboSetupConfig = ReturnType<typeof resolveComboSetupConfig>;
 type RunCombo = (options: HandleComboChatOptions) => Promise<Response>;
@@ -76,6 +77,16 @@ type PreludeBaseOptionArgs = {
   apiKeyAllowedConnections?: string[] | null;
   hiddenModelsByProvider?: HiddenModelsByProvider;
   clientManagedResponsesContext?: boolean;
+  /** #9654 Wave 2: per-target lane-aware admission probe (see HandleComboChatOptions). */
+  perTargetAdmission?: PerTargetAdmissionHook | null;
+  /** #10225 — defer the hard context-overflow preflight when compression is enabled. */
+  deferContextOverflowWhenCompressible?: boolean;
+  /** Server-side compression exclusions (#8034). */
+  compressionExclusions?: import("../compression/exclusions.ts").CompressionExclusions;
+  /** #10503 — request-shape facts for the target-aware deferral check (see knownContextOverflow.ts). */
+  sourceFormat?: string | null;
+  endpointPath?: string | null;
+  requestHeaders?: Headers | Record<string, unknown> | null;
 };
 
 /** Rebuild handleComboChat's option bag verbatim for a recursive dispatch. */
@@ -93,6 +104,12 @@ function buildBaseOptions(a: PreludeBaseOptionArgs): HandleComboChatOptions {
     apiKeyAllowedConnections: a.apiKeyAllowedConnections,
     hiddenModelsByProvider: a.hiddenModelsByProvider,
     clientManagedResponsesContext: a.clientManagedResponsesContext,
+    perTargetAdmission: a.perTargetAdmission,
+    deferContextOverflowWhenCompressible: a.deferContextOverflowWhenCompressible,
+    compressionExclusions: a.compressionExclusions,
+    sourceFormat: a.sourceFormat,
+    endpointPath: a.endpointPath,
+    requestHeaders: a.requestHeaders,
   };
 }
 
@@ -366,6 +383,12 @@ export async function tryFusionDispatch(args: {
   signal?: AbortSignal | null;
   apiKeyAllowedConnections?: string[] | null;
   hiddenModelsByProvider?: HiddenModelsByProvider;
+  perTargetAdmission?: PerTargetAdmissionHook | null;
+  deferContextOverflowWhenCompressible?: boolean;
+  compressionExclusions?: import("../compression/exclusions.ts").CompressionExclusions;
+  sourceFormat?: string | null;
+  endpointPath?: string | null;
+  requestHeaders?: Headers | Record<string, unknown> | null;
   runCombo: RunCombo;
 }): Promise<Response | null> {
   const { cfg, combo, config, strategy, log } = args;
@@ -435,6 +458,7 @@ export async function tryFusionDispatch(args: {
     handleSingleModel: fusionHandleSingleModel,
     log,
     comboName: combo.name,
+    perTargetAdmission: args.perTargetAdmission,
     judgeModel,
     tuning: fusionTuning,
   });
@@ -589,6 +613,12 @@ export async function tryRuntimeUnitDispatch(args: {
   signal?: AbortSignal | null;
   apiKeyAllowedConnections?: string[] | null;
   hiddenModelsByProvider?: HiddenModelsByProvider;
+  perTargetAdmission?: PerTargetAdmissionHook | null;
+  deferContextOverflowWhenCompressible?: boolean;
+  compressionExclusions?: import("../compression/exclusions.ts").CompressionExclusions;
+  sourceFormat?: string | null;
+  endpointPath?: string | null;
+  requestHeaders?: Headers | Record<string, unknown> | null;
   runCombo: RunCombo;
 }): Promise<Response | null> {
   const { body, combo, config, strategy, allCombos, log, settings } = args;

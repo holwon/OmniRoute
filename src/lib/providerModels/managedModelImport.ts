@@ -259,7 +259,6 @@ export async function importManagedModels({
   );
   const candidateImportedModels = normalizeImportedModels(discoveredModels);
   const importedIds = new Set(candidateImportedModels.map((model) => model.id));
-  const discoveredIds = new Set(discoveredModels.map((model) => model.id));
 
   const nextModelsMap = new Map<string, JsonRecord>();
   const removedCustomModels: JsonRecord[] = [];
@@ -267,7 +266,10 @@ export async function importManagedModels({
   for (const model of previousModels) {
     const modelId = getModelId(model);
     if (!modelId) continue;
-    if (isImportedSource(model.source) || discoveredIds.has(modelId)) {
+    // A manually configured row is the provider's user-owned metadata overlay.
+    // It may share an id with an upstream model, in which case list and runtime
+    // resolution merge it over the synced base. Only replace prior import rows.
+    if (isImportedSource(model.source)) {
       removedCustomModels.push(model);
       continue;
     }

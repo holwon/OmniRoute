@@ -211,7 +211,9 @@ function hasDeclaredEffortList(record: JsonRecord): boolean {
 }
 
 export function isAutoFetchModelsEnabled(providerSpecificData: unknown): boolean {
-  return asRecord(providerSpecificData).autoFetchModels !== false;
+  // Remote discovery writes its response into the shared synced-model cache, so
+  // it must be an explicit per-connection opt-in rather than the default.
+  return asRecord(providerSpecificData).autoFetchModels === true;
 }
 
 export function normalizeDiscoveredModels(

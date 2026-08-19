@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Redirecționează cererile cu buget epuizat către furnizorul/modelul de rezervă gratuit de urgență.",
   "featureFlagArenaEloSyncEnabledDescription": "Activează sincronizarea periodică ELO a clasamentului Arena AI pentru clasamentele de inteligență ale modelelor.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Publica id-urile mirror claude/&lt;provider&gt;/&lt;model&gt; pe /v1/models astfel încât lista de descoperire a modelului Claude Code să includă modele non-Claude. Atenție: dublează intrările din catalog pentru toți clienții când este activat global.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Activați benzile de admitere virtuale adaptive per-tenant pentru expedierea către furnizori (#9654): un vârf de trafic al unui tenant nu mai returnează 503 altui tenant. Variabila de mediu OMNIROUTE_CHAT_VIRTUAL_LANES are prioritate față de această setare din panou; modificările intră în vigoare la repornirea serverului.",
   "sidebar": {
     "home": "Acasă",
     "dashboard": "Tabloul de bord",
@@ -1290,7 +1291,9 @@
       "open": "deschide",
       "close": "închide"
     },
-    "noResults": "Niciun rezultat"
+    "noResults": "Niciun rezultat",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhook-uri",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Partajare cotă",
     "discovery": "Descoperire",
     "freeProviderRankings": "Clasament furnizori gratuiți",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Niveluri gratuite",
     "gamification": "Gamificare",
     "leaderboard": "Clasament",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Acest furnizor a fost retras",
     "riskNotice": {
       "title": "Înainte de a continua",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Furnizor cu avertismente de utilizare — faceți clic pentru detalii",
       "oauth": "Acest furnizor utilizează sesiunea oficială a produsului/OAuth, care nu este autorizată pentru utilizarea ca proxy/router. Nu recomandăm utilizarea intensivă a agenților autonomi (stil OpenCloud, fluxuri lungi cu mai mulți pași, loturi mari) — upstream-ul poate reacționa prin restricționarea sau blocarea contului. Utilizați pe propriul risc.",
       "webCookie": "Acest furnizor se autentifică prin cookie-urile sesiunii web. Serviciul upstream poate invalida sesiunea în orice moment, solicitându-vă să vă autentificați din nou. Nu este recomandat pentru operațiuni lungi nesupravegheate. Utilizați pe propriul risc.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Nu mai afișa acest mesaj pentru acest furnizor",
       "understand": "Am înțeles, continuă",
       "cancel": "Anulează"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Dezactivat",
     "enableProvider": "Activați furnizorul",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Setările punctului final al modelului salvat",
     "searchByModelAria": "Caută după model",
     "selectSupportedEndpoint": "Selectați cel puțin un punct final acceptat",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "Obține automat modelele upstream",
+    "autoFetchModelsDisabled": "Modelul upstream auto-fetch dezactivat",
+    "autoFetchModelsTooltip": "Recuperează și stochează modelele upstream atunci când este necesar",
+    "autoFetchModelsEnabled": "Modelul upstream auto-fetch activat",
+    "overridesUpstreamModel": "Suprascrie upstream",
+    "autoFetchModelsToggleFailed": "Nu s-a reușit comutarea automată a preluării modelului upstream",
+    "overridesUpstreamModelHint": "Setările tale suprascriu acest model de bază",
+    "autoFetchModelsPartialFailure": "Unele conexiuni au fost actualizate, dar modelul upstream auto-fetch nu a fost schimbat peste tot",
+    "resetToUpstreamDefaults": "Restabilește valorile implicite upstream",
+    "resetToUpstreamDefaultsSuccess": "Restabilite valorile implicite ale modelului upstream",
+    "resetToUpstreamDefaultsFailed": "Restaurarea valorilor implicite ale modelului upstream a eșuat"
   },
   "settings": {
     "title": "Setări",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Cuvinte cheie interzise",
     "customBannedSignalsDesc": "Cuvinte cheie suplimentare care declanșează detectarea blocării permanente a contului. Cuvintele cheie integrate se aplică întotdeauna.",
     "customBannedSignalsPlaceholder": "de ex. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Compresie",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Realizări rare"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Primul token",
         "description": "Ai efectuat prima cerere API",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Configurare Furnizor",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Actualizarea a eșuat (HTTP {status})",
     "networkError": "Eroare de rețea — nu s-a putut actualiza setarea de expunere a furnizorului"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Furnizorul nu suportă viziunea pentru această cerere de imagine",

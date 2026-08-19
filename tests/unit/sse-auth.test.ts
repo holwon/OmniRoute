@@ -1159,6 +1159,21 @@ test("getProviderCredentials resolves the antigravity / agy alias pool", async (
   assert.equal(selected.connectionId, connection.id);
 });
 
+test("getProviderCredentials shares one Jina token across foundation, reader, and search", async () => {
+  const connection = await seedConnection("jina-ai", {
+    name: "jina-foundation-key",
+    apiKey: "jina-dashboard-key",
+  });
+
+  const viaSearch = await auth.getProviderCredentials("jina-search");
+  const viaReader = await auth.getProviderCredentials("jina-reader");
+
+  assert.ok(viaSearch && !("allExpired" in viaSearch));
+  assert.ok(viaReader && !("allExpired" in viaReader));
+  assert.equal(viaSearch.connectionId, connection.id);
+  assert.equal(viaReader.connectionId, connection.id);
+});
+
 test("getProviderCredentials exposes copilotToken when present in providerSpecificData", async () => {
   const connection = await seedConnection("codex", {
     authType: "oauth",
@@ -1559,6 +1574,56 @@ test("markAccountUnavailable auto-disables permanently banned accounts when the 
     "Verify your account to continue",
     "openai",
     "gpt-4o"
+  );
+  const updated = await providersDb.getProviderConnectionById(connection.id);
+
+  assert.equal(result.shouldFallback, true);
+  assert.equal(updated.isActive, false);
+  assert.equal(updated.testStatus, "banned");
+});
+
+test("markAccountUnavailable keeps prepaid API keys active when auto-disable scope is subscription", async () => {
+  await settingsDb.updateSettings({
+    autoDisableBannedAccounts: true,
+    autoDisableBannedScope: "subscription",
+  });
+  const connection = await seedConnection("openai", {
+    name: "prepaid-key-stays-on",
+    authType: "apikey",
+  });
+
+  const result = await auth.markAccountUnavailable(
+    connection.id,
+    401,
+    "Verify your account to continue",
+    "openai",
+    "gpt-4o"
+  );
+  const updated = await providersDb.getProviderConnectionById(connection.id);
+
+  assert.equal(result.shouldFallback, true);
+  assert.equal(updated.isActive, true);
+  assert.equal(updated.testStatus, "banned");
+});
+
+test("markAccountUnavailable still auto-disables OAuth accounts when scope is subscription", async () => {
+  await settingsDb.updateSettings({
+    autoDisableBannedAccounts: true,
+    autoDisableBannedScope: "subscription",
+  });
+  const connection = await seedConnection("claude", {
+    name: "oauth-subscription-ban",
+    authType: "oauth",
+    accessToken: "oauth-access-token",
+    refreshToken: "oauth-refresh-token",
+  });
+
+  const result = await auth.markAccountUnavailable(
+    connection.id,
+    401,
+    "Verify your account to continue",
+    "claude",
+    "claude-sonnet"
   );
   const updated = await providersDb.getProviderConnectionById(connection.id);
 

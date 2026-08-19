@@ -376,7 +376,29 @@ if (existsSync(chatGptWebCodexMcpSrcFile)) {
   );
 }
 
-// ── Step 8.6: Bundle LLMLingua ONNX worker ────────────────────────────
+// ── Step 8.6: Bundle call-log artifact worker ────────────────────────
+const callLogWorkerSrc = join(ROOT, "src", "lib", "usage", "callLogArtifactWorker.ts");
+const callLogWorkerDest = join(DIST_DIR, "src", "lib", "usage", "callLogArtifactWorker.js");
+if (!existsSync(callLogWorkerSrc)) {
+  throw new Error("Required call-log artifact worker source is missing");
+}
+console.log("  🔨 Bundling call-log artifact worker...");
+mkdirSync(dirname(callLogWorkerDest), { recursive: true });
+runBuildTool(
+  "esbuild",
+  "esbuild",
+  [
+    "src/lib/usage/callLogArtifactWorker.ts",
+    "--bundle",
+    "--platform=node",
+    "--packages=external",
+    "--format=esm",
+    "--outfile=dist/src/lib/usage/callLogArtifactWorker.js",
+  ],
+  { cwd: ROOT, stdio: "inherit" }
+);
+
+// ── Step 8.6a: Bundle LLMLingua ONNX worker ───────────────────────────
 // The worker is spawned via worker_threads at a path the Next.js bundler cannot
 // statically trace, so it must ship as a standalone .js (mirrors the MCP-server
 // bundling above). Heavy deps (@atjsh/llmlingua-2 / @huggingface/transformers /

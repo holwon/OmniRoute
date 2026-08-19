@@ -540,8 +540,9 @@ function emitToolCall(state, emit, tc) {
   // precedence ("...while preserving explicit function-tool precedence") but its
   // unconditional `toolName === "apply_patch"` OR never actually implemented the carve-out.
   const toolName = state.funcNames[tcIdx] || funcName || "";
+  const lowerName = toolName.toLowerCase();
   const isCustomTool =
-    (toolName === "apply_patch" && !state.toolSchemas?.has?.(toolName)) ||
+    ((lowerName === "apply_patch" || lowerName === "applypatch") && !state.toolSchemas?.has?.(toolName)) ||
     state.customToolNames?.has?.(toolName) === true;
 
   if (!state.funcCallIds[tcIdx] && newCallId) state.funcCallIds[tcIdx] = newCallId;
@@ -611,8 +612,9 @@ function closeToolCall(state, emit, idx, recordAsCompleted = true) {
     const toolName = state.funcNames[idx] || "";
     // See emitToolCall()'s isCustomTool comment — must stay in sync (both compute the
     // same classification independently for their respective add/close call sites).
+    const lowerName = toolName.toLowerCase();
     const isCustomTool =
-      (toolName === "apply_patch" && !state.toolSchemas?.has?.(toolName)) ||
+      ((lowerName === "apply_patch" || lowerName === "applypatch") && !state.toolSchemas?.has?.(toolName)) ||
       state.customToolNames?.has?.(toolName) === true;
 
     let funcItem;

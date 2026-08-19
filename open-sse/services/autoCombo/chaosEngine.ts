@@ -25,6 +25,7 @@
  */
 
 import { errorResponse } from "../../utils/error.ts";
+import type { PerTargetAdmissionHook } from "../admission/types.ts";
 import type { ComboLogger, HandleSingleModel } from "../combo/types.ts";
 
 export const CHAOS_DEFAULTS = {
@@ -363,8 +364,19 @@ export async function handleChaosChat(opts: {
   comboName?: string;
   primaryModel?: string | null;
   tuning?: ChaosTuning | null;
+  /** #9654 Wave 2: per-target lane-aware admission probe (see HandleComboChatOptions). */
+  perTargetAdmission?: PerTargetAdmissionHook | null;
 }): Promise<Response> {
-  const { body, models, handleSingleModel, log, comboName, primaryModel, tuning } = opts;
+  const {
+    body,
+    models,
+    handleSingleModel,
+    log,
+    comboName,
+    primaryModel,
+    tuning,
+    perTargetAdmission,
+  } = opts;
   const panel = Array.isArray(models) ? models.filter(Boolean) : [];
   const hardTimeout = tuning?.panelHardTimeoutMs ?? CHAOS_DEFAULTS.panelHardTimeoutMs;
   const minPanel = tuning?.minPanel ?? CHAOS_DEFAULTS.minPanel;
@@ -406,7 +418,29 @@ export async function handleChaosChat(opts: {
 
       const abortControllers: AbortController[] = [];
 
-      const modelPromises = panel.map((model, index) => {
+      // #9654 Wave 2: per-target lane-aware admission probe — drop lane-full
+      // panel members before fan-out (strictly non-blocking; no-op when off).
+      let panelToDispatch = panel;
+      if (perTargetAdmission) {
+        const gates = await Promise.all(
+          panel.map(async (model) => ({
+            model,
+            ok: await perTargetAdmission({ modelStr: model, executionKey: model, body }),
+          }))
+        );
+        const dropped = gates.filter((g) => !g.ok);
+        if (dropped.length > 0) {
+          log?.info?.(
+            "CHAOS",
+            `Skipping ${dropped.length} panel member(s) — admission lane full: ${dropped
+              .map((g) => g.model)
+              .join(", ")}`
+          );
+        }
+        panelToDispatch = gates.filter((g) => g.ok).map((g) => g.model);
+      }
+
+      const modelPromises = panelToDispatch.map((model, index) => {
         const ctrl = new AbortController();
         abortControllers.push(ctrl);
         return dispatchOnePanelModel({
@@ -433,7 +467,7 @@ export async function handleChaosChat(opts: {
 
       if (successes.length === 0) {
         const errText = "All chaos panel models failed";
-        await safeEnqueue(chatChunk(chunkId, panel[0], errText));
+        await safeEnqueue(chatChunk(chunkId, panelToDispatch[0] ?? "", errText));
         await safeEnqueue(SSE_DONE);
         await enqueueChain;
         closed = true;
@@ -490,8 +524,10 @@ export function dispatchChaosFromCombo(args: {
   body: Body;
   handleSingleModel: HandleSingleModel;
   log: ComboLogger;
+  /** #9654 Wave 2: per-target lane-aware admission probe (see HandleComboChatOptions). */
+  perTargetAdmission?: PerTargetAdmissionHook | null;
 }): Promise<Response> | null {
-  const { cfg, comboModels, comboName, body, handleSingleModel, log } = args;
+  const { cfg, comboModels, comboName, body, handleSingleModel, log, perTargetAdmission } = args;
   if (
     !cfg.chaos ||
     typeof cfg.chaos !== "object" ||
@@ -522,5 +558,6 @@ export function dispatchChaosFromCombo(args: {
     comboName,
     primaryModel: chaosCfg.judgeModel,
     tuning: chaosCfg.tuning,
+    perTargetAdmission,
   });
 }

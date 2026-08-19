@@ -32,7 +32,7 @@ export const GITHUB_COPILOT_MODEL_ALLOWLIST = [
   "claude-sonnet-4.5",
   "claude-haiku-4.5",
   "gemini-3.1-pro-preview",
-  "gemini-3.5-flash",
+  "gemini-3.7-flash",
   "gpt-5.6-sol",
   "gpt-5.6-terra",
   "gpt-5.6-luna",

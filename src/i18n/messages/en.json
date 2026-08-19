@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Route budget-exhausted requests to the emergency free fallback provider/model.",
   "featureFlagArenaEloSyncEnabledDescription": "Enable periodic Arena AI leaderboard ELO sync for model intelligence rankings.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Advertise claude/&lt;provider&gt;/&lt;model&gt; mirror ids on /v1/models so Claude Code gateway model discovery lists non-Claude models. Warning: doubles catalog entries for all clients when enabled globally.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Enable per-tenant adaptive virtual admission lanes for provider dispatch (#9654): one tenant's burst no longer 503s another. The OMNIROUTE_CHAT_VIRTUAL_LANES env var wins over this dashboard override; changes take effect at server restart.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1164,6 +1165,8 @@
     "consoleLogs": "Console Logs",
     "logsTimeline": "Timeline",
     "logsTimelineSubtitle": "Visual request timeline",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations",
     "globalRouting": "Global Routing",
     "mitmProxy": "MITM Proxy",
     "oneProxy": "1Proxy",
@@ -5094,6 +5097,7 @@
     "deprecatedProvider": "This provider has been deprecated",
     "riskNotice": {
       "title": "Before continuing",
+      "detailsTitle": "Usage caveats",
       "tooltip": "Provider with usage caveats — click for details",
       "oauth": "This provider uses your official product session/OAuth, which is not authorized for proxy/router use. We don't recommend intensive autonomous agent usage (OpenCloud-style, long multi-step flows, large batches) — the upstream may react by restricting or banning the account. Use at your own risk.",
       "webCookie": "This provider authenticates through your web session cookies. The upstream service may invalidate the session at any time, requiring you to log in again. Not recommended for long unattended operations. Use at your own risk.",
@@ -5101,6 +5105,11 @@
       "dontShowAgain": "Don't show this again for this provider",
       "understand": "I understand, continue",
       "cancel": "Cancel"
+    },
+    "warningNotice": {
+      "tooltip": "{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": " (last failure {time})",
+      "ariaLabel": "View connection health details, {count} warning(s)"
     },
     "disabled": "Disabled",
     "enableProvider": "Enable provider",
@@ -5224,6 +5233,17 @@
     "skippingExistingModels": "Skipping {count} existing models",
     "autoSync": "Auto-Sync",
     "autoSyncShort": "Sync",
+    "autoFetchModels": "Auto-fetch upstream models",
+    "autoFetchModelsTooltip": "Fetch and cache upstream models when needed",
+    "autoFetchModelsEnabled": "Upstream model auto-fetch enabled",
+    "autoFetchModelsDisabled": "Upstream model auto-fetch disabled",
+    "autoFetchModelsToggleFailed": "Failed to toggle upstream model auto-fetch",
+    "autoFetchModelsPartialFailure": "Some connections updated, but upstream model auto-fetch was not changed everywhere",
+    "overridesUpstreamModel": "Overrides upstream",
+    "overridesUpstreamModelHint": "Your settings override this upstream model",
+    "resetToUpstreamDefaults": "Restore upstream defaults",
+    "resetToUpstreamDefaultsSuccess": "Restored upstream model defaults",
+    "resetToUpstreamDefaultsFailed": "Failed to restore upstream model defaults",
     "autoSyncTooltip": "Automatically refresh model list every 24h (configurable via MODEL_SYNC_INTERVAL_HOURS)",
     "autoSyncEnabled": "Auto-sync enabled — models will refresh periodically",
     "autoSyncDisabled": "Auto-sync disabled",
@@ -6088,8 +6108,8 @@
       "inception": "Inception Labs is OpenAI-compatible at https://api.inceptionlabs.ai/v1. mercury-2 is the first diffusion LLM (dLLM) in the catalog — 5-10x faster generation than comparable autoregressive models, with tool calling, json_mode, and structured outputs.",
       "inference-net": "$25 free credits on signup plus research grants available",
       "internlm": "Free monthly quota ~1M input / 3M output tokens (~10 RPM)",
-      "jina-ai": "Bearer API key for the Jina AI rerank API.",
-      "jina-reader": "Connect Jina Reader with an API key.",
+      "jina-ai": "Bearer API key for api.jina.ai (embeddings, rerank, classify, segment, search). Not the Reader / r.jina.ai card. Dashboard keys take precedence over JINA_AI_API_KEY.",
+      "jina-reader": "Bearer API key for r.jina.ai URL-to-markdown only. Does not serve /v1/embeddings or /v1/rerank. The same Jina token as Foundation API works.",
       "kenari": "Kenari exposes an OpenAI-compatible chat completions endpoint at https://kenari.id/v1/chat/completions, plus a live /v1/models catalog covering Claude, GPT, DeepSeek, GLM, Kimi and more. OmniRoute uses the OpenAI protocol and lists models via passthrough.",
       "kie": "Connect KIE.AI with an API key.",
       "kilo-gateway": "Connect Kilo Gateway with an API key.",
@@ -6556,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "All connections",
+    "autoDisableBannedScopeAllDesc": "Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Banned Keywords",
     "customBannedSignalsDesc": "Additional keywords that trigger permanent account ban detection. Built-in keywords always apply.",
     "customBannedSignalsPlaceholder": "e.g. api key revoked",
@@ -7734,6 +7760,10 @@
         "label": "Ponytail (lazy senior dev)",
         "description": "Lazy senior-dev discipline: climb the YAGNI ladder, fix root cause, smallest working diff."
       },
+      "i-have-adhd": {
+        "label": "I have ADHD (action-first)",
+        "description": "Action-first output: next action leads, steps numbered, one concrete next step, no preamble."
+      },
       "terse-cjk": {
         "label": "Terse CJK (文言)",
         "description": "Classical-Chinese ultra-terse style (available only for Chinese)."
@@ -8014,6 +8044,10 @@
     "disableSessionStickinessDesc": "Round-robin and random combos rotate to a different connection on every request instead of pinning a whole conversation to one connection by the first-message hash. Leave off to preserve prompt-cache hits for multi-turn chats. Per-combo overrides take precedence.",
     "promptCacheAffinity": "Prompt-cache locality routing",
     "promptCacheAffinityDesc": "Prefer the same provider account for matching prompt-cache keys while preserving health and quota failover.",
+    "reasoningTokenBuffer": "Reasoning token buffer",
+    "reasoningTokenBufferDesc": "Allow combo routing to add max_tokens headroom only for known reasoning models when the full buffer fits inside a known output cap.",
+    "zeroLatencyOptimizations": "Zero-latency optimizations",
+    "zeroLatencyOptimizationsDesc": "Opt in to hedging, predictive TTFT skips, and proactive fallback compression. Leave off to prevent these latency features from racing targets or compressing fallback requests.",
     "credentialRedaction": "Credential Redaction",
     "credentialRedactionDesc": "Redact API keys, tokens, and secrets from context sent to providers and from responses.",
     "enableCredentialRedaction": "Enable credential redaction",
@@ -8534,13 +8568,13 @@
   },
   "omniglyph": {
     "preview": "Preview",
-    "description": "Context-as-image compression. Renders the system prompt, tool documentation, and dense history as compact PNG pages that Claude Fable 5 reads instead of text. Image tokens are billed by dimensions rather than characters, so the converted block costs about 10× less. Direct Anthropic route only.",
+    "description": "Context-as-image compression. Renders the system prompt, tool documentation, and dense history as compact PNG pages for the measured Claude Fable 5 path. The published OmniGlyph package also exposes native GPT 5.6 transformers, but OmniRoute keeps those routes fail-closed until provider fidelity and reading receipts exist.",
     "economicsTitle": "The economics",
     "economics": {
       "fewerTokens": "fewer tokens on the converted block",
       "savings": "end-to-end savings (measured)",
       "imageTokens": "image tokens for a 1568×728 page (about 28k characters)",
-      "accuracy": "reading accuracy on Fable 5 (n=30)"
+      "accuracy": "scoped Fable 5 reading receipt"
     },
     "beforeAfterTitle": "Before → after",
     "blockSavings": "−{percent}% tokens on this block",
@@ -8553,18 +8587,18 @@
     "gates": {
       "model": {
         "label": "Model",
-        "pass": "claude-fable-5",
-        "why": "Only Fable 5 reads dense pages at 100% accuracy (measured, n=30). GPT-5.5 and Gemini 2.5 Flash are blocked."
+        "pass": "claude-fable-5 (measured); gpt-5.6 (HOLD)",
+        "why": "Only the measured Fable 5 path is enabled in OmniRoute. GPT 5.6 is structurally supported by the package but remains blocked until its provider receipt; unverified families such as Grok stay text-only."
       },
       "transport": {
         "label": "Transport",
-        "pass": "direct Anthropic",
-        "why": "Aggregators resample images and destroy legibility — only the direct route is authoritative."
+        "pass": "direct provider",
+        "why": "Aggregators may resample images and destroy legibility — only a direct provider route is authoritative."
       },
       "format": {
         "label": "Format",
-        "pass": "native Claude",
-        "why": "The body must use Claude format and must never put a system role inside messages."
+        "pass": "native Claude/OpenAI",
+        "why": "The body must match the provider wire: Claude Messages, OpenAI Chat Completions, or native OpenAI Responses input[]."
       },
       "profitable": {
         "label": "Profitable",
@@ -8573,7 +8607,28 @@
       }
     },
     "enableTitle": "Enable the engine",
-    "enableDescription": "Runs last in the stack (after RTK/Caveman cleans the text, OmniGlyph converts the remainder to images) and also runs standalone through <code>omniglyph</code> mode. This is a preview and remains off by default until end-to-end validation is complete.",
+    "enableDescription": "Runs last in the stack after text engines clean the request, using the native provider wire; OpenAI Chat/Responses requests are compressed after translation so their shape is preserved. It also runs standalone through <code>omniglyph</code> mode. This is a preview and remains off by default until end-to-end validation is complete.",
+    "profileTitle": "Compression profile",
+    "profileDescription": "The profile is a ceiling, not a floor: a stricter profile cannot be reopened by a per-step override. Measured on this codebase: with coding-safe or balanced, a session that has not accumulated history yet compresses nothing, because both raise the minimum-characters threshold and keep the system prompt, tool schemas and tool results native.",
+    "profiles": {
+      "aggressive": {
+        "label": "Aggressive (default)",
+        "description": "The policy the published receipts measured. Images the system prompt, tool documentation and dense history."
+      },
+      "balanced": {
+        "label": "Balanced",
+        "description": "Keeps live state native and protects the last 8 turns; only collapses older closed history."
+      },
+      "codingSafe": {
+        "label": "Coding-safe",
+        "description": "Keeps authority, tool schemas and live tool output native, protecting the last 12 turns. Compresses nothing until the session accumulates history."
+      },
+      "passthrough": {
+        "label": "Passthrough",
+        "description": "Routes without transforming. The engine is skipped and the request is forwarded untouched."
+      }
+    },
+    "profileAria": "Select the OmniGlyph compression profile",
     "saved": "Saved.",
     "saveFailed": "Could not save.",
     "enableAria": "Enable the OmniGlyph engine",
@@ -11047,7 +11102,8 @@
       "compressed": "Compression",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",

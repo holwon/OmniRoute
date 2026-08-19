@@ -20,6 +20,11 @@ import {
 } from "@/shared/reasoning/effortStandardization";
 
 import { modelIdSchema, nonEmptyStringSchema } from "./misc.ts";
+import {
+  isCanonicalEmbeddingItem,
+  JINA_NATIVE_MEDIA_KEYS,
+} from "../jinaNativeEmbeddingInput.ts";
+import { isGeminiNativeEmbeddingItem } from "../geminiNativeEmbeddingInput.ts";
 
 export const embeddingTokenArraySchema = z
   .array(z.number().int().min(0))
@@ -110,15 +115,260 @@ export const embeddingMultimodalItemSchema = z.discriminatedUnion("type", [
   ),
 ]);
 
+function decodedInlineBytesFromEmbeddingItem(item: unknown): number {
+  if (!item || typeof item !== "object") return 0;
+  const record = item as Record<string, unknown>;
+  if (
+    "type" in record &&
+    record.type !== "text" &&
+    record.source &&
+    typeof record.source === "object"
+  ) {
+    const source = record.source as { type?: string; data?: string };
+    if (source.type === "base64" && typeof source.data === "string") {
+      return decodedBase64Bytes(source.data);
+    }
+  }
+  for (const key of JINA_NATIVE_MEDIA_KEYS) {
+    if (key === "text" || typeof record[key] !== "string") continue;
+    const value = String(record[key]);
+    const dataUri = /^data:([^;,]+);base64,(.+)$/i.exec(value);
+    if (dataUri) return decodedBase64Bytes(dataUri[2]);
+    if (/^https:\/\//i.test(value)) return 0;
+    return decodedBase64Bytes(value);
+  }
+  if (Array.isArray(record.content)) {
+    return record.content.reduce(
+      (total, chunk) => total + decodedInlineBytesFromEmbeddingItem(chunk),
+      0
+    );
+  }
+  if (record.content && typeof record.content === "object" && !Array.isArray(record.content)) {
+    return decodedInlineBytesFromEmbeddingItem(record.content);
+  }
+  if (Array.isArray(record.parts)) {
+    return record.parts.reduce(
+      (total, chunk) => total + decodedInlineBytesFromEmbeddingItem(chunk),
+      0
+    );
+  }
+  const inline = record.inline_data ?? record.inlineData;
+  if (inline && typeof inline === "object") {
+    const data = (inline as { data?: unknown }).data;
+    if (typeof data === "string") return decodedBase64Bytes(data);
+  }
+  return 0;
+}
+
 const embeddingMultimodalInputSchema = z
   .array(embeddingMultimodalItemSchema)
   .min(1, "input must contain at least one item")
   .max(MAX_EMBEDDING_INPUT_ITEMS, `input must contain at most ${MAX_EMBEDDING_INPUT_ITEMS} items`)
   .superRefine((items, context) => {
-    const totalBytes = items.reduce((total, item) => {
-      if (item.type === "text" || item.source.type !== "base64") return total;
-      return total + decodedBase64Bytes(item.source.data);
-    }, 0);
+    const totalBytes = items.reduce(
+      (total, item) => total + decodedInlineBytesFromEmbeddingItem(item),
+      0
+    );
+    if (totalBytes > MAX_EMBEDDING_INLINE_TOTAL_BYTES) {
+      context.addIssue({
+        code: "custom",
+        message: "decoded inline media must not exceed 16 MiB per request",
+      });
+    }
+  });
+
+function refineJinaMediaString(value: string, context: z.RefinementCtx) {
+  const trimmed = value.trim();
+  if (/^https:\/\//i.test(trimmed)) {
+    if (trimmed.length > MAX_EMBEDDING_URL_LENGTH) {
+      context.addIssue({ code: "custom", message: "media URL is too long" });
+      return;
+    }
+    try {
+      const url = parseAndValidatePublicUrl(trimmed);
+      if (url.protocol !== "https:") {
+        context.addIssue({ code: "custom", message: "media URLs must use HTTPS" });
+      }
+    } catch {
+      context.addIssue({ code: "custom", message: "media URL must be a safe public HTTPS URL" });
+    }
+    return;
+  }
+  if (/^(https?:|file:|data:text\/html)/i.test(trimmed) && !trimmed.startsWith("data:")) {
+    context.addIssue({ code: "custom", message: "media URL must be a safe public HTTPS URL" });
+    return;
+  }
+  const dataUri = /^data:([^;,]+);base64,(.+)$/i.exec(trimmed);
+  const payload = dataUri ? dataUri[2] : trimmed;
+  if (
+    payload.length > MAX_EMBEDDING_INLINE_ITEM_BASE64_LENGTH ||
+    decodedBase64Bytes(payload) > MAX_EMBEDDING_INLINE_ITEM_BYTES
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "decoded inline media must not exceed 8 MiB",
+    });
+  }
+}
+
+const jinaNativeMediaStringSchema = z.string().trim().min(1).superRefine(refineJinaMediaString);
+
+function exactlyOneJinaMediaKey(value: Record<string, unknown>, key: string): boolean {
+  if (isCanonicalEmbeddingItem(value)) return false;
+  return JINA_NATIVE_MEDIA_KEYS.filter((mediaKey) => mediaKey in value).length === 1 && key in value;
+}
+
+const jinaTextDocSchema = z
+  .object({ text: z.string().trim().min(1).max(MAX_EMBEDDING_TEXT_LENGTH) })
+  .passthrough()
+  .refine((value) => exactlyOneJinaMediaKey(value, "text"), {
+    message: "Jina TextDoc must be { text }",
+  });
+
+const jinaImageDocSchema = z
+  .object({ image: jinaNativeMediaStringSchema })
+  .passthrough()
+  .refine((value) => exactlyOneJinaMediaKey(value, "image"), {
+    message: "Jina ImageDoc must be { image }",
+  });
+
+const jinaAudioDocSchema = z
+  .object({ audio: jinaNativeMediaStringSchema })
+  .passthrough()
+  .refine((value) => exactlyOneJinaMediaKey(value, "audio"), {
+    message: "Jina AudioDoc must be { audio }",
+  });
+
+const jinaVideoDocSchema = z
+  .object({ video: jinaNativeMediaStringSchema })
+  .passthrough()
+  .refine((value) => exactlyOneJinaMediaKey(value, "video"), {
+    message: "Jina VideoDoc must be { video }",
+  });
+
+const jinaPdfDocSchema = z
+  .object({ pdf: jinaNativeMediaStringSchema })
+  .passthrough()
+  .refine((value) => exactlyOneJinaMediaKey(value, "pdf"), {
+    message: "Jina PDFDoc must be { pdf }",
+  });
+
+export const jinaNativeDocSchema = z.union([
+  jinaTextDocSchema,
+  jinaImageDocSchema,
+  jinaAudioDocSchema,
+  jinaVideoDocSchema,
+  jinaPdfDocSchema,
+]);
+
+export const jinaMergedContentGroupSchema = z
+  .object({
+    content: z
+      .array(z.union([jinaTextDocSchema, jinaImageDocSchema, jinaAudioDocSchema, jinaVideoDocSchema]))
+      .min(1, "content must contain at least one chunk"),
+  })
+  .passthrough();
+
+const geminiInlineBlobSchema = z
+  .object({
+    mime_type: z.string().trim().min(1).max(MAX_MEDIA_TYPE_LENGTH).optional(),
+    mimeType: z.string().trim().min(1).max(MAX_MEDIA_TYPE_LENGTH).optional(),
+    data: z.string().min(1),
+  })
+  .passthrough()
+  .superRefine((value, context) => {
+    if (!value.mime_type && !value.mimeType) {
+      context.addIssue({ code: "custom", message: "Gemini inline_data requires mime_type" });
+    }
+    const data = value.data;
+    if (
+      data.length > MAX_EMBEDDING_INLINE_ITEM_BASE64_LENGTH ||
+      decodedBase64Bytes(data) > MAX_EMBEDDING_INLINE_ITEM_BYTES
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "decoded inline media must not exceed 8 MiB",
+      });
+    }
+  });
+
+const geminiFileUriSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_EMBEDDING_URL_LENGTH)
+  .superRefine((value, context) => {
+    if (value.startsWith("files/")) return;
+    try {
+      const url = parseAndValidatePublicUrl(value);
+      if (url.protocol !== "https:") {
+        context.addIssue({ code: "custom", message: "media URLs must use HTTPS" });
+      }
+    } catch {
+      context.addIssue({ code: "custom", message: "media URL must be a safe public HTTPS URL" });
+    }
+  });
+
+const geminiFileDataSchema = z
+  .object({
+    mime_type: z.string().trim().min(1).max(MAX_MEDIA_TYPE_LENGTH).optional(),
+    mimeType: z.string().trim().min(1).max(MAX_MEDIA_TYPE_LENGTH).optional(),
+    file_uri: geminiFileUriSchema.optional(),
+    fileUri: geminiFileUriSchema.optional(),
+  })
+  .passthrough()
+  .refine((value) => Boolean(value.file_uri || value.fileUri), {
+    message: "Gemini file_data requires file_uri",
+  });
+
+export const geminiNativePartSchema = z
+  .object({
+    text: z.string().trim().min(1).max(MAX_EMBEDDING_TEXT_LENGTH).optional(),
+    inline_data: geminiInlineBlobSchema.optional(),
+    inlineData: geminiInlineBlobSchema.optional(),
+    file_data: geminiFileDataSchema.optional(),
+    fileData: geminiFileDataSchema.optional(),
+  })
+  .passthrough()
+  .refine((value) => isGeminiNativeEmbeddingItem(value) && !("parts" in value) && !("content" in value), {
+    message: "Gemini part must be { text }, { inline_data }, or { file_data }",
+  });
+
+export const geminiNativeContentSchema = z
+  .object({
+    parts: z.array(geminiNativePartSchema).min(1, "parts must contain at least one part"),
+  })
+  .passthrough();
+
+export const geminiNativeEmbedRequestSchema = z
+  .object({
+    content: geminiNativeContentSchema,
+  })
+  .passthrough();
+
+export const geminiNativeItemSchema = z.union([
+  geminiNativePartSchema,
+  geminiNativeContentSchema,
+  geminiNativeEmbedRequestSchema,
+]);
+
+const jinaNativeOrCanonicalArraySchema = z
+  .array(
+    z.union([
+      nonEmptyStringSchema,
+      embeddingMultimodalItemSchema,
+      jinaNativeDocSchema,
+      jinaMergedContentGroupSchema,
+      geminiNativeItemSchema,
+    ])
+  )
+  .min(1, "input must contain at least one item")
+  .max(MAX_EMBEDDING_INPUT_ITEMS, `input must contain at most ${MAX_EMBEDDING_INPUT_ITEMS} items`)
+  .superRefine((items, context) => {
+    const totalBytes = items.reduce(
+      (total, item) => total + decodedInlineBytesFromEmbeddingItem(item),
+      0
+    );
     if (totalBytes > MAX_EMBEDDING_INLINE_TOTAL_BYTES) {
       context.addIssue({
         code: "custom",
@@ -133,6 +383,10 @@ export const embeddingInputSchema = z.union([
   embeddingTokenArraySchema,
   z.array(embeddingTokenArraySchema).min(1, "input must contain at least one item"),
   embeddingMultimodalInputSchema,
+  jinaNativeDocSchema,
+  jinaMergedContentGroupSchema,
+  geminiNativeItemSchema,
+  jinaNativeOrCanonicalArraySchema,
 ]);
 
 export type EmbeddingMultimodalItem = z.infer<typeof embeddingMultimodalItemSchema>;
@@ -244,6 +498,30 @@ export const v1RerankSchema = z
   })
   .catchall(z.unknown());
 
+// POST /v1/classify — Jina zero/few-shot classification (api.jina.ai).
+export const v1ClassifySchema = z
+  .object({
+    model: modelIdSchema.optional(),
+    classifier_id: z.string().trim().min(1).optional(),
+    input: z.union([
+      nonEmptyStringSchema,
+      z.array(z.unknown()).min(1, "input must contain at least one item"),
+    ]),
+    labels: z.array(z.string().trim().min(1)).min(1).optional(),
+  })
+  .catchall(z.unknown());
+
+// POST /v1/segment — Jina segmenter (segment.jina.ai).
+export const v1SegmentSchema = z
+  .object({
+    content: nonEmptyStringSchema,
+    tokenizer: z.string().trim().min(1).optional(),
+    return_tokens: z.boolean().optional(),
+    return_chunks: z.boolean().optional(),
+    max_chunk_length: z.coerce.number().positive().optional(),
+  })
+  .catchall(z.unknown());
+
 export const providerChatCompletionSchema = z
   .object({
     model: modelIdSchema,
@@ -305,6 +583,9 @@ export const v1SearchSchema = z
         "youcom-search",
         "searxng-search",
         "zai-search",
+        "jina-search",
+        "jina-ai",
+        "jina",
         "duckduckgo-free",
       ])
       .optional(),

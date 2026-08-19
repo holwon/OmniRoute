@@ -11,6 +11,8 @@ const core = await import("../../src/lib/db/core.ts");
 const modelsDb = await import("../../src/lib/db/models.ts");
 const localDb = await import("../../src/lib/localDb.ts");
 const { importManagedModels } = await import("../../src/lib/providerModels/managedModelImport.ts");
+const { mergeProviderModelListing } =
+  await import("../../src/lib/providers/mergeProviderModelListing.ts");
 
 async function resetStorage() {
   core.resetDbInstance();
@@ -84,6 +86,78 @@ test("merge mode builds aliases from discovered models without pruning missing p
   assert.equal(aliases.existing, "openrouter/shared/existing");
   assert.equal(aliases["model-a"], undefined);
   assert.equal(aliases["model-b"], "openrouter/shared/model-b");
+});
+
+test("sync keeps a same-id manual model as the user-configurable metadata override", async () => {
+  await modelsDb.addCustomModel(
+    "openrouter",
+    "shared-model",
+    "Operator configuration",
+    "manual",
+    "responses",
+    ["responses"],
+    "claude",
+    {},
+    true
+  );
+
+  await importManagedModels({
+    providerId: "openrouter",
+    connectionId: "openrouter-connection",
+    mode: "sync",
+    fetchedModels: [
+      {
+        id: "shared-model",
+        name: "Upstream name",
+        apiFormat: "chat-completions",
+        supportedEndpoints: ["chat"],
+        description: "Upstream description",
+      },
+    ],
+  });
+
+  const customModels = (await modelsDb.getCustomModels("openrouter")) as Array<{
+    id: string;
+    apiFormat?: string;
+    targetFormat?: string;
+    supportedEndpoints?: string[];
+    supportsVision?: boolean;
+  }>;
+  assert.deepEqual(customModels, [
+    {
+      id: "shared-model",
+      name: "Operator configuration",
+      source: "manual",
+      apiFormat: "responses",
+      supportedEndpoints: ["responses"],
+      targetFormat: "claude",
+      supportsVision: true,
+    },
+  ]);
+
+  const syncedModels = await modelsDb.getSyncedAvailableModels("openrouter");
+  const effectiveModel = mergeProviderModelListing({
+    providerId: "openrouter",
+    registryModels: [],
+    syncedModels,
+    customModels,
+  }).find((model) => model.id === "shared-model");
+  assert.equal(effectiveModel?.apiFormat, "responses");
+  assert.deepEqual(effectiveModel?.supportedEndpoints, ["responses"]);
+  assert.equal(effectiveModel?.targetFormat, "claude");
+  assert.equal(effectiveModel?.supportsVision, true);
+  assert.equal(effectiveModel?.description, "Upstream description");
+
+  assert.equal(await modelsDb.removeCustomModel("openrouter", "shared-model"), true);
+  const resetModel = mergeProviderModelListing({
+    providerId: "openrouter",
+    registryModels: [],
+    syncedModels,
+    customModels: await modelsDb.getCustomModels("openrouter"),
+  }).find((model) => model.id === "shared-model");
+  assert.equal(resetModel?.apiFormat, "chat-completions");
+  assert.deepEqual(resetModel?.supportedEndpoints, ["chat"]);
+  assert.equal(resetModel?.description, "Upstream description");
 });
 
 test("provider-level synced model deletion removes only that provider", async () => {

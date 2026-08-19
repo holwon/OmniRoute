@@ -35,7 +35,7 @@ const FETCH_PROVIDERS: FetchProviderDef[] = [
   },
   {
     id: "jina-reader",
-    name: "Jina Reader",
+    name: "Jina Reader (r.jina.ai)",
     costPerQuery: 0.0005,
     freeMonthlyQuota: 1000,
     fetchFormats: ["markdown", "text"],

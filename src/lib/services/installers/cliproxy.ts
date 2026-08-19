@@ -101,7 +101,8 @@ export async function update(): Promise<InstallResult> {
  * async file I/O is not available here.
  */
 export function resolveSpawnArgs(port: number): SpawnArgs {
-  const symlinkPath = path.join(BIN_DIR, "cliproxyapi");
+  const executableName = process.platform === "win32" ? "cliproxyapi.exe" : "cliproxyapi";
+  const symlinkPath = path.join(BIN_DIR, executableName);
 
   fs.mkdirSync(CONFIG_DIR, { recursive: true });
   const configPath = path.join(CONFIG_DIR, "config.yaml");

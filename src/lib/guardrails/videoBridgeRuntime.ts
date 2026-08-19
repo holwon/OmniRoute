@@ -29,6 +29,29 @@ export interface VideoFrameFile {
   timestampSeconds: number;
 }
 
+export type VideoSamplingPolicy = "uniform" | "scene_aware" | "segment_aware";
+
+export interface VideoSamplingMetadata {
+  candidateCount: number;
+  focusWindow?: VideoFocusWindow;
+  policyEffective: VideoSamplingPolicy;
+  policyRequested: VideoSamplingPolicy;
+}
+
+export interface VideoFocusBounds {
+  endSeconds?: number;
+  startSeconds?: number;
+}
+
+export interface VideoFocusWindow {
+  endSeconds: number;
+  startSeconds: number;
+}
+
+export interface VideoFrameFileList extends Array<VideoFrameFile> {
+  sampling: VideoSamplingMetadata;
+}
+
 export interface VideoProbeMetadata {
   durationSeconds: number;
   formatName: string;
@@ -40,6 +63,32 @@ export interface VideoProbeMetadata {
 export interface ExtractedVideoFrame {
   dataUri: string;
   timestampSeconds: number;
+}
+
+export interface VideoSamplingDecision extends VideoSamplingMetadata {
+  timestamps: number[];
+}
+
+export function resolveVideoFocusWindow(
+  durationSeconds: number,
+  bounds: VideoFocusBounds
+): VideoFocusWindow | null {
+  if (!Number.isFinite(durationSeconds) || durationSeconds <= 0) {
+    throw new Error("Video focus window requires a positive duration");
+  }
+  if (bounds.startSeconds === undefined && bounds.endSeconds === undefined) return null;
+  if (
+    (bounds.startSeconds !== undefined && !Number.isFinite(bounds.startSeconds)) ||
+    (bounds.endSeconds !== undefined && !Number.isFinite(bounds.endSeconds))
+  ) {
+    throw new Error("Video focus window bounds must be finite");
+  }
+  const startSeconds = Math.max(0, Math.min(durationSeconds, bounds.startSeconds ?? 0));
+  const endSeconds = Math.max(0, Math.min(durationSeconds, bounds.endSeconds ?? durationSeconds));
+  if (endSeconds <= startSeconds) {
+    throw new Error("Video focus window must have a positive duration");
+  }
+  return { endSeconds, startSeconds };
 }
 
 export const VIDEO_FRAME_MAX_BYTES = 4 * 1024 * 1024;
@@ -161,6 +210,207 @@ export function calculateFrameTimestamps(
     { length: frameCount },
     (_unused, index) => ((index + 0.5) * durationSeconds) / frameCount
   );
+}
+
+function normalizeSceneCandidates(
+  durationSeconds: number,
+  candidates: readonly number[]
+): number[] {
+  const unique = new Set<number>();
+  for (const candidate of candidates) {
+    if (!Number.isFinite(candidate) || candidate <= 0 || candidate >= durationSeconds) continue;
+    unique.add(Number(candidate.toFixed(3)));
+  }
+  return [...unique].sort((left, right) => left - right);
+}
+
+export function parseSceneChangeTimestamps(output: string, durationSeconds: number): number[] {
+  const candidates: number[] = [];
+  const timestampPattern = /\bpts_time:([+-]?(?:\d+(?:\.\d*)?|\.\d+))\b/g;
+  for (const match of output.matchAll(timestampPattern)) {
+    const timestamp = Number(match[1]);
+    if (Number.isFinite(timestamp)) candidates.push(timestamp);
+  }
+  return normalizeSceneCandidates(durationSeconds, candidates);
+}
+
+/** Allocate midpoint samples proportionally across validated scene segments. */
+export function calculateSegmentAwareTimestamps(
+  durationSeconds: number,
+  requestedFrameCount: number,
+  sceneCandidates: readonly number[],
+  focusWindow: VideoFocusWindow | null = null
+): number[] {
+  const startSeconds = focusWindow?.startSeconds ?? 0;
+  const endSeconds = focusWindow?.endSeconds ?? durationSeconds;
+  const uniform = calculateFrameTimestamps(endSeconds - startSeconds, requestedFrameCount).map(
+    (timestamp) => timestamp + startSeconds
+  );
+  const boundaries = normalizeSceneCandidates(durationSeconds, sceneCandidates).filter(
+    (timestamp) => timestamp > startSeconds && timestamp < endSeconds
+  );
+  if (boundaries.length === 0) return uniform;
+  const segmentStarts = [startSeconds, ...boundaries];
+  const segmentEnds = [...boundaries, endSeconds];
+  const lengths = segmentStarts.map((segmentStart, index) => segmentEnds[index] - segmentStart);
+  const segmentCount = lengths.length;
+  const frameCount = uniform.length;
+  if (segmentCount > frameCount) {
+    return [...uniform].map((timestamp, index) => {
+      const segmentIndex = Math.min(
+        segmentCount - 1,
+        Math.floor((index * segmentCount) / frameCount)
+      );
+      const segmentStart = segmentStarts[segmentIndex];
+      const segmentEnd = segmentEnds[segmentIndex];
+      return segmentStart + (segmentEnd - segmentStart) / 2;
+    });
+  }
+  const allocation = lengths.map(() => 1);
+  let remaining = frameCount - segmentCount;
+  const idealExtra = lengths.map((length) => (length / (endSeconds - startSeconds)) * remaining);
+  const extras = idealExtra.map((value) => Math.floor(value));
+  remaining -= extras.reduce((sum, value) => sum + value, 0);
+  const remainderOrder = idealExtra
+    .map((value, index) => ({ index, remainder: value - Math.floor(value) }))
+    .sort((left, right) => right.remainder - left.remainder || left.index - right.index);
+  for (let index = 0; index < remaining; index++) extras[remainderOrder[index].index] += 1;
+  for (let index = 0; index < allocation.length; index++) allocation[index] += extras[index];
+  const timestamps: number[] = [];
+  for (let segmentIndex = 0; segmentIndex < segmentCount; segmentIndex++) {
+    const count = allocation[segmentIndex];
+    const segmentStart = segmentStarts[segmentIndex];
+    const segmentLength = lengths[segmentIndex];
+    for (let index = 0; index < count; index++) {
+      timestamps.push(segmentStart + ((index + 0.5) * segmentLength) / count);
+    }
+  }
+  return timestamps;
+}
+
+export function calculateSamplingDecision(
+  durationSeconds: number,
+  requestedFrameCount: number,
+  policy: VideoSamplingPolicy,
+  sceneCandidates: readonly number[] = [],
+  focusWindow: VideoFocusWindow | null = null
+): VideoSamplingDecision {
+  const startSeconds = focusWindow?.startSeconds ?? 0;
+  const endSeconds = focusWindow?.endSeconds ?? durationSeconds;
+  const uniform = calculateFrameTimestamps(endSeconds - startSeconds, requestedFrameCount).map(
+    (timestamp) => timestamp + startSeconds
+  );
+  if (policy === "uniform") {
+    return {
+      candidateCount: 0,
+      ...(focusWindow ? { focusWindow } : {}),
+      policyEffective: "uniform",
+      policyRequested: "uniform",
+      timestamps: uniform,
+    };
+  }
+
+  const candidates = normalizeSceneCandidates(durationSeconds, sceneCandidates).filter(
+    (timestamp) => timestamp >= startSeconds && timestamp < endSeconds
+  );
+  if (candidates.length === 0) {
+    return {
+      candidateCount: 0,
+      ...(focusWindow ? { focusWindow } : {}),
+      policyEffective: "uniform",
+      policyRequested: policy,
+      timestamps: uniform,
+    };
+  }
+
+  if (policy === "segment_aware") {
+    return {
+      candidateCount: candidates.length,
+      ...(focusWindow ? { focusWindow } : {}),
+      policyEffective: "segment_aware",
+      policyRequested: "segment_aware",
+      timestamps: calculateSegmentAwareTimestamps(
+        durationSeconds,
+        requestedFrameCount,
+        candidates,
+        focusWindow
+      ),
+    };
+  }
+
+  const frameCount = uniform.length;
+  const selected =
+    candidates.length <= frameCount
+      ? [...candidates]
+      : candidates.filter(
+          (_candidate, index) =>
+            index === 0 ||
+            index === candidates.length - 1 ||
+            index % Math.max(1, Math.ceil((candidates.length - 1) / (frameCount - 1))) === 0
+        );
+  for (const timestamp of uniform) {
+    if (selected.length >= frameCount) break;
+    if (!selected.some((candidate) => Math.abs(candidate - timestamp) < 0.001)) {
+      selected.push(timestamp);
+    }
+  }
+  selected.sort((left, right) => left - right);
+  while (selected.length > frameCount) {
+    const removableIndex = selected.findIndex(
+      (timestamp) => !candidates.some((candidate) => Math.abs(candidate - timestamp) < 0.001)
+    );
+    selected.splice(removableIndex >= 0 ? removableIndex : selected.length - 2, 1);
+  }
+  return {
+    candidateCount: candidates.length,
+    ...(focusWindow ? { focusWindow } : {}),
+    policyEffective: "scene_aware",
+    policyRequested: "scene_aware",
+    timestamps: selected,
+  };
+}
+
+export async function detectSceneChangeTimestamps(
+  inputPath: string,
+  options: {
+    durationSeconds: number;
+    runner?: VideoCommandRunner;
+    signal?: AbortSignal;
+    streamIndex: number;
+    timeoutMs?: number;
+  }
+): Promise<number[]> {
+  assertLocalPath(inputPath);
+  if (!Number.isInteger(options.streamIndex) || options.streamIndex < 0) {
+    throw new Error("Video stream index is invalid");
+  }
+  const result = await (options.runner ?? defaultRunner)(
+    "ffmpeg",
+    [
+      "-nostdin",
+      "-hide_banner",
+      "-loglevel",
+      "info",
+      "-protocol_whitelist",
+      "file",
+      "-format_whitelist",
+      SAFE_FORMAT_WHITELIST,
+      "-threads",
+      "1",
+      "-i",
+      inputPath,
+      "-map",
+      `0:${options.streamIndex}`,
+      "-vf",
+      "select='gt(scene,0.30)',showinfo",
+      "-an",
+      "-f",
+      "null",
+      "-",
+    ],
+    { signal: options.signal, timeoutMs: options.timeoutMs ?? 30_000 }
+  );
+  return parseSceneChangeTimestamps(`${result.stdout}\n${result.stderr}`, options.durationSeconds);
 }
 
 export async function probeLocalVideo(
@@ -285,23 +535,56 @@ export async function extractFramesFromLocalVideo(
   options: {
     durationSeconds: number;
     frameCount: number;
+    focusWindow?: VideoFocusBounds | null;
     runner?: VideoCommandRunner;
+    samplingPolicy?: VideoSamplingPolicy;
     signal?: AbortSignal;
     streamIndex: number;
     timeoutMs?: number;
   }
-): Promise<VideoFrameFile[]> {
+): Promise<VideoFrameFileList> {
   assertLocalPath(inputPath);
   assertLocalPath(outputDirectory);
-  const timestamps = calculateFrameTimestamps(options.durationSeconds, options.frameCount);
+  const policy = options.samplingPolicy ?? "uniform";
+  let sceneCandidates: number[] = [];
+  if (policy !== "uniform") {
+    try {
+      sceneCandidates = await detectSceneChangeTimestamps(inputPath, {
+        durationSeconds: options.durationSeconds,
+        runner: options.runner,
+        signal: options.signal,
+        streamIndex: options.streamIndex,
+        timeoutMs: Math.min(options.timeoutMs ?? 30_000, 30_000),
+      });
+    } catch {
+      if (options.signal?.aborted) throw new Error("Video extraction request aborted");
+      sceneCandidates = [];
+    }
+  }
+  const focusWindow = options.focusWindow
+    ? resolveVideoFocusWindow(options.durationSeconds, options.focusWindow)
+    : null;
+  const sampling = calculateSamplingDecision(
+    options.durationSeconds,
+    options.frameCount,
+    policy,
+    sceneCandidates,
+    focusWindow
+  );
   if (!Number.isInteger(options.streamIndex) || options.streamIndex < 0) {
     throw new Error("Video stream index is invalid");
   }
   const runner = options.runner ?? defaultRunner;
-  const frames: VideoFrameFile[] = [];
+  const frames = [] as VideoFrameFileList;
+  frames.sampling = {
+    candidateCount: sampling.candidateCount,
+    ...(sampling.focusWindow ? { focusWindow: sampling.focusWindow } : {}),
+    policyEffective: sampling.policyEffective,
+    policyRequested: sampling.policyRequested,
+  };
 
-  for (let index = 0; index < timestamps.length; index++) {
-    const timestampSeconds = timestamps[index];
+  for (let index = 0; index < sampling.timestamps.length; index++) {
+    const timestampSeconds = sampling.timestamps[index];
     const outputPath = join(outputDirectory, `frame-${String(index + 1).padStart(2, "0")}.jpg`);
     await runner(
       "ffmpeg",
@@ -375,12 +658,18 @@ export async function extractVideoFramesFromBytes(
   bytes: Uint8Array,
   options: {
     frameCount: number;
+    focusWindow?: VideoFocusBounds | null;
     maxDurationSeconds: number;
     runner?: VideoCommandRunner;
+    samplingPolicy?: VideoSamplingPolicy;
     signal?: AbortSignal;
     timeoutMs: number;
   }
-): Promise<{ durationSeconds: number; frames: ExtractedVideoFrame[] }> {
+): Promise<{
+  durationSeconds: number;
+  frames: ExtractedVideoFrame[];
+  sampling: VideoSamplingMetadata;
+}> {
   const temporaryDirectory = await mkdtemp(join(tmpdir(), "omniroute-video-broker-"));
   try {
     if (options.signal?.aborted) throw new Error("Video extraction request aborted");
@@ -397,7 +686,9 @@ export async function extractVideoFramesFromBytes(
     const frameFiles = await extractFramesFromLocalVideo(inputPath, framesDirectory, {
       durationSeconds: metadata.durationSeconds,
       frameCount: options.frameCount,
+      focusWindow: options.focusWindow,
       runner: options.runner,
+      samplingPolicy: options.samplingPolicy,
       signal: options.signal,
       streamIndex: metadata.streamIndex,
       timeoutMs: options.timeoutMs,
@@ -409,6 +700,7 @@ export async function extractVideoFramesFromBytes(
         dataUri: `data:image/jpeg;base64,${frameBytes[index].toString("base64")}`,
         timestampSeconds: frame.timestampSeconds,
       })),
+      sampling: frameFiles.sampling,
     };
   } finally {
     await rm(temporaryDirectory, { force: true, recursive: true });

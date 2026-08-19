@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "બજેટ-સમાપ્ત વિનંતીઓને કટોકટીના મફત ફોલબેક પ્રદાતા/મોડેલ પર રૂટ કરો.",
   "featureFlagArenaEloSyncEnabledDescription": "મોડેલ ઇન્ટેલિજન્સ રેન્કિંગ માટે સમયાંતરે Arena AI લીડરબોર્ડ ELO સિંક સક્ષમ કરો.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "/v1/models પર claude/&lt;provider&gt;/&lt;model&gt; મિરર આઈડીઓનું જાહેરાત કરો જેથી Claude Code ગેટવે મોડલ શોધી કાઢે છે non-Claude મોડલ. ચેતવણી: જ્યારે વૈશ્વિક રીતે સક્રિય કરવામાં આવે ત્યારે તમામ ક્લાયન્ટ માટે કૅટલોગ એન્ટ્રીઓ ડબલ કરે છે.",
+  "featureFlagChatVirtualLanesEnabledDescription": "પ્રોવાઇડર ડિસ્પેચ માટે પ્રતિ-ટેનન્ટ અનુકૂલનશીલ વર્ચ્યુઅલ એડમિશન લેન સક્ષમ કરો (#9654): એક ટેનન્ટનો બર્સ્ટ હવે બીજા ટેનન્ટને 503 આપતો નથી. OMNIROUTE_CHAT_VIRTUAL_LANES એન્વાયર્નમેન્ટ વેરિયેબલ આ ડેશબોર્ડ સેટિંગ કરતાં વધુ પ્રાધાન્ય ધરાવે છે; ફેરફારો સર્વર પુનઃપ્રારંભ પર અસરકારક થાય છે.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1290,7 +1291,9 @@
       "open": "ખોલો",
       "close": "બંધ કરો"
     },
-    "noResults": "કોઈ પરિણામો નથી"
+    "noResults": "કોઈ પરિણામો નથી",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "વેબહુક્સ",
@@ -1736,6 +1739,8 @@
     "quotaShare": "ક્વોટા શેર",
     "discovery": "ડિસ્કવરી",
     "freeProviderRankings": "ફ્રી પ્રોવાઇડર રેન્કિંગ્સ",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "ફ્રી ટાયર્સ",
     "gamification": "ગેમિફિકેશન",
     "leaderboard": "લીડરબોર્ડ",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "આ પ્રદાતા નાપસંદ કરવામાં આવી છે",
     "riskNotice": {
       "title": "આગળ વધતા પહેલા",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "વપરાશની ચેતવણીઓ સાથેનો પ્રદાતા — વિગતો માટે ક્લિક કરો",
       "oauth": "આ પ્રદાતા તમારા સત્તાવાર પ્રોડક્ટ સત્ર/OAuth નો ઉપયોગ કરે છે, જે પ્રોક્સી/રાઉટર ઉપયોગ માટે અધિકૃત નથી. અમે સઘન સ્વાયત્ત એજન્ટ વપરાશ (OpenCloud-શૈલી, લાંબા બહુ-પગલાંના પ્રવાહો, મોટા બેચ) ની ભલામણ કરતા નથી — અપસ્ટ્રીમ એકાઉન્ટને પ્રતિબંધિત અથવા બૅન કરીને પ્રતિક્રિયા આપી શકે છે. તમારા પોતાના જોખમે ઉપયોગ કરો.",
       "webCookie": "આ પ્રદાતા તમારા વેબ સત્ર કૂકીઝ દ્વારા પ્રમાણિત કરે છે. અપસ્ટ્રીમ સેવા કોઈપણ સમયે સત્રને અમાન્ય કરી શકે છે, જેના કારણે તમારે ફરીથી લૉગ ઇન કરવું પડશે. લાંબા અડચણ વગરના ઓપરેશન્સ માટે ભલામણ કરેલ નથી. તમારા પોતાના જોખમે ઉપયોગ કરો.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "આ પ્રદાતા માટે આ ફરીથી બતાવશો નહીં",
       "understand": "હું સમજું છું, આગળ વધો",
       "cancel": "રદ કરો"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Disabled",
     "enableProvider": "Enable provider",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "સાચવેલ મોડેલ અંતિમ બિંદુની સેટિંગ્સ",
     "searchByModelAria": "મોડલ દ્વારા શોધો",
     "selectSupportedEndpoint": "કમથી કમ એક સમર્થિત અંતિમ બિંદુ પસંદ કરો",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "આપોઆપ અપસ્ટ્રીમ મોડલ્સ લાવો",
+    "autoFetchModelsEnabled": "અપસ્ટ્રીમ મોડલ આપોઆપ મેળવવું સક્રિય છે",
+    "autoFetchModelsDisabled": "અપસ્ટ્રીમ મોડલ આપોઆપ મેળવનાર બંધ છે",
+    "autoFetchModelsTooltip": "જરૂર પડ્યે અપસ્ટ્રીમ મોડલ્સને લાવવા અને કેશ કરવા",
+    "autoFetchModelsToggleFailed": "અપસ્ટ્રીમ મોડલ ઓટો-ફેચ ટોગલ કરવામાં નિષ્ફળ થયું",
+    "overridesUpstreamModel": "અપસ્ટ્રીમને ઓવરરાઈડ કરે છે",
+    "autoFetchModelsPartialFailure": "કેટલાક કનેક્શન અપડેટ થયા, પરંતુ ઉપરવાળા મોડેલનું ઓટો-ફેચ દરેક જગ્યાએ બદલાયું નથી",
+    "overridesUpstreamModelHint": "તમારા સેટિંગ્સ આ અપસ્ટ્રીમ મોડેલને ઓવરરાઈડ કરે છે",
+    "resetToUpstreamDefaultsSuccess": "ઉપરવાળી મોડલ ડિફોલ્ટ્સ પુનઃસ્થાપિત કરવામાં આવ્યા",
+    "resetToUpstreamDefaults": "અપસ્ટ્રીમ ડિફોલ્ટ્સ પુનઃસ્થાપિત કરો",
+    "resetToUpstreamDefaultsFailed": "અપસ્ટ્રીમ મોડલ ડિફોલ્ટ્સ પુનઃસ્થાપિત કરવામાં નિષ્ફળ થયું"
   },
   "settings": {
     "title": "Settings",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "પ્રતિબંધિત કીવર્ડ્સ",
     "customBannedSignalsDesc": "વધારાના કીવર્ડ્સ જે કાયમી એકાઉન્ટ પ્રતિબંધ શોધને ટ્રિગર કરે છે. બિલ્ટ-ઇન કીવર્ડ્સ હંમેશા લાગુ પડે છે.",
     "customBannedSignalsPlaceholder": "દા.ત. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "સંકોચન",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "દુર્લભ સિદ્ધિઓ"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "પ્રથમ ટોકન",
         "description": "તમારી પ્રથમ API વિનંતી કરી",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "પ્રદાતા સેટઅપ",
@@ -13658,23 +13710,6 @@
     "updateFailed": "અપડેટ કરવામાં નિષ્ફળ (HTTP {status})",
     "networkError": "નેટવર્ક ભૂલ — પ્રદાતા એક્સપોઝર સેટિંગને અપડેટ કરી શકતા નથી"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "આ છબીની વિનંતી માટે પ્રદાતા દ્રષ્ટિનું સમર્થન નથી આપતું",

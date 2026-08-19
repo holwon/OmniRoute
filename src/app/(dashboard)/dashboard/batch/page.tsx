@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslations } from "next-intl";
 import BatchListTab from "./BatchListTab";
-import { FileRecord } from "@/lib/db/files";
-import { BatchRecord } from "@/lib/db/batches";
+import type { FileRecord } from "@/lib/db/files";
+import type { BatchRecord } from "@/lib/db/batches";
 import { mapBatchApiToRecord, mapFileApiToRecord } from "./batch-utils";
 import BatchConceptCard from "./components/BatchConceptCard";
 import NewBatchWizard from "./components/NewBatchWizard";

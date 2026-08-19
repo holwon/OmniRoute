@@ -306,7 +306,7 @@ test("callVisionModel uses correct request body format", async () => {
     };
     assert.strictEqual(imagePart.type, "image_url");
     assert.strictEqual(imagePart.image_url.url, imageUri);
-    assert.strictEqual(imagePart.image_url.detail, "low");
+    assert.strictEqual(imagePart.image_url.detail, "high");
 
     // Second content is text prompt
     const textPart = message.content[1] as { type: string; text: string };
@@ -358,10 +358,17 @@ test("callVisionModel fetches remote images before Anthropic requests", async ()
     assert.strictEqual(fetchCalls[1].url, "https://api.anthropic.com/v1/messages");
 
     const anthropicBody = JSON.parse(fetchCalls[1].init?.body as string);
-    const imageSource = anthropicBody.messages[0].content[0].source;
+    const imagePart = anthropicBody.messages[0].content[0];
+    const imageSource = imagePart.source;
     assert.strictEqual(imageSource.type, "base64");
     assert.strictEqual(imageSource.media_type, "image/png");
     assert.strictEqual(imageSource.data, Buffer.from("cat-image-bytes").toString("base64"));
+    // Compatibility guard for the global (not OpenCode-scoped) `detail: "high"`
+    // default added to the OpenAI-compatible describe path: Anthropic's wire
+    // format has no `detail` concept, so the describe self-loop must not leak
+    // an OpenAI-only field into the Anthropic request body.
+    assert.strictEqual(imagePart.detail, undefined);
+    assert.strictEqual(imageSource.detail, undefined);
   } finally {
     globalThis.fetch = originalFetch;
   }

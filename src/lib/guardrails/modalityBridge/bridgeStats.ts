@@ -16,7 +16,14 @@ export interface BridgeModalityStats {
   averageLatencyMs: number;
   bridged: number;
   cacheHits: number;
+  resultCacheBytes: number;
+  resultCacheHits: number;
+  resultCacheLatencyMs: number;
   failures: number;
+  /** Audio/video fusion runs (video bridge only; 0 for other modalities). */
+  fusionRuns: number;
+  /** Fusion runs that completed with one branch failed (partial result). */
+  fusionPartials: number;
   lastUsedAt: string | null;
   latencySamples: number;
   successes: number;
@@ -37,7 +44,12 @@ function emptyStats(): BridgeModalityStats {
     averageLatencyMs: 0,
     bridged: 0,
     cacheHits: 0,
+    resultCacheBytes: 0,
+    resultCacheHits: 0,
+    resultCacheLatencyMs: 0,
     failures: 0,
+    fusionRuns: 0,
+    fusionPartials: 0,
     lastUsedAt: null,
     latencySamples: 0,
     successes: 0,
@@ -47,7 +59,17 @@ function emptyStats(): BridgeModalityStats {
 
 export function recordBridgeUse(
   kind: BridgeModality,
-  opts: { cacheHit?: boolean; cacheHits?: number; failure?: boolean; latencyMs?: number } = {}
+  opts: {
+    cacheHit?: boolean;
+    cacheHits?: number;
+    failure?: boolean;
+    fusionRun?: boolean;
+    fusionPartial?: boolean;
+    latencyMs?: number;
+    resultCacheBytes?: number;
+    resultCacheHit?: boolean;
+    resultCacheLatencyMs?: number;
+  } = {}
 ): void {
   const s = stats[kind];
   s.attempts += 1;
@@ -64,6 +86,24 @@ export function recordBridgeUse(
         ? 1
         : 0;
   s.cacheHits += cacheHits;
+  if (opts.fusionRun) s.fusionRuns += 1;
+  if (opts.fusionPartial) s.fusionPartials += 1;
+  if (opts.resultCacheHit) {
+    s.resultCacheHits += 1;
+    if (
+      typeof opts.resultCacheBytes === "number" &&
+      Number.isFinite(opts.resultCacheBytes) &&
+      opts.resultCacheBytes > 0
+    ) {
+      s.resultCacheBytes += Math.max(0, Math.round(opts.resultCacheBytes));
+    }
+    if (
+      typeof opts.resultCacheLatencyMs === "number" &&
+      Number.isFinite(opts.resultCacheLatencyMs)
+    ) {
+      s.resultCacheLatencyMs += Math.max(0, opts.resultCacheLatencyMs);
+    }
+  }
   if (typeof opts.latencyMs === "number" && Number.isFinite(opts.latencyMs)) {
     s.totalLatencyMs += Math.max(0, opts.latencyMs);
     s.latencySamples += 1;
@@ -123,8 +163,13 @@ export function buildModalityBridgeHeader(results: GuardrailMetaEntry[]): string
       meta.videosProcessed > 0 &&
       !meta.rerouted
     ) {
+      const sampling =
+        meta.samplingPolicyRequested === "scene_aware" ||
+        meta.samplingPolicyRequested === "segment_aware"
+          ? `;sampling=${headerModelToken(meta.samplingPolicyEffective ?? "uniform")};candidates=${typeof meta.samplingCandidateCount === "number" ? Math.max(0, Math.floor(meta.samplingCandidateCount)) : 0}`
+          : "";
       segments.push(
-        `video->text;model=${headerModelToken(meta.videoModel)};parts=${meta.videosProcessed}`
+        `video->text;model=${headerModelToken(meta.videoModel)};parts=${meta.videosProcessed}${sampling}`
       );
     }
   }

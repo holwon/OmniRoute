@@ -10,6 +10,7 @@ import {
   VIDEO_BRIDGE_TIMEOUT_MAX_MS,
   VIDEO_BRIDGE_TIMEOUT_MIN_MS,
   resolveVideoBridgeRuntimeSettings,
+  type VideoSamplingPolicy,
 } from "@/shared/constants/modalityBridgeDefaults";
 
 import ModalityBridgeStatsRow from "./ModalityBridgeStatsRow";
@@ -18,6 +19,7 @@ interface VideoState {
   modalityBridgeVideoEnabled: boolean;
   modalityBridgeVideoModel: string;
   modalityBridgeVideoFrameCount: number;
+  modalityBridgeVideoSamplingPolicy: VideoSamplingPolicy;
   modalityBridgeVideoMaxVideos: number;
   modalityBridgeVideoTimeout: number;
 }
@@ -44,6 +46,7 @@ function fromApi(value: unknown): VideoState {
     modalityBridgeVideoEnabled: runtime.enabled,
     modalityBridgeVideoModel: runtime.model,
     modalityBridgeVideoFrameCount: runtime.frameCount,
+    modalityBridgeVideoSamplingPolicy: runtime.samplingPolicy,
     modalityBridgeVideoMaxVideos: runtime.maxVideos,
     modalityBridgeVideoTimeout: runtime.timeoutMs,
   };
@@ -286,6 +289,24 @@ export default function ModalityBridgeVideoTab({
                 )
               }
             />
+            <label className="block text-sm font-medium">
+              {t("modalityBridgeAdvanced")}
+              <select
+                aria-label={t("modalityBridgeAdvanced")}
+                value={settings.modalityBridgeVideoSamplingPolicy}
+                onChange={(event) =>
+                  void update({
+                    modalityBridgeVideoSamplingPolicy: event.currentTarget
+                      .value as VideoSamplingPolicy,
+                  })
+                }
+                className="mt-1 w-full rounded-control border border-border bg-surface px-3 py-2 text-sm"
+              >
+                <option value="uniform">uniform</option>
+                <option value="scene_aware">scene_aware</option>
+                <option value="segment_aware">segment_aware</option>
+              </select>
+            </label>
           </div>
         </details>
 

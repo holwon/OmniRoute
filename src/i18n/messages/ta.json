@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "பட்ஜெட் தீர்ந்த கோரிக்கைகளை அவசரகால இலவச ஃபால்பேக் வழங்குநர்/மாடலுக்கு வழிசெலுத்துங்கள்.",
   "featureFlagArenaEloSyncEnabledDescription": "மாடல் நுண்ணறிவு தரவரிசைகளுக்காக அவ்வப்போதான Arena AI லீடர்போர்டு ELO ஒத்திசைவை இயக்குங்கள்.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "/v1/models இல் Claude Code gateway மாதிரி கண்டுபிடிப்பு பட்டியலில் non-Claude மாதிரிகளை காட்ட Claude/&lt;provider&gt;/&lt;model&gt; மின்னூல் அடையாளங்களை விளம்பரம் செய்யவும். எச்சரிக்கை: உலகளாவியமாக செயல்படுத்தப்பட்டால் அனைத்து கிளையன்டுகளுக்கும் பட்டியல் பதிவுகளை இரட்டைப்படுத்துகிறது.",
+  "featureFlagChatVirtualLanesEnabledDescription": "வழங்குநர் அனுப்பீட்டிற்கு ஒவ்வொரு குத்தகைதாரருக்கும் (tenant) தகவமைப்பு மெய்நிகர் சேர்க்கைப் பாதைகளை இயக்கு (#9654): ஒரு குத்தகைதாரரின் அதிகரிப்பு இனி மற்றொருவருக்கு 503 ஐ அளிக்காது. OMNIROUTE_CHAT_VIRTUAL_LANES சூழல் மாறி இந்த டாஷ்போர்டு அமைப்பை விட முன்னுரிமை பெறுகிறது; மாற்றங்கள் சேவையகம் மறுதொடக்கத்தில் நடைமுறைக்கு வரும்.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1290,7 +1291,9 @@
       "open": "திறக்கவும்",
       "close": "மூடு"
     },
-    "noResults": "எந்த முடிவுகளும் இல்லை"
+    "noResults": "எந்த முடிவுகளும் இல்லை",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "வெப்ஹூக்ஸ்",
@@ -1736,6 +1739,8 @@
     "quotaShare": "ஒதுக்கீட்டுப் பகிர்வு",
     "discovery": "கண்டறிதல்",
     "freeProviderRankings": "இலவச வழங்குநர் தரவரிசை",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "இலவச அடுக்குகள்",
     "gamification": "கேமிஃபிகேஷன்",
     "leaderboard": "லீடர்போர்டு",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "இந்த வழங்குநர் நிராகரிக்கப்பட்டார்",
     "riskNotice": {
       "title": "தொடர்வதற்கு முன்",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "பயன்பாட்டு எச்சரிக்கைகளைக் கொண்ட வழங்குநர் — விவரங்களுக்கு கிளிக் செய்யவும்",
       "oauth": "இந்த வழங்குநர் உங்களது அதிகாரப்பூர்வ தயாரிப்பு அமர்வு/OAuth ஐப் பயன்படுத்துகிறார், இது ப்ராக்ஸி/ரவுட்டர் பயன்பாட்டிற்கு அங்கீகரிக்கப்படவில்லை. தீவிரமான தன்னாட்சி முகவர் பயன்பாட்டை (OpenCloud-பாணி, நீண்ட பல-படி ஓட்டங்கள், பெரிய தொகுதிகள்) நாங்கள் பரிந்துரைக்கவில்லை — அப்ஸ்ட்ரீம் கணக்கைக் கட்டுப்படுத்துவதன் மூலமோ அல்லது தடை செய்வதன் மூலமோ எதிர்வினையாற்றலாம். உங்கள் சொந்த பொறுப்பில் பயன்படுத்தவும்.",
       "webCookie": "இந்த வழங்குநர் உங்கள் வலை அமர்வு குக்கீகள் மூலம் அங்கீகரிக்கிறார். அப்ஸ்ட்ரீம் சேவை எந்த நேரத்திலும் அமர்வை செல்லாததாக்கலாம், இதனால் நீங்கள் மீண்டும் உள்நுழைய வேண்டியிருக்கும். நீண்ட கவனிக்கப்படாத செயல்பாடுகளுக்கு பரிந்துரைக்கப்படவில்லை. உங்கள் சொந்த பொறுப்பில் பயன்படுத்தவும்.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "இந்த வழங்குநருக்கு இதை மீண்டும் காட்ட வேண்டாம்",
       "understand": "எனக்கு புரிகிறது, தொடரவும்",
       "cancel": "ரத்துசெய்"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Disabled",
     "enableProvider": "Enable provider",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "சேமிக்கப்பட்ட மாதிரி முடிவுறுப்பு அமைப்புகள்",
     "searchByModelAria": "மாதிரியில் தேடு",
     "selectSupportedEndpoint": "குறைந்தது ஒரு ஆதரிக்கப்படும் முடிவுகளைத் தேர்ந்தெடுக்கவும்",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsTooltip": "தேவையான போது மேல்நிலை மாதிரிகளை பெறவும் மற்றும் கச்சே செய்யவும்",
+    "autoFetchModelsDisabled": "மேல்நிலை மாதிரி தானாகப் பெறுதல் முடக்கப்பட்டது",
+    "autoFetchModels": "உயர்தர மாதிரிகளை தானாகப் பெறவும்",
+    "autoFetchModelsEnabled": "மேல்நிலை மாதிரி தானாகப் பெறுதல் செயல்படுத்தப்பட்டது",
+    "overridesUpstreamModel": "மேல்நிலை மாற்றங்கள்",
+    "autoFetchModelsPartialFailure": "சில இணைப்புகள் புதுப்பிக்கப்பட்டன, ஆனால் மேல்மட்ட மாதிரி தானாகப் பெறுதல் எங்கும் மாற்றப்படவில்லை",
+    "autoFetchModelsToggleFailed": "மேல்தர மாதிரி தானாகப் பெறுதலை மாற்ற முடியவில்லை",
+    "overridesUpstreamModelHint": "உங்கள் அமைப்புகள் இந்த மேல்மட்ட மாதிரியை மீறுகின்றன",
+    "resetToUpstreamDefaults": "முதன்மை இயல்புகளை மீட்டமைக்கவும்",
+    "resetToUpstreamDefaultsSuccess": "மீட்டமைக்கப்பட்ட மேல்நிலை மாதிரி இயல்புகள்",
+    "resetToUpstreamDefaultsFailed": "மேல்நிலை மாதிரி இயல்புகளை மீட்டெடுக்க முடியவில்லை"
   },
   "settings": {
     "title": "Settings",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "தடைசெய்யப்பட்ட முக்கிய வார்த்தைகள்",
     "customBannedSignalsDesc": "நிரந்தரக் கணக்குத் தடை கண்டறிதலைத் தூண்டும் கூடுதல் முக்கிய வார்த்தைகள். உள்ளமைக்கப்பட்ட முக்கிய வார்த்தைகள் எப்போதும் பொருந்தும்.",
     "customBannedSignalsPlaceholder": "எ.கா. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "சுருக்கம்",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "அரிய சாதனைகள்"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "முதல் டோக்கன்",
         "description": "உங்கள் முதல் API கோரிக்கையைச் செய்துள்ளீர்கள்",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "வழங்குநர் அமைப்பு",
@@ -13658,23 +13710,6 @@
     "updateFailed": "புதுப்பிக்க முடியவில்லை (HTTP {status})",
     "networkError": "நெட்வொர்க் பிழை — வழங்குநர் வெளிப்பாடு அமைப்பை புதுப்பிக்க முடியவில்லை"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "இந்த படக் கோரிக்கைக்கு வழங்குநர் கண்ணோட்டத்தை ஆதரிக்கவில்லை",

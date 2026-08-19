@@ -19,7 +19,35 @@ OmniRoute compression is built around engine contracts. A mode can run one engin
 | `aggressive` | Caveman + history/tool summarizers | Long chat sessions                           |
 | `ultra`      | Caveman + pruning helpers          | Context-limit recovery                       |
 | `rtk`        | RTK                                | Terminal, shell, build, test, and git output |
+| `omniglyph`  | OmniGlyph                          | Context-as-image on the native provider wire |
 | `stacked`    | Pipeline, default `rtk -> caveman` | Mixed tool logs and prose, max savings       |
+
+### OmniGlyph compression profiles
+
+The `omniglyph` engine (package `omniglyph`, 1.4.0+) accepts a named semantic profile, set
+globally through `omniglyph.profile` in the compression settings or per step through the
+stacked pipeline's step config:
+
+| Profile        | Boundary                                                                    |
+| -------------- | --------------------------------------------------------------------------- |
+| `aggressive`   | Default. The policy the published receipts measured — images system, tool docs and dense history |
+| `balanced`     | Keeps live state native, protects the last 8 turns, collapses older closed history |
+| `coding-safe`  | Keeps authority, tool schemas and live tool output native, protects the last 12 turns |
+| `passthrough`  | Routes without transforming; the engine is skipped                          |
+
+The profile is a **ceiling, not a floor**: `mergeCompressionProfileOptions` in the package
+refuses to let a caller override reopen a lossy lane the profile closed, so a per-step
+`preserveSystemPrompt: false` cannot re-enable system compression under `coding-safe`.
+
+Measured on this codebase: `coding-safe` and `balanced` raise `minCompressChars` to its
+maximum and keep system, tool schemas and tool results native, so a session that has not
+accumulated history yet stops at `below_min_chars` and the engine transforms nothing. That
+is why the default is `aggressive` rather than the safest profile.
+
+The package resolves its own model scope and profile from its environment configuration.
+OmniRoute never delegates the decision: the adapter pins the model gate to the package's
+most restrictive scope, so host environment settings can only narrow the allowlist, never
+widen it past OmniRoute's measured receipts.
 
 ## Engine Registry
 

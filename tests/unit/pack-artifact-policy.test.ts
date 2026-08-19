@@ -163,6 +163,12 @@ test("tls-options.mjs is allowed in staging dist/ (server-ws.mjs dependency, mis
   assert.deepEqual(unexpectedPaths, []);
 });
 
+test("call-log artifact worker is kept and required in packaged runtimes", () => {
+  const workerPath = "src/lib/usage/callLogArtifactWorker.js";
+  assert.ok(APP_STAGING_ALLOWED_EXACT_PATHS.includes(workerPath));
+  assert.ok(PACK_ARTIFACT_REQUIRED_PATHS.includes(`dist/${workerPath}`));
+});
+
 test("dist/tls-options.mjs is a required tarball path (regression guard for #5452)", () => {
   const missingPaths = findMissingArtifactPaths([], PACK_ARTIFACT_REQUIRED_PATHS);
   assert.ok(
@@ -216,6 +222,7 @@ test("findMissingArtifactPaths flags missing root runtime files in the tarball",
     "dist/peer-stamp.mjs",
     "dist/responses-ws-proxy.mjs",
     "dist/server-ws.mjs",
+    "dist/src/lib/usage/callLogArtifactWorker.js",
     "dist/tls-options.mjs",
     "dist/webdav-handler.mjs",
     "scripts/build/colocateOptionals.mjs",

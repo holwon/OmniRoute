@@ -49,13 +49,6 @@ test("#3061 opencode-zen no-auth: first selection returns synthetic noauth (happ
   assert.equal((creds as { connectionId?: string }).connectionId, "noauth");
 });
 
-test("#3061 mimocode no-auth: first selection returns synthetic noauth (happy path preserved)", async () => {
-  const creds = await getProviderCredentials("mimocode", null, null, "mimo-auto");
-  assert.ok(creds, "mimocode must resolve to synthetic no-auth credentials on first selection");
-  assert.equal((creds as { connectionId?: string }).connectionId, "noauth");
-  assert.equal((creds as { apiKey?: unknown }).apiKey, null);
-});
-
 // ── The fix: once "noauth" is excluded, selection MUST stop (return null) ──
 
 test("#3061 opencode no-auth: excluding 'noauth' returns null (breaks the fallback loop)", async () => {
@@ -81,13 +74,3 @@ test("#3061 opencode-zen no-auth: excluding 'noauth' returns null (breaks the fa
   );
 });
 
-test("#3061 mimocode no-auth: excluding 'noauth' returns null (breaks the fallback loop)", async () => {
-  const creds = await getProviderCredentials("mimocode", null, null, "mimo-auto", {
-    excludeConnectionIds: ["noauth"],
-  });
-  assert.equal(
-    creds,
-    null,
-    "excluded synthetic noauth must not be re-selected for the mimocode keyless path"
-  );
-});

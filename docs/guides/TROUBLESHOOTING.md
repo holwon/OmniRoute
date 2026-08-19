@@ -478,7 +478,7 @@ If a provider repeatedly enters OPEN state:
 
 ### "Unsupported model" error
 
-- Ensure you're using the correct prefix: `deepgram/nova-3` or `assemblyai/best`
+- Use a model id whose first segment is a provider you have credentials for (`openai/whisper-1`, `openrouter/deepgram/nova-3`). Bare `deepgram/nova-3` requires a native Deepgram key.
 - Verify the provider is connected in **Dashboard → Providers**
 
 ### Transcription returns empty or fails

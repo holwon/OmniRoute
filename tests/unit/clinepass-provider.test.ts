@@ -68,6 +68,7 @@ test("ClinePass fallback is the official subscription-only catalog", () => {
     "cline-pass/kimi-k2.7-code",
     "cline-pass/mimo-v2.5-pro",
     "cline-pass/mimo-v2.5",
+    "cline-pass/qwen3.8-max",
     "cline-pass/qwen3.7-max",
     "cline-pass/qwen3.7-plus",
   ]);

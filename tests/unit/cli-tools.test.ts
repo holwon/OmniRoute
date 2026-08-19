@@ -10,6 +10,7 @@ const {
   normalizeCliCompatProviderId,
 } = await import("../../src/shared/constants/cliCompatProviders.ts");
 const { CLI_TOOL_IDS } = await import("../../src/shared/services/cliRuntime.ts");
+const { hasRegisteredAgent } = await import("../../src/lib/acp/registry.ts");
 const { applyFingerprint, isCliCompatEnabled, setCliCompatProviders } =
   await import("../../open-sse/config/cliFingerprints.ts");
 
@@ -29,6 +30,11 @@ test("Hermes quick-config is registered as a guide-based CLI tool", () => {
   assert.ok(Array.isArray(hermes.guideSteps));
   assert.ok(String(hermes.codeBlock?.code || "").includes('"baseURL": "{{baseUrl}}"'));
   assert.ok(CLI_TOOL_IDS.includes("hermes"));
+});
+
+test("ACP registry accepts the Gemini CLI target used by the manager", () => {
+  assert.equal(hasRegisteredAgent("gemini"), true);
+  assert.equal(hasRegisteredAgent("definitely-not-an-agent"), false);
 });
 
 test("CLI fingerprint toggles only expose implemented fingerprints and functional legacy aliases", () => {

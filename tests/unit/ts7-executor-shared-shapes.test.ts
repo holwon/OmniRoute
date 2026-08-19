@@ -2,7 +2,6 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 
 const { OpencodeExecutor } = await import("../../open-sse/executors/opencode.ts");
-const { MimocodeExecutor } = await import("../../open-sse/executors/mimocode.ts");
 
 /**
  * Behavioral guards for the three type-only fixes in the TS 7 executor slice
@@ -78,68 +77,3 @@ describe("OpencodeExecutor — tools truncation survives the narrowing fix", () 
   });
 });
 
-describe("MimocodeExecutor — AccountState.proxy is always present (#3837/#5521)", () => {
-  const FP = "fingerprint-1";
-
-  function accountsOf(exec: unknown): Array<Record<string, unknown>> {
-    return (exec as { accounts: Array<Record<string, unknown>> }).accounts;
-  }
-
-  function sync(exec: unknown, credentials: unknown): void {
-    (exec as { syncAccountsFromCredentials(c: unknown): void }).syncAccountsFromCredentials(
-      credentials
-    );
-  }
-
-  it("defaults proxy to null — not undefined — when no accountProxies are configured", () => {
-    const exec = new MimocodeExecutor();
-    accountsOf(exec).length = 0;
-    accountsOf(exec).push({
-      fingerprint: FP,
-      jwt: "",
-      expiresAt: 0,
-      cooldownUntil: 0,
-      consecutiveFails: 0,
-    });
-
-    sync(exec, { providerSpecificData: {} });
-
-    const account = accountsOf(exec)[0];
-    assert.ok("proxy" in account, "every account must expose a proxy key");
-    assert.equal(account.proxy, null, "unconfigured proxy is null, never undefined");
-  });
-
-  it("resolves a configured proxy onto the matching account", () => {
-    const exec = new MimocodeExecutor();
-    accountsOf(exec).length = 0;
-    accountsOf(exec).push({
-      fingerprint: FP,
-      jwt: "",
-      expiresAt: 0,
-      cooldownUntil: 0,
-      consecutiveFails: 0,
-    });
-
-    const proxy = { type: "http", host: "p1.example.com", port: 1080 };
-    sync(exec, { providerSpecificData: { accountProxies: [{ fingerprint: FP, proxy }] } });
-
-    assert.deepEqual(accountsOf(exec)[0].proxy, proxy);
-  });
-
-  it("clears a previously-resolved proxy back to null when config drops it", () => {
-    const exec = new MimocodeExecutor();
-    accountsOf(exec).length = 0;
-    accountsOf(exec).push({
-      fingerprint: FP,
-      jwt: "",
-      expiresAt: 0,
-      cooldownUntil: 0,
-      consecutiveFails: 0,
-      proxy: { type: "http", host: "stale.example.com", port: 8080 },
-    });
-
-    sync(exec, { providerSpecificData: { accountProxies: [] } });
-
-    assert.equal(accountsOf(exec)[0].proxy, null, "a removed proxy must not linger on the account");
-  });
-});

@@ -95,6 +95,26 @@ test("runOAuthStatus filtra por provider", async () => {
   assert.ok(capturedUrl.includes("provider=gemini"));
 });
 
+test("runOAuthStatus consumes the connections envelope", async () => {
+  const origFetch = globalThis.fetch;
+  globalThis.fetch = ((url: string) => {
+    assert.ok(url.includes("/api/providers"));
+    return Promise.resolve(makeResp({ connections: CONNECTIONS }));
+  }) as any;
+
+  try {
+    const { runOAuthStatus } = await import("../../bin/cli/commands/oauth.mjs");
+    const out = await captureStdout(() => runOAuthStatus({}, makeCmd() as any));
+    const parsed = JSON.parse(out);
+    assert.deepEqual(
+      parsed.map((connection: { id: string }) => connection.id),
+      ["conn1", "conn2"],
+    );
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});
+
 test("runOAuthRevoke com --yes chama endpoint de revogação", async () => {
   let capturedUrl = "";
   let capturedMethod = "";

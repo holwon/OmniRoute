@@ -8,9 +8,16 @@ import {
   type VideoExtractionQueue,
   VideoExtractionQueueError,
 } from "@/lib/guardrails/videoBridgeBrokerQueue";
-import { extractVideoFramesFromBytes } from "@/lib/guardrails/videoBridgeRuntime";
+import {
+  extractVideoFramesFromBytes,
+  type VideoFocusBounds,
+  type VideoSamplingPolicy,
+} from "@/lib/guardrails/videoBridgeRuntime";
 import { resolveModelSyncInternalBaseUrl } from "@/shared/services/modelSyncScheduler";
 import { VIDEO_BRIDGE_TIMEOUT_MAX_MS } from "@/shared/constants/modalityBridgeDefaults";
+import { createLogger } from "@/shared/utils/logger";
+
+const log = createLogger("video-bridge-broker");
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -31,11 +38,51 @@ function invalid(message: string, status = 400, headers?: Record<string, string>
 }
 
 function parseFrameCount(url: URL): number | null {
-  if ([...url.searchParams.keys()].some((key) => key !== "frames")) return null;
+  if (
+    [...url.searchParams.keys()].some(
+      (key) => !["frames", "samplingPolicy", "start", "end"].includes(key)
+    )
+  ) {
+    return null;
+  }
   const raw = url.searchParams.get("frames");
   if (!raw || !/^\d{1,2}$/.test(raw)) return null;
+  const samplingPolicy = url.searchParams.get("samplingPolicy");
+  if (
+    samplingPolicy !== null &&
+    samplingPolicy !== "uniform" &&
+    samplingPolicy !== "scene_aware" &&
+    samplingPolicy !== "segment_aware"
+  ) {
+    return null;
+  }
   const value = Number(raw);
   return Number.isInteger(value) && value >= 1 && value <= 16 ? value : null;
+}
+
+function parseFocusWindow(url: URL): VideoFocusBounds | null {
+  const start = url.searchParams.get("start");
+  const end = url.searchParams.get("end");
+  if (start === null && end === null) return null;
+  const parse = (value: string | null): number | undefined => {
+    if (value === null || value.length === 0) return undefined;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
+  };
+  const startSeconds = parse(start);
+  const endSeconds = parse(end);
+  if (
+    (start !== null && startSeconds === undefined) ||
+    (end !== null && endSeconds === undefined)
+  ) {
+    return null;
+  }
+  return { endSeconds, startSeconds };
+}
+
+function parseSamplingPolicy(url: URL): VideoSamplingPolicy {
+  const value = url.searchParams.get("samplingPolicy");
+  return value === "scene_aware" || value === "segment_aware" ? value : "uniform";
 }
 
 function expectedBrokerPath(): string {
@@ -89,6 +136,11 @@ export async function handleVideoExtractionBrokerRequest(
   }
   const frameCount = parseFrameCount(url);
   if (!frameCount) return invalid("Video Bridge frame count must be between 1 and 16");
+  const samplingPolicy = parseSamplingPolicy(url);
+  const focusWindow = parseFocusWindow(url);
+  if (focusWindow === null && (url.searchParams.has("start") || url.searchParams.has("end"))) {
+    return invalid("Video Bridge focus window bounds are invalid");
+  }
   const declaredHeader = request.headers.get("content-length");
   const declaredLength = declaredHeader === null ? null : Number(declaredHeader);
   if (
@@ -126,7 +178,9 @@ export async function handleVideoExtractionBrokerRequest(
       () =>
         extractFrames(bytes, {
           frameCount,
+          focusWindow,
           maxDurationSeconds: MAX_DURATION_SECONDS,
+          samplingPolicy,
           signal,
           timeoutMs: BROKER_TIMEOUT_MS,
         }),
@@ -140,20 +194,23 @@ export async function handleVideoExtractionBrokerRequest(
       error instanceof VideoExtractionQueueError && error.code === "QUEUE_CAPACITY";
     const clientAborted = request.signal.aborted;
     const deadlineExceeded = !clientAborted && deadline.aborted;
-    console.warn("[VideoBridgeBroker] extraction failed", {
-      aborted: clientAborted,
-      code: clientAborted
-        ? "CLIENT_ABORTED"
-        : queueCapacity
-          ? "QUEUE_CAPACITY"
-          : deadlineExceeded
-            ? "DEADLINE_EXCEEDED"
-            : unavailable
-              ? "RUNTIME_UNAVAILABLE"
-              : "EXTRACTION_FAILED",
-      frameCount,
-      inputBytes: bytes.byteLength,
-    });
+    log.warn(
+      {
+        aborted: clientAborted,
+        code: clientAborted
+          ? "CLIENT_ABORTED"
+          : queueCapacity
+            ? "QUEUE_CAPACITY"
+            : deadlineExceeded
+              ? "DEADLINE_EXCEEDED"
+              : unavailable
+                ? "RUNTIME_UNAVAILABLE"
+                : "EXTRACTION_FAILED",
+        frameCount,
+        inputBytes: bytes.byteLength,
+      },
+      "Video Bridge broker extraction failed"
+    );
     if (clientAborted) return invalid("Video extraction was aborted", 499);
     if (deadlineExceeded) return invalid("Video extraction deadline exceeded", 504);
     if (queueCapacity) {

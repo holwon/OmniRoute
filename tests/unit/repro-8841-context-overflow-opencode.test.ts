@@ -60,7 +60,7 @@ function upstreamContextOverflowResponse() {
       error: {
         code: "context_length_exceeded",
         message:
-          "Input exceeds the context window for opencode/north-mini-code-free: estimated 210724 input tokens, limit 200000. Reduce the prompt or route to a model with a larger context window.",
+          "Input exceeds the context window for opencode/mimo-v2.5-free: estimated 210724 input tokens, limit 200000. Reduce the prompt or route to a model with a larger context window.",
       },
     }),
     {
@@ -71,8 +71,8 @@ function upstreamContextOverflowResponse() {
 }
 
 test("#8841 advertised vs compat-filter limit agree", () => {
-  const advertised = getTokenLimit("opencode-zen", "north-mini-code-free");
-  const caps = getResolvedModelCapabilities("opencode/north-mini-code-free");
+  const advertised = getTokenLimit("opencode-zen", "mimo-v2.5-free");
+  const caps = getResolvedModelCapabilities("opencode/mimo-v2.5-free");
   assert.ok(advertised > 0);
   assert.ok(
     caps.contextWindow != null && caps.contextWindow > 0,
@@ -83,7 +83,7 @@ test("#8841 advertised vs compat-filter limit agree", () => {
 test("#8841 oversized request rejected up front (no dispatch)", async () => {
   const body = largeBody();
   const pool = [
-    target("opencode/north-mini-code-free"),
+    target("opencode/mimo-v2.5-free"),
     target("opencode/hy3-free"),
   ];
 
@@ -96,7 +96,7 @@ test("#8841 oversized request rejected up front (no dispatch)", async () => {
       name: "pro-coding-repro-8841",
       strategy: "priority",
       models: [
-        "opencode/north-mini-code-free",
+        "opencode/mimo-v2.5-free",
         "opencode/hy3-free",
       ],
     },

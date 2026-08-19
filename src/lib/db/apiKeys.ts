@@ -222,6 +222,22 @@ const _lastUsedUpdateCache = new Map<string, number>();
 const CACHE_TTL = 60 * 1000; // 1 minute TTL
 const LAST_USED_UPDATE_TTL = 5 * 60 * 1000;
 const MAX_CACHE_SIZE = 1000;
+const EXCLUSIVE_LEASE_SCOPE = "lease:exclusive";
+
+export class ApiKeyPolicyInvariantError extends Error {
+  readonly code = "LEASE_KEY_POLICY_INVALID";
+}
+
+function assertExclusiveLeaseKeyPolicy(
+  scopes: readonly string[],
+  allowedConnections: readonly string[]
+): void {
+  if (scopes.includes(EXCLUSIVE_LEASE_SCOPE) && allowedConnections.length === 0) {
+    throw new ApiKeyPolicyInvariantError(
+      "lease:exclusive requires explicit allowedConnections"
+    );
+  }
+}
 
 // Prepared statements cache
 let _stmtGetAllKeys: ApiKeysStatements["getAllKeys"] | null = null;
@@ -423,7 +439,7 @@ function getPreparedStatements(db: ApiKeysDbLike): ApiKeysStatements {
       "SELECT id, name, machine_id, model_access_mode, allowed_models, blocked_models, allowed_combos, allowed_connections, allowed_quotas, no_log, auto_resolve, is_active, access_schedule, max_requests_per_day, max_requests_per_minute, throttle_delay_ms, max_sessions, revoked_at, expires_at, ip_allowlist, scopes, rate_limits, is_banned, key_hash, allowed_endpoints, stream_default_mode, cache_default_mode, disable_non_public_models, allow_usage_command, usage_limit_enabled, daily_usage_limit_usd, weekly_usage_limit_usd, chaos_mode_enabled, compression_enabled, proxy_id FROM api_keys WHERE key = ? OR key_hash = ?",
     );
     _stmtInsertKey = db.prepare(
-      "INSERT INTO api_keys (id, name, key, machine_id, allowed_models, allowed_combos, no_log, created_at, key_prefix, key_hash, scopes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO api_keys (id, name, key, machine_id, allowed_models, allowed_combos, allowed_connections, no_log, created_at, key_prefix, key_hash, scopes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     );
     _stmtDeleteKey = db.prepare("DELETE FROM api_keys WHERE id = ?");
   }
@@ -502,6 +518,19 @@ export function getApiKeysCount(): number {
   return row.cnt;
 }
 
+/** Derived lease-only membership from existing key policy, not a second pool store. */
+export async function getExclusiveLeaseConnectionIds(): Promise<Set<string>> {
+  ensureApiKeysColumns(getDbInstance() as ApiKeysDbLike);
+  const rows = (getDbInstance() as ApiKeysDbLike)
+    .prepare<ApiKeyRow>(
+      `SELECT allowed_connections FROM api_keys
+       WHERE is_active != 0 AND is_banned != 1 AND revoked_at IS NULL
+       AND (expires_at IS NULL OR expires_at > ?) AND scopes LIKE ?`
+    )
+    .all(new Date().toISOString(), `%"${EXCLUSIVE_LEASE_SCOPE}"%`);
+  return new Set(rows.flatMap((row) => parseAllowedConnections(row.allowed_connections)));
+}
+
 /**
  * Select an API key for internal OmniRoute operations (combo health checks,
  * cloud-sync verify pings, etc.).
@@ -524,7 +553,7 @@ export function getApiKeysCount(): number {
  *      behavior when no key matches the better rules above).
  *
  * The selector is deliberately conservative: it never promotes a revoked,
- * inactive, or banned key, and it never widens a key's allowedModels.
+ * inactive, banned, or hard-lease key, and it never widens a key's allowedModels.
  */
 export async function pickApiKeyForInternalUse(
   purpose: "combo-health-check" | "cloud-sync-verify" | "internal-probe" = "internal-probe",
@@ -542,7 +571,11 @@ export async function pickApiKeyForInternalUse(
     }>;
 
     const isUsable = (k: (typeof keys)[number]) =>
-      Boolean(k.key) && k.isActive !== false && !k.revokedAt && k.isBanned !== true;
+      Boolean(k.key) &&
+      k.isActive !== false &&
+      !k.revokedAt &&
+      k.isBanned !== true &&
+      !k.scopes?.includes(EXCLUSIVE_LEASE_SCOPE);
 
     // 1. Management-scoped key (preferred for any internal probe).
     const manageKey = keys.find(
@@ -625,10 +658,17 @@ async function hashKey(key: string): Promise<string> {
   return createHash("sha256").update(key).digest("hex"); // nosemgrep: insufficient-password-hash
 }
 
-export async function createApiKey(name: string, machineId: string, scopes: string[] = []) {
+export async function createApiKey(
+  name: string,
+  machineId: string,
+  scopes: string[] = [],
+  options: { allowedConnections?: string[] } = {}
+) {
   if (!machineId) {
     throw new Error("machineId is required");
   }
+  const allowedConnections = options.allowedConnections ?? [];
+  assertExclusiveLeaseKeyPolicy(scopes, allowedConnections);
 
   const db = getDbInstance() as ApiKeysDbLike;
   const now = new Date().toISOString();
@@ -644,7 +684,7 @@ export async function createApiKey(name: string, machineId: string, scopes: stri
     modelAccessMode: "all" as const,
     allowedModels: [], // Empty array means all models allowed
     allowedCombos: [ALL_COMBOS_ACCESS_RULE], // Explicit wildcard means all combos allowed
-    allowedConnections: [], // Empty array means all connections allowed
+    allowedConnections,
     noLog: false,
     allowUsageCommand: false,
     createdAt: now,
@@ -659,6 +699,7 @@ export async function createApiKey(name: string, machineId: string, scopes: stri
     apiKey.machineId,
     "[]",
     JSON.stringify(apiKey.allowedCombos),
+    JSON.stringify(allowedConnections),
     0,
     apiKey.createdAt,
     apiKey.key.slice(0, 12),
@@ -968,9 +1009,20 @@ export async function updateApiKeyPermissions(
     db.exec("BEGIN IMMEDIATE");
     try {
       const prevRow = db
-        .prepare<{ scopes: string | null }>("SELECT scopes FROM api_keys WHERE id = ?")
+        .prepare<{ scopes: string | null; allowed_connections: string | null }>(
+          "SELECT scopes, allowed_connections FROM api_keys WHERE id = ?"
+        )
         .get(id);
-      previousScopes = parseStringList(prevRow?.scopes ?? null);
+      if (!prevRow) {
+        db.exec("ROLLBACK");
+        return false;
+      }
+      previousScopes = parseStringList(prevRow.scopes);
+      const nextAllowedConnections =
+        normalized.allowedConnections === undefined
+          ? parseAllowedConnections(prevRow.allowed_connections)
+          : normalized.allowedConnections;
+      assertExclusiveLeaseKeyPolicy(nextScopes, nextAllowedConnections);
       const upd = db
         .prepare(`UPDATE api_keys SET ${updates.join(", ")} WHERE id = @id`)
         .run(params);
@@ -984,6 +1036,28 @@ export async function updateApiKeyPermissions(
         db.exec("ROLLBACK");
       } catch {
         // swallow: original error is more important
+      }
+      throw err;
+    }
+  } else if (normalized.allowedConnections !== undefined) {
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      const row = db
+        .prepare<{ scopes: string | null }>("SELECT scopes FROM api_keys WHERE id = ?")
+        .get(id);
+      if (!row) {
+        db.exec("ROLLBACK");
+        return false;
+      }
+      assertExclusiveLeaseKeyPolicy(parseStringList(row.scopes), normalized.allowedConnections);
+      const upd = db.prepare(`UPDATE api_keys SET ${updates.join(", ")} WHERE id = @id`).run(params);
+      changedRows = upd.changes ?? 0;
+      db.exec("COMMIT");
+    } catch (err) {
+      try {
+        db.exec("ROLLBACK");
+      } catch {
+        // Preserve the mutation failure if rollback also fails.
       }
       throw err;
     }

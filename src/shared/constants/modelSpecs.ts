@@ -153,7 +153,7 @@ export const MODEL_SPECS: Record<string, ModelSpec> = {
     aliases: ["openai/gpt-4o"],
   },
 
-  // ── Gemini 2.5 and 3.5 Flash series ──────────────────────────────
+  // ── Gemini 2.5 and provider-neutral 3.5 Flash series ─────────────
   "gemini-2.5-flash": {
     maxOutputTokens: 65536,
     contextWindow: 1048576,
@@ -174,12 +174,17 @@ export const MODEL_SPECS: Record<string, ModelSpec> = {
     thinkingBudgetCap: 0,
   },
 
-  // ── Gemini 3.7 / 3.6 Flash (Antigravity live tiers) ─────────────
+  // ── Gemini 3.7 Flash (current Antigravity/AGY live tiers) ─────────
   // The model id itself selects the upstream 10k/4k/1k reasoning tier. Antigravity
   // still rejects client-supplied thinking parameters, so keep the explicit-parameter
-  // capability aligned with the existing Gemini 3.5 tier ids.
+  // capability aligned with the existing Gemini Flash tier ids.
   "gemini-3.7-flash-high": { ...GEMINI_35_FLASH_MODEL_SPEC },
   "gemini-3.7-flash-medium": { ...GEMINI_35_FLASH_MODEL_SPEC },
+  "gemini-3.7-flash-low": { ...GEMINI_35_FLASH_MODEL_SPEC },
+
+  // Provider-neutral compatibility for providers that still serve Gemini 3.6.
+  // Antigravity/AGY availability is governed by their own provider catalogs and
+  // retirement filters; these shared specs must not be treated as an allowlist.
   "gemini-3.6-flash-high": { ...GEMINI_35_FLASH_MODEL_SPEC },
   "gemini-3.6-flash-medium": { ...GEMINI_35_FLASH_MODEL_SPEC },
   "gemini-3.6-flash-low": { ...GEMINI_35_FLASH_MODEL_SPEC },

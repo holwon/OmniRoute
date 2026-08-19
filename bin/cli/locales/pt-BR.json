@@ -1297,7 +1297,7 @@
     "description": "Gerencia tokens de acesso CLI com escopo (modo remoto)"
   },
   "configure": {
-    "description": "Escolhe um provedor+modelo do servidor ativo e grava uma configuração de CLI local"
+    "description": "Escolhe um provedor+modelo do servidor ativo e configura uma CLI local compatível"
   },
   "launchCodex": {
     "description": "Inicia o Codex CLI apontando para o OmniRoute (local ou VPS remoto)"

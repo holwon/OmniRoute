@@ -56,6 +56,8 @@ tags:
       background scheduler tick.
   - name: API Keys
     description: API key management
+  - name: Session Leases
+    description: Client-neutral exclusive managed session connection leases
   - name: Combos
     description: Routing combo management
   - name: Settings
@@ -103,6 +105,76 @@ tags:
       See docs/frameworks/TRAFFIC_INSPECTOR.md.
 
 paths:
+  /api/v1/session-leases:
+    post:
+      tags:
+        - Session Leases
+      summary: Acquire, renew, or release an exclusive managed connection lease
+      description: |
+        Requires an API key with `lease:exclusive` and an explicit non-empty
+        `allowedConnections` policy. The opaque owner is bound to the authenticated API key;
+        the lease owns an eligible connection, not a provider or model. Managed inference
+        requests present the owner and exact generation headers. Temporary foreign occupancy
+        returns 429 `WAITING_FOR_CAPACITY` with `Retry-After`.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: X-OmniRoute-Lease-Owner
+          in: header
+          required: true
+          schema:
+            type: string
+            pattern: ^vlo_[A-Za-z0-9_-]{43}$
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [action, model]
+                  properties:
+                    action: { type: string, const: acquire }
+                    model: { type: string, minLength: 1, maxLength: 512 }
+                - type: object
+                  required: [action, generation]
+                  properties:
+                    action: { type: string, const: renew }
+                    generation: { type: integer, minimum: 1 }
+                - type: object
+                  required: [action, generation]
+                  properties:
+                    action: { type: string, const: release }
+                    generation: { type: integer, minimum: 1 }
+                    reason:
+                      type: string
+                      enum: [OWNER_EXIT, CLIENT_CANCELLED]
+      responses:
+        "200":
+          description: Lease lifecycle state without connection or credential disclosure
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExclusiveConnectionLeaseLifecycle"
+        "400":
+          description: Missing or invalid lease context/action
+        "401":
+          description: Missing or invalid API key
+        "403":
+          description: Managed lease scope or key configuration required
+        "409":
+          description: Stale generation, missing binding, or connection fence rejection
+        "415":
+          description: Lifecycle mutations require application/json
+        "429":
+          description: Eligible managed connections are held by foreign active leases
+          headers:
+            Retry-After:
+              schema: { type: integer, minimum: 1, maximum: 3600 }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ExclusiveConnectionLeaseCapacity"
   # --- Playground + Search Tools (plans 17+18) ---
   /api/playground/improve-prompt:
     post:
@@ -1370,6 +1442,38 @@ paths:
             cost-telemetry headers (see `POST /api/v1/chat/completions`); media
             cost is computed per modality when pricing is available, otherwise
             `0` (fail-open).
+
+  /api/v1/multimodal-embeddings:
+    post:
+      tags: [Embeddings]
+      summary: Create embeddings (Jina multimodal-embeddings alias)
+      description: >-
+        Same handler as `POST /api/v1/embeddings`. Provided so Jina-compatible
+        clients that call `/v1/multimodal-embeddings` do not receive HTTP 404
+        `unknown_route`.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [input, model]
+              additionalProperties: true
+      responses:
+        "200":
+          description: Embedding vectors (same contract as POST /api/v1/embeddings).
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+    get:
+      tags: [Embeddings]
+      summary: List embedding models (Jina multimodal-embeddings alias)
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Embedding model catalog (same as GET /api/v1/embeddings).
 
   /api/v1/providers/{provider}/embeddings:
     post:
@@ -5498,7 +5602,7 @@ paths:
       x-loopback-only: true
       tags: [System]
       summary: Extract bounded Video Bridge frames through the internal broker
-      description: Internal per-process-authenticated trusted-loopback broker. Accepts at most 50 MiB of video bytes; URLs, paths, executable names, and command arguments are not part of the contract. The body pipeline and streamed handler reader both enforce the input cap. The broker applies fixed FFmpeg/ffprobe confinement, a single extraction slot with four pending jobs/100 MiB queued input, a 4 MiB per-frame cap, and a 32 MiB total response cap. This is not a public upload API.
+      description: Internal per-process-authenticated trusted-loopback broker. Accepts at most 50 MiB of video bytes; URLs, paths, executable names, and command arguments are not part of the contract. The body pipeline and streamed handler reader both enforce the input cap. The broker applies fixed FFmpeg/ffprobe confinement, a single extraction slot with four pending jobs/100 MiB queued input, a 4 MiB per-frame cap, and a 32 MiB total response cap. Optional focus bounds and scene-aware sampling are deterministic and bounded. Transcript provenance is a metadata contract on the parent video part, not an instruction to run speech-to-text. This is not a public upload API.
       security: []
       parameters:
         - in: query
@@ -5508,6 +5612,28 @@ paths:
             type: integer
             minimum: 1
             maximum: 16
+        - in: query
+          name: samplingPolicy
+          required: false
+          description: Optional deterministic sampling policy. Scene-aware detection falls back to uniform sampling on detector failure.
+          schema:
+            type: string
+            enum: [uniform, scene_aware, segment_aware]
+            default: uniform
+        - in: query
+          name: start
+          required: false
+          description: Optional focus-window start in seconds. The broker clamps it to the media duration.
+          schema:
+            type: number
+            minimum: 0
+        - in: query
+          name: end
+          required: false
+          description: Optional focus-window end in seconds. It must be greater than the normalized start.
+          schema:
+            type: number
+            minimum: 0
       requestBody:
         required: true
         content:
@@ -5539,6 +5665,83 @@ paths:
                 minimum: 1
         "504":
           description: Fixed 120-second broker extraction deadline exceeded
+
+  /api/modality-bridge/video/drilldown:
+    get:
+      x-loopback-only: true
+      tags: [System]
+      summary: Read a bounded Video Bridge drill-down slice
+      description: Internal loopback/token-authenticated lookup into a short-lived per-session frame cache. It never downloads media or starts a subprocess; start/end and frame count only select already materialized frames.
+      security: []
+      parameters:
+        - in: query
+          name: sessionId
+          required: true
+          schema: { type: string, maxLength: 128 }
+        - in: query
+          name: videoRef
+          required: true
+          schema: { type: string, maxLength: 4096 }
+        - in: query
+          name: start
+          required: false
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: end
+          required: false
+          schema: { type: number, minimum: 0 }
+        - in: query
+          name: frames
+          required: false
+          schema: { type: integer, minimum: 1, maximum: 16 }
+      responses:
+        "200": { description: Bounded cached frame slice }
+        "403": { description: Trusted loopback/token identity required }
+        "404": { description: Drill-down session or media key was not found }
+    post:
+      x-loopback-only: true
+      tags: [System]
+      summary: Store a bounded Video Bridge drill-down result
+      description: Internal lifecycle operation for explicitly authorized callers. The short-lived session cache is isolated by session and media reference and does not alter the primary request cost.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sessionId, videoRef, durationSeconds, frames]
+              properties:
+                sessionId: { type: string, maxLength: 128 }
+                videoRef: { type: string, maxLength: 4096 }
+                durationSeconds: { type: number, exclusiveMinimum: 0, maximum: 600 }
+                frames:
+                  type: array
+                  minItems: 1
+                  maxItems: 16
+                  items:
+                    type: object
+                    required: [timestampSeconds, dataUri]
+                    properties:
+                      timestampSeconds: { type: number, minimum: 0 }
+                      dataUri: { type: string, pattern: "^data:image/jpeg;base64," }
+      responses:
+        "201": { description: Drill-down result stored }
+        "403": { description: Trusted loopback/token identity required }
+        "413": { description: Payload exceeds the bounded session budget }
+    delete:
+      x-loopback-only: true
+      tags: [System]
+      summary: Delete a Video Bridge drill-down session
+      security: []
+      parameters:
+        - in: query
+          name: sessionId
+          required: true
+          schema: { type: string, maxLength: 128 }
+      responses:
+        "200": { description: Session entries removed }
+        "403": { description: Trusted loopback/token identity required }
 
   /api/cache/stats:
     get:
@@ -7215,6 +7418,31 @@ components:
             requestId: 0a1b2c3d-4e5f-6a7b-8c9d-0e1f2a3b4c5d
 
   schemas:
+    ExclusiveConnectionLeaseLifecycle:
+      type: object
+      required: [state, generation, acquiredAt, renewedAt, expiresAt]
+      properties:
+        state: { type: string, enum: [ACTIVE, RELEASED] }
+        generation: { type: integer, minimum: 1 }
+        acquiredAt: { type: string, format: date-time }
+        renewedAt: { type: string, format: date-time }
+        expiresAt: { type: string, format: date-time }
+    ExclusiveConnectionLeaseCapacity:
+      type: object
+      required: [state, error, reason, retryAfter, eligibleCount, freeCount]
+      properties:
+        state: { type: string, const: WAITING_FOR_CAPACITY }
+        error:
+          type: object
+          required: [type, code, message]
+          properties:
+            type: { type: string, const: lease_error }
+            code: { type: string, const: LEASE_CAPACITY_UNAVAILABLE }
+            message: { type: string }
+        reason: { type: string, const: NO_FREE_ELIGIBLE_CONNECTION }
+        retryAfter: { type: integer, minimum: 1, maximum: 3600 }
+        eligibleCount: { type: integer, minimum: 0 }
+        freeCount: { type: integer, minimum: 0 }
     EmbeddingMultimodalItem:
       oneOf:
         - type: object
@@ -8498,7 +8726,12 @@ components:
           type: string
         url:
           type: string
-          description: Redacted subscription URL.
+          description: >-
+            Redacted subscription URL. May be a local/loopback address
+            (e.g. `http://127.0.0.1:8080/list`) — local-first fetch targets
+            are allowed by default (`OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS`);
+            cloud-metadata / link-local endpoints (169.254.0.0/16) are always
+            blocked.
         enabled:
           type: boolean
         mode:

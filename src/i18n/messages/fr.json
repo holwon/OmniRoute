@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Router les requêtes ayant épuisé leur budget vers le fournisseur/modèle de secours gratuit d'urgence.",
   "featureFlagArenaEloSyncEnabledDescription": "Activer la synchronisation périodique de l'ELO du classement Arena AI pour les classements d'intelligence des modèles.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Afficher les identifiants miroir claude/&lt;provider&gt;/&lt;model&gt; dans /v1/models afin que la découverte de modèles de la passerelle Claude Code répertorie les modèles non-Claude. Attention : cette option double les entrées du catalogue pour tous les clients lorsqu'elle est activée globalement.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Activez des voies d'admission virtuelles adaptatives par tenant pour la répartition des fournisseurs (#9654) : le pic d'un tenant ne renvoie plus 503 à un autre. La variable d'environnement OMNIROUTE_CHAT_VIRTUAL_LANES prime sur ce réglage du tableau de bord ; les modifications prennent effet au redémarrage du serveur.",
   "sidebar": {
     "home": "Accueil",
     "dashboard": "Tableau de bord",
@@ -1281,6 +1282,8 @@
     "resilienceConnectionsSubtitle": "Cooldown, disjoncteur, état de blocage",
     "settingsModalityBridge": "Pont de Modalité",
     "settingsModalityBridgeSubtitle": "Fallback image/audio → texte pour les modèles uniquement textuels",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations",
     "commandPalette": {
       "title": "Palette de commandes",
       "searchPlaceholder": "Rechercher dans les pages, paramètres et outils…",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Partage de quota",
     "discovery": "Découverte",
     "freeProviderRankings": "Classement des fournisseurs gratuits",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Niveaux gratuits",
     "gamification": "Gamification",
     "leaderboard": "Classement",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Ce fournisseur est obsolète",
     "riskNotice": {
       "title": "Avant de continuer",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Fournisseur avec des restrictions d'utilisation — cliquez pour plus de détails",
       "oauth": "Ce fournisseur utilise votre session produit officielle/OAuth, ce qui n'est pas autorisé pour une utilisation via proxy/routeur. Nous ne recommandons pas une utilisation intensive par des agents autonomes (style OpenCloud, flux longs à étapes multiples, lots volumineux) — le service amont pourrait réagir en restreignant ou en bannissant le compte. À utiliser à vos risques et périls.",
       "webCookie": "Ce fournisseur s'authentifie via les cookies de votre session web. Le service amont peut invalider la session à tout moment, vous obligeant à vous reconnecter. Non recommandé pour les opérations longues sans surveillance. À utiliser à vos risques et périls.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Ne plus afficher cela pour ce fournisseur",
       "understand": "Je comprends, continuer",
       "cancel": "Annuler"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Désactivé",
     "enableProvider": "Activer le fournisseur",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Saved modèles endpoint paramètres",
     "searchByModelAria": "Rechercher un modèle",
     "selectSupportedEndpoint": "Sélectionnez au moins un endpoint pris en charge",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "Récupérer automatiquement les modèles en amont",
+    "autoFetchModelsEnabled": "Récupération automatique du modèle en amont activée",
+    "autoFetchModelsDisabled": "Récupération automatique du modèle en amont désactivée",
+    "autoFetchModelsTooltip": "Récupérer et mettre en cache les modèles en amont si nécessaire",
+    "autoFetchModelsToggleFailed": "Échec de l'activation de la récupération automatique du modèle en amont",
+    "overridesUpstreamModel": "Remplace les modifications en amont",
+    "overridesUpstreamModelHint": "Vos paramètres remplacent ce modèle en amont",
+    "resetToUpstreamDefaults": "Restaurer les valeurs par défaut en amont",
+    "resetToUpstreamDefaultsSuccess": "Modèles par défaut de l'amont restaurés",
+    "autoFetchModelsPartialFailure": "Certaines connexions ont été mises à jour, mais l'auto-récupération du modèle en amont n'a pas été modifiée partout",
+    "resetToUpstreamDefaultsFailed": "Échec de la restauration des paramètres par défaut du modèle en amont"
   },
   "settings": {
     "title": "Paramètres",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Mots-clés bannis",
     "customBannedSignalsDesc": "Mots-clés supplémentaires qui déclenchent la détection de bannissement permanent du compte. Les mots-clés intégrés s'appliquent toujours.",
     "customBannedSignalsPlaceholder": "ex. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Compression",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Succès rares"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Premier token",
         "description": "Première requête API effectuée",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Configuration du fournisseur",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Échec de la mise à jour (HTTP {status})",
     "networkError": "Erreur réseau — impossible de mettre à jour le paramètre d'exposition du fournisseur"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Le fournisseur ne prend pas en charge la vision pour cette demande d'image",

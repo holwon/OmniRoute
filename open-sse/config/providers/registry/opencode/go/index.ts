@@ -131,27 +131,19 @@ export const opencode_goProvider: RegistryEntry = {
     { id: "grok-4.5-low", name: "Grok 4.5 (low effort)", supportsReasoning: true },
     { id: "grok-4.5-medium", name: "Grok 4.5 (medium effort)", supportsReasoning: true },
     { id: "grok-4.5-high", name: "Grok 4.5 (high effort)", supportsReasoning: true },
-    { id: "deepseek-v4-pro", name: "DeepSeek V4 Pro", supportsReasoning: true },
-    // OpencodeExecutor rewrites these aliases to the canonical upstream id and injects reasoning_effort.
-    { id: "deepseek-v4-pro-low", name: "DeepSeek V4 Pro (low effort)", supportsReasoning: true },
     {
-      id: "deepseek-v4-pro-medium",
-      name: "DeepSeek V4 Pro (medium effort)",
+      id: "deepseek-v4-pro",
+      name: "DeepSeek V4 Pro",
       supportsReasoning: true,
-    },
-    { id: "deepseek-v4-pro-high", name: "DeepSeek V4 Pro (high effort)", supportsReasoning: true },
-    { id: "deepseek-v4-pro-max", name: "DeepSeek V4 Pro (max effort)", supportsReasoning: true },
-    { id: "deepseek-v4-flash", name: "DeepSeek V4 Flash", supportsReasoning: true },
-    // #8353: DeepSeek V4 Flash effort tiers from the OpenCode Go registry.
-    {
-      id: "deepseek-v4-flash-high",
-      name: "DeepSeek V4 Flash (high effort)",
-      supportsReasoning: true,
+      supportedThinkingEfforts: ["none", "low", "high", "max"],
+      targetFormat: "openai-responses",
     },
     {
-      id: "deepseek-v4-flash-max",
-      name: "DeepSeek V4 Flash (max effort)",
+      id: "deepseek-v4-flash",
+      name: "DeepSeek V4 Flash",
       supportsReasoning: true,
+      supportedThinkingEfforts: ["none", "low", "high", "max"],
+      targetFormat: "openai-responses",
     },
   ],
 };

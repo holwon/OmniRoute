@@ -456,11 +456,17 @@ export default function OAuthModal({
         // Claude Code and Cline OAuth flows can finish on provider-hosted pages that
         // show an auth code instead of redirecting back to OmniRoute.
         // Start directly in manual mode so users always have an input to paste code/url.
-        // zed-hosted's native-app sign-in always redirects the browser to a local
-        // 127.0.0.1:<port> callback that OmniRoute never listens on (the port is
-        // arbitrary and unrelated to the dashboard's own port) — nothing can
-        // auto-close the popup, so always show the manual paste-URL input.
-        if (provider === "claude" || provider === "cline" || provider === "zed-hosted") {
+        // zed-hosted's native-app sign-in redirects the browser to a local
+        // 127.0.0.1:<native_app_port> callback. On true localhost that port IS the
+        // dashboard's own (buildAuthUrl reuses it), so the redirect lands on the
+        // /callback relay and the popup flow auto-completes. Elsewhere (LAN/remote)
+        // the port is unreachable — nothing can auto-close the popup, so always
+        // show the manual paste-URL input.
+        if (
+          provider === "claude" ||
+          provider === "cline" ||
+          (provider === "zed-hosted" && !isTrueLocalhost)
+        ) {
           forceManual = true;
         }
 
@@ -880,6 +886,17 @@ export default function OAuthModal({
       }
 
       const input = callbackUrl.trim();
+
+      // zed-hosted: the native-app callback (http://127.0.0.1:<port>/?user_id=...&access_token=...)
+      // carries no ?code= param — the FULL pasted URL (or JSON/query blob) is the
+      // payload. zed-hosted's exchangeToken parses user_id/access_token out of it
+      // and RSA-decrypts the token with the private key held in codeVerifier, so
+      // skip the generic code/state extraction below.
+      if (provider === "zed-hosted") {
+        await exchangeTokens(input, authData?.state || null);
+        return;
+      }
+
       let code = null;
       let state = authData?.state || null;
       let errorParam = null;

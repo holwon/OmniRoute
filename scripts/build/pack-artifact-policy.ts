@@ -45,6 +45,7 @@ export const APP_STAGING_ALLOWED_EXACT_PATHS: string[] = [
   // LLMLingua ONNX worker — esbuild'd standalone .js spawned via worker_threads
   // (the Next.js bundler can't trace the computed Worker path). Kept like the MCP server.
   "open-sse/services/compression/engines/llmlingua/onnxWorker.js",
+  "src/lib/usage/callLogArtifactWorker.js",
   "package.json",
   "peer-stamp.mjs",
   "main-server-timeouts.mjs",
@@ -175,6 +176,7 @@ export const PACK_ARTIFACT_ROOT_ALLOWED_PATH_PREFIXES: string[] = [
 
 export const PACK_ARTIFACT_REQUIRED_PATHS: string[] = [
   "dist/open-sse/services/compression/engines/rtk/filters/generic-output.json",
+  "dist/src/lib/usage/callLogArtifactWorker.js",
   "dist/open-sse/vendor/codex-chatgpt-web/adapters/chatgpt-web/mcp-server.js",
   "dist/open-sse/services/compression/rules/en/filler.json",
   "dist/server.js",

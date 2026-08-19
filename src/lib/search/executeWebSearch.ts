@@ -4,6 +4,7 @@ import * as defaultLog from "@/sse/utils/logger";
 import {
   getAllSearchProviders,
   getSearchProvider,
+  resolveSearchProvider,
   selectProvider,
   supportsSearchType,
   SEARCH_CREDENTIAL_FALLBACKS,
@@ -121,7 +122,7 @@ export async function executeWebSearch(
   const searchType = input.search_type || "web";
 
   if (input.provider) {
-    const explicitProvider = getSearchProvider(input.provider);
+    const explicitProvider = resolveSearchProvider(input.provider);
     if (!explicitProvider) {
       throw new WebSearchExecutionError(`Unknown search provider: ${input.provider}`, 400);
     }

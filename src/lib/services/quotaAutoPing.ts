@@ -25,6 +25,7 @@ import { sanitizeErrorMessage } from "@omniroute/open-sse/utils/error.ts";
 import { getExecutor } from "@omniroute/open-sse/executors/index.ts";
 import { getCodexUsage } from "@omniroute/open-sse/services/usage/codex.ts";
 import { getSettings, getProviderConnections, updateProviderConnection } from "@/lib/localDb";
+import { isConnectionUnavailableToAuxiliaryActivity } from "@/lib/exclusiveLeaseIsolation";
 import { refreshAndUpdateCredentials } from "@/lib/usage/providerLimits";
 import { getCircuitBreaker } from "@/shared/utils/circuitBreaker";
 import {
@@ -68,6 +69,7 @@ export interface QuotaAutoPingDeps {
   ) => Promise<JsonRecord>;
   getExecutor: (provider: string) => { execute: (input: JsonRecord) => Promise<JsonRecord> };
   canExecuteProvider: (provider: string) => boolean;
+  isConnectionUnavailableToAuxiliaryActivity: (connectionId: string) => Promise<boolean>;
 }
 
 export interface QuotaAutoPingState {
@@ -90,6 +92,7 @@ export function createDefaultQuotaAutoPingDeps(): QuotaAutoPingDeps {
     getCodexUsage,
     getExecutor,
     canExecuteProvider: (provider) => getCircuitBreaker(provider).canExecute(),
+    isConnectionUnavailableToAuxiliaryActivity,
   };
 }
 
@@ -246,7 +249,7 @@ function shouldPingForReset(
  * Cheap pre-fetch guards — none of these require a network call. Extracted so
  * `pingConnection` reads as a single linear flow instead of a wall of `if`s.
  */
-function isPingCandidateBlocked(
+async function isPingCandidateBlocked(
   connection: QuotaAutoPingConnection,
   provider: "codex",
   providerConfig: QuotaAutoPingProviderConfig,
@@ -255,8 +258,9 @@ function isPingCandidateBlocked(
   key: string,
   cachedReset: string | undefined,
   nowMs: number
-): boolean {
+): Promise<boolean> {
   if (!deps.canExecuteProvider(provider)) return true; // provider circuit breaker OPEN
+  if (await deps.isConnectionUnavailableToAuxiliaryActivity(connection.id)) return true;
   if (isRateLimited(connection, nowMs)) return true; // connection cooldown active
   if (shouldSkipAfterFailure(state, key, nowMs)) return true;
 
@@ -326,7 +330,7 @@ async function pingConnection(
 ): Promise<void> {
   const key = cacheKey(provider, connection.id);
   const cachedReset = state.resetCache[key];
-  if (isPingCandidateBlocked(connection, provider, providerConfig, deps, state, key, cachedReset, nowMs)) {
+  if (await isPingCandidateBlocked(connection, provider, providerConfig, deps, state, key, cachedReset, nowMs)) {
     return;
   }
 

@@ -166,7 +166,10 @@ test("saveCallLog stores only summary metadata in SQLite and writes detailed art
   assert.equal(typeof (summaryRow as any).artifact_relpath, "string");
 
   const artifactPath = path.join(TEST_DATA_DIR, "call_logs", detail.artifactRelPath);
-  const artifact = JSON.parse(fs.readFileSync(artifactPath, "utf8"));
+  const serializedArtifact = fs.readFileSync(artifactPath, "utf8");
+  const artifact = JSON.parse(serializedArtifact);
+  assert.equal(Buffer.byteLength(serializedArtifact), detail.artifactSizeBytes);
+  assert.match(detail.artifactSha256 || "", /^[0-9a-f]{8}$/);
   assert.equal(artifact.summary.id, logId);
   assert.equal(artifact.summary.requestedModel, "openai/gpt-5");
   assert.equal(artifact.summary.comboExecutionKey, "combo-a:0:step-openai-a");

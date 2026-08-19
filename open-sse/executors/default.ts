@@ -388,7 +388,12 @@ export class DefaultExecutor extends BaseExecutor {
     }
   }
 
-  buildHeaders(credentials, stream = true, clientHeaders?: Record<string, string> | null) {
+  buildHeaders(
+    credentials,
+    stream = true,
+    clientHeaders?: Record<string, string> | null,
+    model?: string | null
+  ) {
     const { headers, effectiveKey } = this.buildHeadersPreamble(credentials, stream);
 
     switch (this.provider) {
@@ -594,7 +599,15 @@ export class DefaultExecutor extends BaseExecutor {
       const clientBeta = clientHeaders["anthropic-beta"] ?? clientHeaders["Anthropic-Beta"] ?? null;
       const betaKey = Object.keys(headers).find((key) => key.toLowerCase() === "anthropic-beta");
       if (betaKey && clientBeta) {
-        headers[betaKey] = mergeClientAnthropicBeta(headers[betaKey], clientBeta);
+        headers[betaKey] = mergeClientAnthropicBeta(
+          headers[betaKey],
+          clientBeta,
+          undefined,
+          // Gate the client-negotiated context-1m beta on the RESOLVED target model:
+          // combo/fallback can route a request negotiated for a [1m] sibling onto a
+          // model that does not qualify (e.g. Haiku), which Anthropic rejects (#10119).
+          model
+        );
       }
     }
 

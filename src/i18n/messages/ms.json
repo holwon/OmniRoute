@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Route budget-exhausted requests to the emergency free fallback provider/model.",
   "featureFlagArenaEloSyncEnabledDescription": "Enable periodic Arena AI leaderboard ELO sync for model intelligence rankings.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Iklankan claude/&lt;provider&gt;/&lt;model&gt; mirror ids pada /v1/models supaya senarai penemuan model gerbang Claude Code termasuk model bukan Claude. Amaran: menggandakan entri katalog untuk semua klien apabila diaktifkan secara global.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Aktifkan lorong kemasukan maya adaptif setiap-tenant untuk penghantaran pembekal (#9654): lonjakan satu tenant tidak lagi memberikan 503 kepada tenant lain. Pemboleh ubah persekitaran OMNIROUTE_CHAT_VIRTUAL_LANES mengatasi tetapan papan pemuka ini; perubahan berkuat kuasa apabila pelayan dimulakan semula.",
   "sidebar": {
     "home": "Rumah",
     "dashboard": "Papan pemuka",
@@ -1290,7 +1291,9 @@
       "open": "buka",
       "close": "tutup"
     },
-    "noResults": "Tiada hasil"
+    "noResults": "Tiada hasil",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Perkongsian Kuota",
     "discovery": "Penemuan",
     "freeProviderRankings": "Kedudukan Penyedia Percuma",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Tier Percuma",
     "gamification": "Gamifikasi",
     "leaderboard": "Papan Pendahulu",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Pembekal ini telah ditamatkan",
     "riskNotice": {
       "title": "Sebelum meneruskan",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Penyedia dengan kekangan penggunaan — klik untuk butiran",
       "oauth": "Penyedia ini menggunakan sesi produk/OAuth rasmi anda, yang tidak dibenarkan untuk penggunaan proksi/penghala. Kami tidak mengesyorkan penggunaan ejen autonomi yang intensif (gaya OpenCloud, aliran berbilang langkah yang panjang, kelompok besar) — upstream mungkin bertindak balas dengan menyekat atau mengharamkan akaun tersebut. Gunakan atas risiko anda sendiri.",
       "webCookie": "Penyedia ini mengesahkan melalui kuki sesi web anda. Perkhidmatan upstream mungkin membatalkan sesi pada bila-bila masa, memerlukan anda untuk log masuk semula. Tidak disyorkan untuk operasi tanpa pengawasan yang lama. Gunakan atas risiko anda sendiri.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Jangan tunjukkan ini lagi untuk penyedia ini",
       "understand": "Saya faham, teruskan",
       "cancel": "Batal"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Dilumpuhkan",
     "enableProvider": "Dayakan pembekal",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Tetapan titik akhir model yang disimpan",
     "searchByModelAria": "Cari mengikut model",
     "selectSupportedEndpoint": "Pilih sekurang-kurangnya satu titik akhir yang disokong",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsEnabled": "Model hulu auto-fetch diaktifkan",
+    "autoFetchModels": "Ambil model hulu secara automatik",
+    "autoFetchModelsTooltip": "Ambil dan simpan model hulu apabila diperlukan",
+    "autoFetchModelsToggleFailed": "Gagal untuk menghidupkan model upstream auto-fetch",
+    "autoFetchModelsDisabled": "Model hulu auto-fetch dinyahdayakan",
+    "overridesUpstreamModel": "Mengganti hulu",
+    "autoFetchModelsPartialFailure": "Beberapa sambungan telah dikemas kini, tetapi pengambilan auto model hulu tidak diubah di semua tempat",
+    "overridesUpstreamModelHint": "Tetapan anda mengatasi model hulu ini",
+    "resetToUpstreamDefaults": "Pulihkan tetapan asal upstream",
+    "resetToUpstreamDefaultsFailed": "Gagal untuk memulihkan tetapan lalai model upstream",
+    "resetToUpstreamDefaultsSuccess": "Mengembalikan tetapan lalai model upstream"
   },
   "settings": {
     "title": "tetapan",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Kata Kunci Disekat",
     "customBannedSignalsDesc": "Kata kunci tambahan yang mencetuskan pengesanan sekatan akaun kekal. Kata kunci terbina dalam sentiasa digunakan.",
     "customBannedSignalsPlaceholder": "cth. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Mampatan",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Pencapaian jarang"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Token Pertama",
         "description": "Membuat permintaan API pertama anda",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Penyediaan Penyedia",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Gagal untuk mengemas kini (HTTP {status})",
     "networkError": "Ralat rangkaian — tidak dapat mengemas kini tetapan pendedahan penyedia"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Penyedia tidak menyokong penglihatan untuk permintaan imej ini",

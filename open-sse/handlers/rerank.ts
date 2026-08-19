@@ -292,6 +292,7 @@ export async function handleRerank({
       duration: Date.now() - startTime,
       tokens: { prompt_tokens: 0, completion_tokens: 0 },
       responseBody: { results_count: Array.isArray(result?.results) ? result.results.length : 0 },
+      connectionId,
     }).catch(() => {});
 
     const headers = new Headers({ ...CORS_HEADERS, "Content-Type": "application/json" });

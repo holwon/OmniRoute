@@ -282,7 +282,15 @@ export async function replaceCustomModels(
   // Merge: keep existing per-model compat flags if model still exists
   const merged = models.map((m) => {
     const prev = existingMap.get(m.id);
+    // `customModels` is also the user-owned metadata overlay for a same-id
+    // synced model. Preserve every defined field instead of maintaining a
+    // lossy allowlist here (for example supportsVision and future capabilities).
+    const definedModelMetadata = Object.fromEntries(
+      Object.entries(m).filter(([, value]) => value !== undefined)
+    );
     return {
+      ...(prev || {}),
+      ...definedModelMetadata,
       id: m.id,
       name: m.name || m.id,
       source: m.source || "auto-sync",

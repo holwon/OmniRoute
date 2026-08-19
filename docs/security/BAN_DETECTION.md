@@ -56,7 +56,10 @@ upstream error response
   → isAccountDeactivated(body): getMergedBannedSignals().some(sig => body.includes(sig))   [substring match]
   → match?
       → connection testStatus = "banned"      (permanent — 1-year cooldown, never auto-recovers)
-      → if setting `autoDisableBannedAccounts` is on → also isActive = false
+      → if setting `autoDisableBannedAccounts` is on and `autoDisableBannedScope`
+        includes this connection (`all`, or `subscription` for OAuth/cookie/session)
+        → also isActive = false. Prepaid API keys stay active when scope is
+        `subscription`.
       → connection is skipped during account selection (combo QUOTA_BLOCKING statuses)
 ```
 
@@ -88,6 +91,13 @@ providers with real ban risk (ChatGPT Web, Claude Web, Codex, Muse Spark,
 Antigravity). An API-key provider will only trip the detector if its error body
 literally contains one of the substrings.
 
+`autoDisableBannedScope` (`all` | `subscription`, default `all`) controls whether
+a match also flips `isActive=false`. `subscription` means login-style seats
+(paid subscriptions and free accounts, including web-cookie sessions). It still
+records `testStatus=banned` for prepaid API keys but leaves them in the routing
+pool. The durable design is a per-provider and per-account override; the global
+enum is the first cut.
+
 ## Custom banned keywords
 
 Add or remove keywords in **Security → Banned Keywords** (persisted as the global
@@ -118,8 +128,9 @@ own). An operator must clear them explicitly:
    `active` and clears the error fields.
 2. **Re-authenticate / edit credentials** — for OAuth providers, re-run the login
    / refresh flow; provider create/import routes set `isActive = true`.
-3. **Re-enable the connection** — if `autoDisableBannedAccounts` set
-   `isActive = false`, toggle it back on after fixing the account.
+3. **Re-enable the connection** — if auto-disable set `isActive = false`
+   (scope `all`, or `subscription` for an OAuth/cookie/session connection),
+   toggle it back on after fixing the account.
 
 There is no separate "clear ban flag" button — recovery is re-test, re-auth, or
 re-enable, matching the general terminal-state rule in
@@ -131,6 +142,7 @@ re-enable, matching the general terminal-state rule in
 | --- | --- |
 | Signal tables + match | `open-sse/services/accountFallback.ts` |
 | Terminalization / persistence | `src/sse/services/auth.ts` (`markAccountUnavailable`, `resolveTerminalConnectionStatus`, `clearAccountError`) |
+| Auto-disable scope | `src/shared/utils/autoDisableBanned.ts`, `src/sse/services/autoDisableBannedAccount.ts` |
 | Inline classification | `open-sse/handlers/chatCore.ts`, `open-sse/services/errorClassifier.ts` |
 | Terminal-state recovery exclusion | `src/lib/quota/connectionRecovery.ts` |
 | Custom-keyword runtime load | `src/lib/config/runtimeSettings.ts` (`setCustomBannedSignals`) |

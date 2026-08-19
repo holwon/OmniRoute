@@ -80,7 +80,7 @@ test("a byte-light request above the message threshold acquires heavyweight capa
   assert.equal(controller.activeHeavy, 0);
 });
 
-test("a byte-light request above the tool threshold is rejected when heavy capacity is busy", async () => {
+test("a byte-light request above the tool threshold is rejected when heavy capacity is busy AND the heap is genuinely under pressure (#10183/#10268)", async () => {
   const controller = new ChatAdmissionController(1);
   const occupied = controller.tryAcquireHeavy();
   assert.ok(occupied);
@@ -88,7 +88,16 @@ test("a byte-light request above the tool threshold is rejected when heavy capac
   const result = await admitChatStructure(
     { messages: [], tools: [{ type: "function" }, { type: "function" }] },
     null,
-    { controller, maxMessages: 10, heavyMessages: 10, heavyTools: 2, heavyTokens: 10_000 }
+    {
+      controller,
+      maxMessages: 10,
+      heavyMessages: 10,
+      heavyTools: 2,
+      heavyTokens: 10_000,
+      // #10183/#10268: shedding is now conditional on real heap pressure, not
+      // capacity alone — simulate the pressured case this test targets.
+      heapPressureCheck: () => true,
+    }
   );
 
   assert.equal(result.admit, false);
@@ -135,7 +144,7 @@ test("no history cap is enforced by default; long conversations are admitted", a
   result.lease?.release();
 });
 
-test("an uncapped oversized conversation still yields to occupied heavyweight capacity", async () => {
+test("an uncapped oversized conversation still yields to occupied heavyweight capacity when the heap is genuinely under pressure (#10183/#10268)", async () => {
   const controller = new ChatAdmissionController(1);
   const occupied = controller.tryAcquireHeavy();
   assert.ok(occupied);
@@ -143,7 +152,15 @@ test("an uncapped oversized conversation still yields to occupied heavyweight ca
   const result = await admitChatStructure(
     { messages: Array.from({ length: 5_000 }, () => ({ role: "user", content: "x" })) },
     null,
-    { controller, maxMessages: 0, heavyMessages: 200, heavyTools: 64, heavyTokens: 32_000 }
+    {
+      controller,
+      maxMessages: 0,
+      heavyMessages: 200,
+      heavyTools: 64,
+      heavyTokens: 32_000,
+      // #10183/#10268: shedding is now conditional on real heap pressure.
+      heapPressureCheck: () => true,
+    }
   );
 
   assert.equal(result.admit, false);

@@ -292,3 +292,6 @@ docker-compose.yml.bak
 
 # CLI local cache/state
 .playwright-cli
+
+# Ad-hoc test sandboxes (never tracked — may contain local DBs)
+/.sandbox/

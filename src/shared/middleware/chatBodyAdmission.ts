@@ -17,6 +17,7 @@
 
 import { CORS_HEADERS } from "../utils/cors";
 import { createHash } from "crypto";
+import v8 from "node:v8";
 
 function parsePositiveInt(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(String(value), 10);
@@ -80,6 +81,60 @@ export const CHAT_HEAVY_ESTIMATED_TOKENS = parsePositiveInt(
   process.env.OMNIROUTE_CHAT_HEAVY_ESTIMATED_TOKENS,
   32_000
 );
+
+/**
+ * Heap-pressure shed ratio for the structural admission gate (#10183, #10268).
+ *
+ * 3.8.48 only shed a heavy request once `heapUsed / heapLimit >= shedRatio` (0.75).
+ * 3.8.49 (#9654/#9940) replaced that heap-conditional shed with an unconditional
+ * `CHAT_MAX_HEAVY_IN_FLIGHT=1` structural lease, so a second concurrent "heavy"
+ * request (coding-agent fan-out is the common trigger) was hard-rejected with a
+ * retryable 503 even on a host with ample free RAM. This restores the heap
+ * condition as an ADDITIONAL gate layered on top of the bounded-concurrency /
+ * per-connection-lane protection from #9654 (that protection stays in force —
+ * this constant only decides whether a *busy* lease is still shed with a 503 or
+ * admitted anyway because the heap has real headroom).
+ */
+export const CHAT_ADMISSION_HEAP_SHED_RATIO = (() => {
+  const parsed = Number(process.env.OMNIROUTE_CHAT_ADMISSION_HEAP_SHED_RATIO);
+  return Number.isFinite(parsed) && parsed > 0 && parsed <= 1 ? parsed : 0.75;
+})();
+
+/**
+ * Bounded extra capacity for the "healthy heap" fast path (#10437).
+ *
+ * The #10183/#10268 fix above admits a busy heavyweight request immediately whenever
+ * `heapPressureCheck()` is false — but with no bound of its own, that path let an
+ * UNLIMITED number of "healthy heap" requests pile in ahead of the heap-pressure
+ * shed, defeating the point of admission control: a slow leak or a burst that never
+ * quite trips the heap-pressure ratio could still starve the process. This constant
+ * caps how many requests may bypass the primary `CHAT_MAX_HEAVY_IN_FLIGHT` lease via
+ * the healthy-heap path at once (tracked independently, per `ChatAdmissionController`
+ * instance — see `#activeHealthy` / `tryAcquireHealthyHeadroom`). Once this budget is
+ * also exhausted, requests fall through to the SAME bounded-wait/shed path used under
+ * real heap pressure, so there is still a real ceiling either way.
+ */
+export const CHAT_ADMISSION_HEALTHY_HEADROOM = parseNonNegativeInt(
+  process.env.OMNIROUTE_CHAT_ADMISSION_HEALTHY_HEADROOM,
+  CHAT_MAX_HEAVY_IN_FLIGHT
+);
+
+/**
+ * Live `heapUsed / heap_size_limit` pressure probe, injectable for deterministic
+ * tests (`admitChatStructure({ heapPressureCheck })`). Defaults to the real V8
+ * heap statistics. Any read failure is treated as "not under pressure" so a
+ * transient stats error never turns into a false structural shed.
+ */
+export function defaultHeapPressureCheck(): boolean {
+  try {
+    const heapUsed = process.memoryUsage().heapUsed;
+    const heapLimit = v8.getHeapStatistics().heap_size_limit;
+    if (!Number.isFinite(heapLimit) || heapLimit <= 0) return false;
+    return heapUsed / heapLimit >= CHAT_ADMISSION_HEAP_SHED_RATIO;
+  } catch {
+    return false;
+  }
+}
 /**
  * Optional per-deployment history cap. `0` (the default) disables it.
  *
@@ -122,6 +177,11 @@ interface AdmissionWaiter {
 export class ChatAdmissionController {
   #activeHeavy = 0;
   #queuedBytes = 0;
+  /** #10437: independent counter for the bounded "healthy heap" headroom budget —
+   * separate from `#activeHeavy` so it never inflates the documented
+   * `CHAT_MAX_HEAVY_IN_FLIGHT` bound, but still a real, finite ceiling instead of
+   * the unconditional bypass this replaces. */
+  #activeHealthy = 0;
   /** Per-key FIFOs. A key groups one client's waiters so they are served
    * round-robin against the shared budget instead of monopolizing a strict
    * FIFO (see #dispatchFair). */
@@ -132,7 +192,11 @@ export class ChatAdmissionController {
 
   constructor(
     readonly maxHeavyInFlight = 1,
-    readonly maxQueuedBytes = CHAT_ADMISSION_MAX_QUEUED_BYTES
+    readonly maxQueuedBytes = CHAT_ADMISSION_MAX_QUEUED_BYTES,
+    /** #10437: bounded extra capacity for the healthy-heap fast path. `0` disables
+     * the bypass entirely — every busy request then falls through to the same
+     * bounded-wait/shed path used under real heap pressure. */
+    readonly healthyHeadroom = CHAT_ADMISSION_HEALTHY_HEADROOM
   ) {
     if (!Number.isSafeInteger(maxHeavyInFlight) || maxHeavyInFlight < 1) {
       throw new RangeError("maxHeavyInFlight must be a positive integer");
@@ -140,10 +204,42 @@ export class ChatAdmissionController {
     if (!Number.isSafeInteger(maxQueuedBytes) || maxQueuedBytes < 0) {
       throw new RangeError("maxQueuedBytes must be a non-negative integer");
     }
+    if (!Number.isSafeInteger(healthyHeadroom) || healthyHeadroom < 0) {
+      throw new RangeError("healthyHeadroom must be a non-negative integer");
+    }
   }
 
   get activeHeavy(): number {
     return this.#activeHeavy;
+  }
+
+  /** Active leases held through the bounded healthy-heap headroom budget (#10437). */
+  get activeHealthyHeadroom(): number {
+    return this.#activeHealthy;
+  }
+
+  /**
+   * Acquire one slot from the bounded, independent healthy-heap headroom budget
+   * (#10437). Unlike `tryAcquireHeavy()`, this never contends with the primary
+   * `maxHeavyInFlight` lease — it exists ONLY to give the "heap has real
+   * headroom" fast path a finite ceiling instead of an unconditional bypass.
+   * Returns `null` once `healthyHeadroom` concurrent leases are already active,
+   * at which point the caller must fall through to the bounded-wait/shed path.
+   */
+  tryAcquireHealthyHeadroom(): ChatAdmissionLease | null {
+    if (this.#activeHealthy >= this.healthyHeadroom) return null;
+    this.#activeHealthy += 1;
+    let released = false;
+    return {
+      get released() {
+        return released;
+      },
+      release: () => {
+        if (released) return;
+        released = true;
+        this.#activeHealthy = Math.max(0, this.#activeHealthy - 1);
+      },
+    };
   }
 
   /** Total buffered bytes currently parked across all queues (heap valve accounting). */
@@ -334,18 +430,25 @@ export function resolveSessionId(request: Request): string {
   // material never appears in diagnostics. Reuses the internal-bypass auth
   // extraction: bearer token from Authorization, x-api-key (Anthropic-style),
   // or Google API key header.
+  // CodeQL: Intentionally SHA-256, NOT password hashing. The digest is a
+  // deterministic, non-reversible per-key fairness key for the shared
+  // admission budget — never stored or used for password-style verification.
+  // codeql[js/insufficient-password-hash]
   const authHeader = request.headers.get("authorization") || "";
   const bearerMatch = /^bearer\s+(\S+)$/i.exec(authHeader.trim());
   if (bearerMatch) {
-    return "key_" + createHash("sha256").update(bearerMatch[1]).digest("hex").slice(0, 16);
+    // codeql[js/insufficient-password-hash]
+    return "key_" + createHash("sha256").update(bearerMatch[1]).digest("hex").slice(0, 16); // nosemgrep: insufficient-password-hash
   }
   const xApiKey = request.headers.get("x-api-key") || "";
   if (xApiKey.trim().length > 0) {
-    return "key_" + createHash("sha256").update(xApiKey.trim()).digest("hex").slice(0, 16);
+    // codeql[js/insufficient-password-hash]
+    return "key_" + createHash("sha256").update(xApiKey.trim()).digest("hex").slice(0, 16); // nosemgrep: insufficient-password-hash
   }
   const xGoogApiKey = request.headers.get("x-goog-api-key") || "";
   if (xGoogApiKey.trim().length > 0) {
-    return "key_" + createHash("sha256").update(xGoogApiKey.trim()).digest("hex").slice(0, 16);
+    // codeql[js/insufficient-password-hash]
+    return "key_" + createHash("sha256").update(xGoogApiKey.trim()).digest("hex").slice(0, 16); // nosemgrep: insufficient-password-hash
   }
   return "anonymous";
 }
@@ -523,6 +626,12 @@ export async function admitChatStructure(
     heavyTokens?: number;
     queueMs?: number;
     signal?: AbortSignal;
+    /**
+     * Heap-pressure probe consulted only when heavyweight capacity is busy
+     * (#10183, #10268). Defaults to `defaultHeapPressureCheck` (live V8 heap
+     * stats). Tests inject a deterministic override.
+     */
+    heapPressureCheck?: () => boolean;
   } = {}
 ): Promise<ChatStructureAdmission> {
   if (!body || typeof body !== "object" || Array.isArray(body)) return { admit: true, lease };
@@ -560,6 +669,34 @@ export async function admitChatStructure(
     (options.sessionId
       ? perConnectionAdmissionController.getController(options.sessionId)
       : defaultAdmissionController);
+
+  // Uncontended fast path: capacity is free, no need to consult heap pressure at all.
+  const immediate = controller.tryAcquireHeavy();
+  if (immediate) return { admit: true, lease: immediate };
+
+  // Heavyweight capacity is momentarily busy (a concurrent heavy request holds the
+  // lease). #10183 / #10268: only enter the bounded-wait / shed path — with its
+  // queued-bytes heap valve and abort handling (#9654) — when the heap is
+  // GENUINELY under pressure. This restores the 3.8.48 `heapUsed/heapLimit >=
+  // shedRatio` condition as an additional gate on top of (never a replacement
+  // for) the bounded-concurrency / per-connection-lane protection above. A
+  // healthy heap has real headroom for a second heavy request even while the
+  // single lease is momentarily busy, so admit it immediately instead of
+  // parking/shedding a request that has nothing to do with actual resource
+  // pressure.
+  const heapPressureCheck = options.heapPressureCheck ?? defaultHeapPressureCheck;
+  if (!heapPressureCheck()) {
+    // #10437: the healthy-heap fast path must still have a real ceiling — an
+    // unconditional bypass here let unlimited concurrent "healthy heap"
+    // requests pile in ahead of the heap-pressure shed, defeating admission
+    // control entirely. Reserve from a separate, bounded headroom budget
+    // instead of an unconditional no-op lease; only fall through to the
+    // bounded-wait/shed path below (identical to the real-pressure case) once
+    // that budget is also exhausted.
+    const headroomLease = controller.tryAcquireHealthyHeadroom();
+    if (headroomLease) return { admit: true, lease: headroomLease };
+  }
+
   // Structural-only waits happen on byte-light bodies (a byte-heavy body already
   // holds the byte-stage lease), so the conservative 256KB weight bounds the
   // parsed JSON the waiter keeps resident while parked.
@@ -633,14 +770,18 @@ export function resolveSelfLoopBearer(): string {
  * gap that kept the Zoo Code / api-key describe call failing even after the byte
  * stage was bypassed. Release is a no-op; capacity was never reserved.
  */
-const NULL_LEASE: ChatAdmissionLease = {
-  get released() {
-    return true;
-  },
-  release() {
-    // No-op: the sentinel never reserved heavyweight capacity.
-  },
-};
+function createNoopLease(): ChatAdmissionLease {
+  return {
+    get released() {
+      return true;
+    },
+    release() {
+      // No-op: this sentinel never reserved heavyweight capacity.
+    },
+  };
+}
+
+const NULL_LEASE: ChatAdmissionLease = createNoopLease();
 
 /**
  * True when the request is a trusted in-process self-loop sub-request that must

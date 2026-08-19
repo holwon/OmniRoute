@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "I-route ang mga request na naubusan ng budget sa emergency free fallback provider/model.",
   "featureFlagArenaEloSyncEnabledDescription": "I-enable ang pana-panahong Arena AI leaderboard ELO sync para sa mga ranking ng intelligence ng modelo.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "I-anunsyo ang claude/&lt;provider&gt;/&lt;model&gt; mirror ids sa /v1/models upang ang Claude Code gateway model discovery ay maglista ng mga non-Claude models. Babala: nagdodoble ng catalog entries para sa lahat ng kliyente kapag pinagana nang globally.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Paganahin ang adaptive virtual admission lanes para sa bawat tenant sa pagpapadala ng provider (#9654): ang pag-akyat ng trapiko ng isang tenant ay hindi na nagbibigay ng 503 sa iba. Ang environment variable na OMNIROUTE_CHAT_VIRTUAL_LANES ay mas nangingibabaw sa setting na ito sa dashboard; magkakabisa ang mga pagbabago sa pag-restart ng server.",
   "sidebar": {
     "home": "Bahay",
     "dashboard": "Dashboard",
@@ -1290,7 +1291,9 @@
       "open": "buksan",
       "close": "isara"
     },
-    "noResults": "Walang resulta"
+    "noResults": "Walang resulta",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Mga Webhook",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Quota Share",
     "discovery": "Pagtuklas",
     "freeProviderRankings": "Mga Ranggo ng Libreng Provider",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Mga Libreng Tier",
     "gamification": "Gamification",
     "leaderboard": "Leaderboard",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Ang provider na ito ay hindi na ginagamit",
     "riskNotice": {
       "title": "Bago magpatuloy",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Provider na may mga paalala sa paggamit — i-click para sa mga detalye",
       "oauth": "Gumagamit ang provider na ito ng iyong opisyal na session ng produkto/OAuth, na hindi awtorisado para sa paggamit ng proxy/router. Hindi namin inirerekomenda ang masinsinang paggamit ng autonomous agent (estilong OpenCloud, mahabang multi-step na flow, malalaking batch) — maaaring tumugon ang upstream sa pamamagitan ng paghihigpit o pag-ban sa account. Gamitin sa sarili mong panganib.",
       "webCookie": "Nagpapatotoo ang provider na ito sa pamamagitan ng iyong mga cookie sa web session. Maaaring pawalang-bisa ng upstream na serbisyo ang session anumang oras, na nangangailangan sa iyong mag-log in muli. Hindi inirerekomenda para sa mahabang operasyon na walang bantay. Gamitin sa sarili mong panganib.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Huwag nang ipakita ito muli para sa provider na ito",
       "understand": "Naiintindihan ko, magpatuloy",
       "cancel": "Kanselahin"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Hindi pinagana",
     "enableProvider": "Paganahin ang provider",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Naka-save na mga setting ng endpoint ng modelo",
     "searchByModelAria": "Maghanap ayon sa modelo",
     "selectSupportedEndpoint": "Pumili ng hindi bababa sa isang sinusuportahang endpoint",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsDisabled": "Naka-disable ang auto-fetch ng upstream model",
+    "autoFetchModelsTooltip": "Kunin at i-cache ang upstream models kapag kinakailangan",
+    "autoFetchModelsEnabled": "Naka-enable ang auto-fetch ng upstream model",
+    "autoFetchModels": "Awtomatikong kunin ang mga upstream na modelo",
+    "autoFetchModelsToggleFailed": "Nabigong i-toggle ang upstream model auto-fetch",
+    "overridesUpstreamModel": "Pinalitan ang upstream",
+    "overridesUpstreamModelHint": "Ang iyong mga setting ay nangingibabaw sa modelong ito mula sa upstream",
+    "resetToUpstreamDefaults": "Ibalik ang mga default ng upstream",
+    "resetToUpstreamDefaultsSuccess": "Ibinalik ang mga default ng upstream model",
+    "autoFetchModelsPartialFailure": "Ilang koneksyon ang na-update, ngunit ang auto-fetch ng upstream model ay hindi nagbago sa lahat ng lugar",
+    "resetToUpstreamDefaultsFailed": "Nabigong maibalik ang mga default ng upstream model"
   },
   "settings": {
     "title": "Mga setting",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Mga Banned na Keyword",
     "customBannedSignalsDesc": "Mga karagdagang keyword na nagti-trigger ng pagtukoy sa permanenteng pag-ban ng account. Palaging nalalapat ang mga built-in na keyword.",
     "customBannedSignalsPlaceholder": "hal. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Compression",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Mga bihirang achievement"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Unang Token",
         "description": "Nagawa ang iyong unang API request",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Provider Setup",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Nabigong i-update (HTTP {status})",
     "networkError": "Error sa Network — hindi ma-update ang setting ng provider exposure"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Hindi sinusuportahan ng provider ang vision para sa kahilingang ito ng larawan",

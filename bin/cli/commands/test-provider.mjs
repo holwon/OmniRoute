@@ -80,7 +80,7 @@ async function _runAllProviders(opts) {
     return 1;
   }
   const data = await res.json();
-  const connections = (data.providers ?? data.items ?? data).filter(
+  const connections = (data.connections ?? data.providers ?? data.items ?? data).filter(
     (c) => c.authType === "apikey" || c.testStatus !== "unavailable"
   );
   if (connections.length === 0) {

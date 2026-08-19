@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Elekeza maombi yaliyomaliza bajeti kwenye mtoa huduma/muundo wa dharura wa akiba usiolipiwa.",
   "featureFlagArenaEloSyncEnabledDescription": "Washa usawazishaji wa mara kwa mara wa ELO wa ubao wa wanaoongoza wa Arena AI kwa viwango vya akili vya muundo.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Tangaza claude/&lt;provider&gt;/&lt;model&gt; vitambulisho vya kioo kwenye /v1/models ili orodha ya kugundua modeli za Claude Code iwe na modeli zisizo za Claude. Onyo: inafanya kuingia mara mbili kwenye katalogi kwa wateja wote inapowekwa kuwa ya ulimwengu mzima.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Washa njia za uandikishaji pepe zinazobadilika kwa kila mpangaji (tenant) kwa utumaji wa watoa huduma (#9654): mlipuko wa mpangaji mmoja hautoi tena 503 kwa mwingine. Kigezo cha mazingira cha OMNIROUTE_CHAT_VIRTUAL_LANES kinashinda mpangilio huu wa dashibodi; mabadiliko yanatumika wakati seva inapoanzishwa upya.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1290,7 +1291,9 @@
       "open": "fungua",
       "close": "funga"
     },
-    "noResults": "Hakuna matokeo"
+    "noResults": "Hakuna matokeo",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Viboko vya mtandao",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Mgao wa Quota",
     "discovery": "Ugunduzi",
     "freeProviderRankings": "Nafasi za Watoa Huduma Bila Malipo",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Viwango vya Bila Malipo",
     "gamification": "Uchezeshaji",
     "leaderboard": "Ubao wa Wanaoongoza",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Mtoa huduma huyu ameacha kutumika",
     "riskNotice": {
       "title": "Kabla ya kuendelea",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Mtoa huduma aliye na tahadhari za matumizi — bofya kwa maelezo zaidi",
       "oauth": "Mtoa huduma huyu anatumia kipindi chako rasmi cha bidhaa/OAuth, ambacho hakijaidhinishwa kwa matumizi ya proksi/ruta. Hatupendekezi matumizi makubwa ya ejenti inayojitegemea (mtindo wa OpenCloud, mtiririko mrefu wa hatua nyingi, makundi makubwa) — upstream inaweza kuchukua hatua kwa kuzuia au kupiga marufuku akaunti. Tumia kwa hatari yako mwenyewe.",
       "webCookie": "Mtoa huduma huyu anathibitisha kupitia kuki za kipindi chako cha wavuti. Huduma ya upstream inaweza kubatilisha kipindi wakati wowote, ikikuhitaji uingie tena. Haipendekezwi kwa shughuli ndefu zisizosimamiwa. Tumia kwa hatari yako mwenyewe.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Usionyeshe hii tena kwa mtoa huduma huyu",
       "understand": "Nimeelewa, endelea",
       "cancel": "Ghairi"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Disabled",
     "enableProvider": "Enable provider",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Mipangilio ya mwisho wa mfano uliohifadhiwa",
     "searchByModelAria": "Tafuta kwa mfano",
     "selectSupportedEndpoint": "Chagua angalau kiunganishi kimoja kinachoungwa mkono",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsEnabled": "Mfano wa upstream auto-fetch umewezeshwa",
+    "autoFetchModelsDisabled": "Mfano wa upstream auto-fetch umezimwa",
+    "autoFetchModels": "Pata modeli za upstream kiotomatiki",
+    "autoFetchModelsTooltip": "Pata na kuhifadhi mifano ya juu inapohitajika",
+    "autoFetchModelsToggleFailed": "Imeshindikana kubadilisha hali ya upakuaji wa mfano wa juu.",
+    "autoFetchModelsPartialFailure": "Baadhi ya muunganisho yameboreshwa, lakini mfano wa juu wa auto-fetch haukubadilishwa kila mahali",
+    "overridesUpstreamModelHint": "Mipangilio yako inakataa mfano huu wa juu",
+    "overridesUpstreamModel": "Inazidi mwelekeo wa juu",
+    "resetToUpstreamDefaults": "Rejesha mipangilio ya msingi ya upstream",
+    "resetToUpstreamDefaultsSuccess": "Imerejeshwa mipangilio ya mfano wa upstream",
+    "resetToUpstreamDefaultsFailed": "Imeshindikana kurejesha mipangilio ya msingi ya upstream"
   },
   "settings": {
     "title": "Settings",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Maneno Muhimu Yaliyopigwa Marufuku",
     "customBannedSignalsDesc": "Maneno muhimu ya ziada yanayosababisha ugunduzi wa kupigwa marufuku kwa akaunti kabisa. Maneno muhimu yaliyojengwa ndani hutumika kila wakati.",
     "customBannedSignalsPlaceholder": "k.m. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Mfinyazo",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Mafanikio adimu"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Tokeni ya Kwanza",
         "description": "Umetuma ombi lako la kwanza la API",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Leverantörsinstallation",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Imeshindikana kuboresha (HTTP {status})",
     "networkError": "Kosa la mtandao — haiwezekani kuboresha mipangilio ya kufichua mtoa huduma"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Mtoa huduma haitoi msaada wa kuona kwa ombi hili la picha",

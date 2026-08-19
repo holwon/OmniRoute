@@ -227,6 +227,7 @@ export async function getSettings() {
     localOnlyManageScopeBypassEnabled: true,
     localOnlyManageScopeBypassPrefixes: ["/api/mcp/"],
     customBannedSignals: [],
+    autoDisableBannedScope: "all",
     proxyEnabled: true,
     perKeyProxyEnabled: false,
     customSystemPromptEnabled: false,

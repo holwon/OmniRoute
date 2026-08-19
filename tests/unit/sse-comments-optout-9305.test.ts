@@ -127,7 +127,9 @@ for (const upstreamDone of [true, false]) {
   const finalization = upstreamDone ? "upstream [DONE]" : "natural EOF";
 
   for (const [label, envValue, commentsExpected] of [
-    ["default", undefined, true],
+    // #10524: OMNIROUTE_SSE_COMMENTS now defaults to disabled — strict SSE
+    // clients (WorkBuddy, etc.) crash on `: x-omniroute-*` comment lines.
+    ["default", undefined, false],
     ["explicitly enabled", "yes", true],
     ["disabled", "off", false],
   ] as const) {

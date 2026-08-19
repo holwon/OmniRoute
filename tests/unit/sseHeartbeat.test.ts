@@ -51,8 +51,8 @@ async function collectHeartbeatOutput(
   ).text();
 }
 
-test("sseCommentsEnabled defaults to true when the env var is unset", () => {
-  withEnv(undefined, () => assert.equal(sseCommentsEnabled(), true));
+test("sseCommentsEnabled defaults to false when the env var is unset (#10524)", () => {
+  withEnv(undefined, () => assert.equal(sseCommentsEnabled(), false));
 });
 
 test("sseCommentsEnabled is false for 'off', 'false', '0', 'no' (case-insensitive)", () => {

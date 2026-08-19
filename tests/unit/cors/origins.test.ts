@@ -284,4 +284,10 @@ describe("cors/origins.STATIC_CORS_HEADERS", () => {
     );
     assert.match(STATIC_CORS_HEADERS["Access-Control-Allow-Methods"], /OPTIONS/);
   });
+
+  it("allows the generic managed-lease control headers", () => {
+    const allowedHeaders = STATIC_CORS_HEADERS["Access-Control-Allow-Headers"];
+    assert.match(allowedHeaders, /X-OmniRoute-Lease-Owner/i);
+    assert.match(allowedHeaders, /X-OmniRoute-Lease-Generation/i);
+  });
 });

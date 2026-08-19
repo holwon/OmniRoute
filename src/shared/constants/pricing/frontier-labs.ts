@@ -3,6 +3,7 @@
  * Pure data; merged by default-pricing.ts via spread (god-file decomposition; semantic split).
  */
 import {
+  GEMINI_3_7_FLASH_PROMO_PRICING,
   GPT_5_5_PRICING,
   GPT_5_6_LUNA_PRICING,
   GPT_5_6_SOL_PRICING,
@@ -226,6 +227,7 @@ export const DEFAULT_PRICING_FRONTIER = {
     "claude-opus-4": CLAUDE_OPUS_4_PRICING,
   },
   gemini: {
+    "gemini-3.7-flash": GEMINI_3_7_FLASH_PROMO_PRICING,
     // Gemini 3.1 Pro — novo flagship Google (2026-03-17)
     // Context: 1.050.000 tokens | Max Output: 65.536
     "gemini-3.1-pro": {

@@ -213,7 +213,7 @@ describe("PromptQl — helpers", () => {
     assert.equal(models.clientFacingPromptQlModelId("pql/gpt-5.6-sol"), "gpt-5.6-sol");
     const r = models.resolvePromptQlModel("Claude Fable 5");
     assert.ok(r);
-    assert.equal(r!.id, "vertex-claude-fable-5");
+    assert.equal(r!.id, "bedrock-claude-fable-5");
   });
 
   it("converts credit micros to USD", () => {

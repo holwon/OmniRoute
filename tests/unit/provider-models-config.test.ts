@@ -99,7 +99,7 @@ test("GitHub Copilot registry reflects the current supported model lineup", () =
   // the OpenAI shape. Port of decolua/9router#2608.
   assert.equal(getModelTargetFormat("gh", "claude-opus-4.8-fast"), "claude");
   assert.equal(getModelTargetFormat("gh", "claude-sonnet-4.6"), "claude");
-  assert.equal(getModelTargetFormat("gh", "gemini-3.5-flash"), null);
+  assert.equal(getModelTargetFormat("gh", "gemini-3.7-flash"), null);
   assert.equal(getModelTargetFormat("gh", "kimi-k2.7-code"), null);
   assert.equal(ids.includes("gpt-4"), false);
   assert.equal(ids.includes("gpt-4o"), false);

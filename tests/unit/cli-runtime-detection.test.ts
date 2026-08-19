@@ -9,7 +9,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 
-const { getCliRuntimeStatus, getKnownToolPaths, CLI_TOOL_IDS } =
+const { getCliRuntimeStatus, getKnownToolPaths, normalizeCliToolId, CLI_TOOL_IDS } =
   await import("../../src/shared/services/cliRuntime.ts");
 
 // ─── Helpers ──────────────────────────────────────────────────
@@ -78,6 +78,16 @@ describe("CLI_TOOL_IDS", () => {
     for (const id of expected) {
       assert.ok(CLI_TOOL_IDS.includes(id), `Missing tool: ${id}`);
     }
+  });
+});
+
+describe("CLI tool id compatibility aliases", () => {
+  it("normalizes legacy binary names without creating duplicate ids", () => {
+    assert.equal(normalizeCliToolId("kilocode"), "kilo");
+    assert.equal(normalizeCliToolId("kilo-code"), "kilo");
+    assert.equal(normalizeCliToolId("openai-codex"), "codex");
+    assert.equal(normalizeCliToolId("cc"), "claude");
+    assert.equal(normalizeCliToolId("unknown-tool"), "unknown-tool");
   });
 });
 

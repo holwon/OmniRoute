@@ -10,6 +10,7 @@ import {
   caseInsensitiveToolNameLookup,
   restoreOpenAIToolNames,
 } from "../translator/helpers/toolCallHelper.ts";
+import { sanitizeToolId } from "../translator/helpers/schemaCoercion.ts";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -701,9 +702,10 @@ function convertOpenAINonStreamingToClaude(openaiResponse: JsonRecord): JsonReco
     for (const tool of messageObj.tool_calls) {
       const toolObj = toRecord(tool);
       const fn = toRecord(toolObj.function);
+      const rawId = toString(toolObj.id, `call_${Date.now()}`);
       content.push({
         type: "tool_use",
-        id: toString(toolObj.id, `call_${Date.now()}`),
+        id: sanitizeToolId(rawId),
         name: toString(fn.name),
         input:
           typeof fn.arguments === "string" ? JSON.parse(fn.arguments || "{}") : fn.arguments || {},

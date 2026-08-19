@@ -107,6 +107,12 @@ const ENV_VAR_ALLOWLIST = new Set([
   "NINEROUTER_API_KEY", // injected into the 9router subprocess at spawn (EMBEDDED-SERVICES.md)
   "CLAUDE_CODE_MAX_OUTPUT_TOKENS", // Claude Code CLI's own env var (CODEX-CLI-CONFIGURATION.md)
   "CODEX_HOME", // Codex CLI's own config-home env var (CODEX-CLI-CONFIGURATION.md)
+  // Gemini CLI's own auth-routing env vars. `omniroute run gemini` DELETES them
+  // from the spawned child's env (bin/cli/commands/run.mjs) so a stored Vertex /
+  // Code Assist session cannot override the OmniRoute-directed launch — a delete
+  // on a copied env object, never a `process.env.X` read. (CLI-INTEGRATIONS.md)
+  "GOOGLE_GENAI_USE_VERTEXAI",
+  "GOOGLE_GENAI_USE_GCA",
   "OPENAI_API_BASE", // legacy OpenAI base-URL env var some downstream tools (e.g. Aider) read (CLI-INTEGRATIONS.md)
   "PROMPTFOO_PROVIDER_KEY", // promptfoo's own provider-key env var, used by the red-team suite (GUARDRAILS.md)
   "REDIS_PORT", // docker-compose host-port override (DOCKER_GUIDE.md)
@@ -114,6 +120,12 @@ const ENV_VAR_ALLOWLIST = new Set([
   "LINUX_GPG_KEY", // electron AppImage signing key, CI/build only (ELECTRON_GUIDE.md)
   "BRANCH_LOCK_TOKEN", // release branch-protection ops token (QUALITY_GATE_PLAYBOOK.md)
   "NEXT_LOCALE", // next-intl locale cookie name (I18N.md)
+  // Feature flags are resolved by key at runtime — `resolveFeatureFlag()` reads
+  // `process.env[key]` (src/shared/utils/featureFlags.ts), never a literal
+  // `process.env.MODELS_CATALOG_PREFIX_MODE`, so this scan cannot see the read.
+  // The flag is real: defined in featureFlagDefinitions.ts, overridable from the
+  // dashboard or the environment. (API_REFERENCE.md, VSCODE-COPILOT.md)
+  "MODELS_CATALOG_PREFIX_MODE",
   // Telegram Mini App integration (proposal TELEGRAM-MINIAPP.md, not yet implemented): env vars named in the feasibility analysis but no code reads them yet.
   "TELEGRAM_WEBHOOK_URL", // proposal-only: Telegram webhook public endpoint (TELEGRAM-MINIAPP.md, future feature)
   "TELEGRAM_WEBHOOK_SECRET", // proposal-only: Telegram webhook HMAC secret (TELEGRAM-MINIAPP.md, future feature)

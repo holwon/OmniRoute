@@ -169,8 +169,8 @@ test("admitChatRequest with explicit controller overrides per-connection lookup"
   if (result.admit) result.lease?.release();
 });
 
-test("admitChatStructure routes structural rejection to per-connection controller", async () => {
-  // occupy sess-a's controller — which is the shared process-global budget
+test("admitChatStructure routes structural rejection to per-connection controller when heap pressure is genuinely high (#10183/#10268)", async () => {
+  // occupy sess-a's per-connection controller via the module-level instance
   const controller = perConnectionAdmissionController.getController("sess-a");
   const occupied = controller.tryAcquireHeavy();
   assert.ok(occupied);
@@ -186,6 +186,8 @@ test("admitChatStructure routes structural rejection to per-connection controlle
       heavyMessages: 1,
       heavyTools: 10,
       heavyTokens: 10_000,
+      // #10183/#10268: shedding is now conditional on real heap pressure.
+      heapPressureCheck: () => true,
     }
   );
   // The process-wide slot is busy → 503
@@ -203,7 +205,11 @@ test("admitChatStructure with different sessionId shares the global budget", asy
   assert.ok(occupied);
 
   // Session B must NOT get independent capacity (pre-#10110 it did — that was
-  // the defect): it shares the one process-wide slot and must be rejected.
+  // the defect): it shares the one process-wide slot and must be rejected —
+  // under real heap pressure. #10183/#10268 layered a heap-conditional gate on
+  // top of this shed path (a healthy heap now gets a bounded headroom slot
+  // instead of an outright 503), so this test forces genuine pressure to keep
+  // exercising the #10110 shared-budget invariant it targets.
   const result = await admitChatStructure(
     {
       messages: Array.from({ length: 500 }, () => ({ role: "user", content: "x" })),
@@ -215,6 +221,7 @@ test("admitChatStructure with different sessionId shares the global budget", asy
       heavyMessages: 200,
       heavyTools: 64,
       heavyTokens: 32_000,
+      heapPressureCheck: () => true,
     }
   );
   assert.equal(result.admit, false);

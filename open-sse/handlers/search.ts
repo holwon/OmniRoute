@@ -6,7 +6,8 @@ import { randomUUID } from "crypto";
  * Routes to search providers with automatic failover:
  *   serper-search, brave-search, perplexity-search, exa-search, tavily-search,
  *   firecrawl, google-pse-search, linkup-search, searchapi-search,
- *   youcom-search, searxng-search, ollama-search, zai-search, duckduckgo-free
+ *   youcom-search, searxng-search, ollama-search, zai-search, jina-search,
+ *   duckduckgo-free
  *
  * Request format:
  * {
@@ -21,6 +22,7 @@ import { getSearchProvider, type SearchProviderConfig } from "../config/searchRe
 import { buildPerplexityRequest, parsePerplexitySearchOptions } from "./search/perplexitySearch.ts";
 import * as fcSearch from "./search/firecrawlSearch.ts";
 import { type FirecrawlSearchEnvelope } from "./search/firecrawlSearch.ts";
+import { buildJinaSearchRequest, extractJinaSearchItems } from "./search/jinaSearch.ts";
 import { freeWebSearch } from "../services/freeWebSearch.ts";
 import { saveCallLog } from "@/lib/usageDb";
 import { safeOutboundFetch } from "@/shared/network/safeOutboundFetch";
@@ -625,6 +627,7 @@ const requestBuilders: Record<string, SearchRequestBuilder> = {
   "youcom-search": buildYouComRequest,
   "searxng-search": buildSearxngRequest,
   "ollama-search": buildOllamaRequest,
+  "jina-search": buildJinaSearchRequest,
 };
 
 function buildRequest(
@@ -1202,6 +1205,7 @@ const responseNormalizers: Record<string, SearchResponseNormalizer> = {
   "youcom-search": normalizeYouComResponse,
   "searxng-search": normalizeSearxngResponse,
   "ollama-search": normalizeOllamaResponse,
+  "jina-search": normalizeJinaSearchResponse,
 };
 
 function normalizeResponse(
@@ -1214,6 +1218,30 @@ function normalizeResponse(
   if (normalizer) return normalizer(data, query, searchType);
 
   return { results: [], totalResults: null };
+}
+
+function normalizeJinaSearchResponse(
+  data: unknown,
+  _query: string,
+  _searchType: string
+): { results: SearchResult[]; totalResults: number | null } {
+  const now = new Date().toISOString();
+  const items = extractJinaSearchItems(data);
+  const results = items.map((item, idx) =>
+    makeResult(
+      "jina-search",
+      {
+        title: item.title,
+        url: item.url,
+        snippet: item.description || item.snippet || "",
+        full_text: item.content || item.text,
+        text_format: "markdown",
+      },
+      idx,
+      now
+    )
+  );
+  return { results, totalResults: results.length };
 }
 
 export async function handleSearch(options: SearchHandlerOptions): Promise<SearchHandlerResult> {

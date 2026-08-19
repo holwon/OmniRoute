@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import http from "node:http";
 
 const TEST_DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "omniroute-sub-svc-"));
 process.env.DATA_DIR = TEST_DATA_DIR;
@@ -228,4 +229,58 @@ test("global→rule switch re-evaluates binding: drops global, binds the selecte
   const afterRule = await proxies.resolveProxyForConnectionFromRegistry("connA");
   assert.ok(afterRule, "rule mode should bind the node to provider provA");
   assert.equal(afterRule?.proxy.host, "10.0.0.5");
+});
+
+// ─────────────────── Regression: #10158 local proxy subscription ───────────────────
+// Promoted from the TDD probe (was RED on release/v3.8.50: createSubscription against a
+// real local (127.0.0.1) HTTP server failed with "Fetch failed: Subscription URL is not
+// allowed (scheme or host blocked)" even though coreEndpoint.ts already permits routing
+// through a loopback core). Uses a REAL local HTTP server (not a fetch stub) so the fix
+// is proven end-to-end through assertSafeFetchTarget's SSRF guard.
+
+function startLocalSubscriptionServer(
+  body: string
+): Promise<{ url: string; close: () => Promise<void> }> {
+  return new Promise((resolve) => {
+    const srv = http.createServer((_req, res) => {
+      res.writeHead(200, { "Content-Type": "text/plain" });
+      res.end(body);
+    });
+    srv.listen(0, "127.0.0.1", () => {
+      const addr = srv.address();
+      if (!addr || typeof addr === "string") throw new Error("no addr");
+      resolve({
+        url: `http://127.0.0.1:${addr.port}/list`,
+        close: () => new Promise((r) => srv.close(() => r())),
+      });
+    });
+  });
+}
+
+test("#10158: createSubscription against a real local (127.0.0.1) HTTP server syncs ok", async () => {
+  await reset();
+  const LIST_BODY = [
+    "proxies:",
+    "  - name: local-node",
+    "    type: http",
+    "    server: 127.0.0.1",
+    "    port: 8080",
+  ].join("\n");
+  const { url, close } = await startLocalSubscriptionServer(LIST_BODY);
+  try {
+    const created = await sub.createSubscription({
+      name: "local-list",
+      url,
+      enabled: true,
+      mode: "global",
+    });
+    assert.equal(
+      created.status,
+      "ok",
+      `expected ok, got status=${created.status} error=${created.error}`
+    );
+    assert.ok((created.lastNodes ?? []).length >= 1, "expected at least one parsed node");
+  } finally {
+    await close();
+  }
 });

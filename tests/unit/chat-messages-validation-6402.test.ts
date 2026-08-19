@@ -181,16 +181,10 @@ test("Antigravity Gemini-family regression covers every current callable tier", 
   for (const model of [
     "gemini-pro-agent",
     "gemini-3.1-pro-low",
-    "gemini-3.6-flash-high",
-    "gemini-3.6-flash-medium",
-    "gemini-3.6-flash-low",
-    "gemini-3-flash-agent",
-    "gemini-3.5-flash-low",
-    "gemini-3.5-flash-extra-low",
+    "gemini-3.7-flash-high",
+    "gemini-3.7-flash-medium",
+    "gemini-3.7-flash-low",
     "gemini-3.1-flash-lite",
-    "gemini-2.5-flash-thinking",
-    "gemini-2.5-flash",
-    "gemini-2.5-flash-lite",
   ]) {
     assert.ok(coveredModels.has(model), `expected regression coverage for ${model}`);
   }

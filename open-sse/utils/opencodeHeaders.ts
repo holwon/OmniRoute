@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import { setUserAgentHeader } from "../executors/base.ts";
+import { generateSessionId } from "../services/sessionManager.ts";
 
 /**
  * Header keys that are forwarded from the client to the upstream provider.
@@ -51,6 +52,10 @@ function findHeader(headers: Record<string, string>, name: string): string | und
  *   that is not already the OpenCode CLI (e.g. curl/8.5.0) is REPLACED with the
  *   synthesized CLI UA, because opencode.ai's free tier rejects generic client UAs
  *   from datacenter IPs with FreeUsageLimitError 429. (#5997, follow-up #10229)
+ * @param options.sessionBody - Request body fields used to generate a
+ *   conversation-stable session fingerprint (model, system, messages, tools).
+ *   When provided, x-opencode-session is a deterministic hash instead of a random
+ *   UUID, so upstream prompt caching hits across requests in the same conversation.
  */
 export function forwardOpencodeClientHeaders(
   headers: Record<string, string>,
@@ -58,6 +63,12 @@ export function forwardOpencodeClientHeaders(
   options?: {
     synthesizeRequestId?: boolean;
     cliDefaults?: { userAgent: string; client: string; project: string };
+    sessionBody?: {
+      model?: string;
+      system?: unknown;
+      messages?: Array<{ role?: string; content?: unknown }>;
+      tools?: Array<{ name?: string; function?: { name?: string } }>;
+    };
   }
 ): void {
   // 1. Forward User-Agent
@@ -98,7 +109,7 @@ export function forwardOpencodeClientHeaders(
   // 4. OpencodeExecutor-only: synthesize the OpenCode CLI identity Cloudflare expects
   //    on VPS egress, for any key the client did not supply (#5997).
   if (options?.cliDefaults) {
-    applyCliDefaults(headers, options.cliDefaults);
+    applyCliDefaults(headers, options.cliDefaults, options.sessionBody);
   }
 }
 
@@ -113,7 +124,13 @@ export function forwardOpencodeClientHeaders(
  */
 function applyCliDefaults(
   headers: Record<string, string>,
-  cliDefaults: { userAgent: string; client: string; project: string }
+  cliDefaults: { userAgent: string; client: string; project: string },
+  sessionBody?: {
+    model?: string;
+    system?: unknown;
+    messages?: Array<{ role?: string; content?: unknown }>;
+    tools?: Array<{ name?: string; function?: { name?: string } }>;
+  }
 ): void {
   const existingUa = headers["User-Agent"] || headers["user-agent"];
   const clientUaIsCliLike =
@@ -124,5 +141,6 @@ function applyCliDefaults(
   headers["x-opencode-client"] ||= cliDefaults.client;
   headers["x-opencode-project"] ||= cliDefaults.project;
   headers["x-opencode-request"] ||= randomUUID();
-  headers["x-opencode-session"] ||= randomUUID();
+  headers["x-opencode-session"] ||=
+    generateSessionId(sessionBody ?? null) || randomUUID();
 }

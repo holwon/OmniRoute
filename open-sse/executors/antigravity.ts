@@ -442,9 +442,10 @@ function sanitizeAntigravityGeminiRequest(
  * `"assistant"`). Mirrors the trailing-strip pop-loop already used for Mistral
  * (#3396), Copilot (#5802), and the CC-bridge in `claudeCodeCompatible.ts`.
  *
- * Scoped strictly to the Claude path by the caller (`isClaude` branch only) — native
- * Gemini models via Antigravity must be unaffected, since Vertex-Claude is the only
- * documented rejection surface.
+ * Wired in by the caller for both the Claude path (`isClaude`) and native Gemini
+ * models (`isGemini`, #10104) — newer Gemini endpoints reject a trailing `model` turn
+ * with the same "ending with a model turn" class of 400 that Claude hits via Vertex.
+ * Other model families routed through Antigravity are left untouched.
  *
  * Guard: never strip `contents` down to empty — an empty `contents` array is itself
  * an invalid request, so at least one entry (even a lone trailing "model" turn) is
@@ -466,6 +467,20 @@ function stripTrailingAntigravityAssistantTurn(
   }
 
   return request;
+}
+
+/**
+ * Newer Antigravity Gemini chat families reject a request ending on a model turn.
+ * Keep this explicit rather than matching every model containing "gemini": image
+ * generation has a separate request contract, and the older 2.5 family is not part
+ * of the rejection evidence for #10104.
+ */
+function isAntigravityGeminiChatModel(upstreamModel: string): boolean {
+  const normalizedModel = upstreamModel.toLowerCase();
+  if (/(?:^|-)image(?:-|$)/.test(normalizedModel)) {
+    return false;
+  }
+  return /^gemini-(?:3(?:\.\d+)?(?:-[a-z0-9-]+)?|pro-agent)$/.test(normalizedModel);
 }
 
 // Test-only export so the unit suite can exercise the strip logic directly.
@@ -519,6 +534,17 @@ type AntigravityAttemptOutcome =
 export class AntigravityExecutor extends BaseExecutor {
   constructor() {
     super("antigravity", PROVIDERS.antigravity);
+  }
+
+  override shouldRetry(status: number, urlIndex: number): boolean {
+    return (
+      (status === HTTP_STATUS.RATE_LIMITED ||
+        status === HTTP_STATUS.NOT_FOUND ||
+        status === HTTP_STATUS.BAD_GATEWAY ||
+        status === HTTP_STATUS.SERVICE_UNAVAILABLE ||
+        status === HTTP_STATUS.GATEWAY_TIMEOUT) &&
+      urlIndex + 1 < this.getFallbackCount()
+    );
   }
 
   buildUrl(model: string, _stream: boolean, urlIndex = 0): string {
@@ -673,6 +699,14 @@ export class AntigravityExecutor extends BaseExecutor {
 
     const upstreamModel = await cleanModelName(model, modelIdOverride);
     const isClaude = upstreamModel.toLowerCase().includes("claude");
+    // #10104: newer Gemini endpoints reject a request ending on a `model` turn with
+    // HTTP 400 "Requests ending with a model turn are not supported" — the same
+    // rejection surface Claude hits via Vertex (see stripTrailingAntigravityAssistantTurn's
+    // doc comment above). Native Gemini models routed through Antigravity (`agy/gemini-*`,
+    // e.g. the Gemini 3.x Flash/Pro tiers from PR #8013's catalog) need the same guarded
+    // strip. Scoped to models whose id names Gemini so unrelated model families are
+    // untouched; the strip itself never empties `contents` (see the guard above).
+    const isGemini = isAntigravityGeminiChatModel(upstreamModel);
     const baseBody = bodyRecord;
     const normalizedBody = shouldStripCloudCodeThinking(this.provider, upstreamModel)
       ? stripCloudCodeThinkingConfig(baseBody)
@@ -736,11 +770,16 @@ export class AntigravityExecutor extends BaseExecutor {
           : normalizedRequest?.toolConfig,
     };
 
+    // Note: sanitizeAntigravityGeminiRequest() applies a Claude-only field whitelist
+    // (dropping fields native Gemini requests may legitimately carry), so the Gemini
+    // branch only runs the trailing-turn strip — never the sanitize/whitelist step.
     const transformedRequest = isClaude
       ? stripTrailingAntigravityAssistantTurn(
           sanitizeAntigravityGeminiRequest(rawTransformedRequest)
         )
-      : rawTransformedRequest;
+      : isGemini
+        ? stripTrailingAntigravityAssistantTurn(rawTransformedRequest)
+        : rawTransformedRequest;
 
     applyAntigravityGenerationDefaults(transformedRequest, upstreamModel);
 

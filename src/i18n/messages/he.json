@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "ניתוב בקשות שחרגו מהתקציב לספק/מודל גיבוי חינמי לשעת חירום.",
   "featureFlagArenaEloSyncEnabledDescription": "הפעלת סנכרון ELO תקופתי מלוח המובילים של Arena AI עבור דירוגי אינטליגנציית מודלים.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "פרסם את מזהי המראה של claude/&lt;provider&gt;/&lt;model&gt; ב-/v1/models כך שרשימות גילוי המודלים של Claude Code יכללו מודלים שאינם של Claude. אזהרה: מכפיל את רשומות הקטלוג עבור כל הלקוחות כאשר זה מופעל באופן גלובלי.",
+  "featureFlagChatVirtualLanesEnabledDescription": "הפעל נתיבי קבלה וירטואליים אדפטיביים לכל דייר (tenant) עבור שליחת ספקים (#9654): פרץ עומס של דייר אחד כבר לא מחזיר 503 לדייר אחר. משתנה הסביבה OMNIROUTE_CHAT_VIRTUAL_LANES גובר על הגדרה זו בלוח הבקרה; השינויים נכנסים לתוקף לאחר הפעלת השרת מחדש.",
   "sidebar": {
     "home": "בית",
     "dashboard": "לוח מחוונים",
@@ -1290,7 +1291,9 @@
       "open": "פתח",
       "close": "סגור"
     },
-    "noResults": "אין תוצאות"
+    "noResults": "אין תוצאות",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhooks",
@@ -1736,6 +1739,8 @@
     "quotaShare": "שיתוף מכסה",
     "discovery": "גילוי",
     "freeProviderRankings": "דירוג ספקים חינמיים",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "מסלולים חינמיים",
     "gamification": "משחוק",
     "leaderboard": "לוח מובילים",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "ספק זה הוצא משימוש",
     "riskNotice": {
       "title": "לפני שממשיכים",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "ספק עם סייגי שימוש — לחץ לפרטים",
       "oauth": "ספק זה משתמש בסשן המוצר הרשמי/OAuth שלך, שאינו מורשה לשימוש בפרוקסי/נתב. איננו ממליצים על שימוש אינטנסיבי בסוכנים אוטונומיים (בסגנון OpenCloud, תהליכים ארוכים מרובי שלבים, אצוות גדולות) — ספק ה-upstream עלול להגיב בהגבלת החשבון או בחסימתו. השימוש הוא על אחריותך בלבד.",
       "webCookie": "ספק זה מבצע אימות באמצעות עוגיות סשן הדפדפן שלך. שירות ה-upstream עלול לבטל את תוקף הסשן בכל עת, מה שידרוש ממך להתחבר מחדש. לא מומלץ לפעולות ארוכות ללא השגחה. השימוש הוא על אחריותך בלבד.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "אל תציג זאת שוב עבור ספק זה",
       "understand": "הבנתי, המשך",
       "cancel": "ביטול"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "מושבת",
     "enableProvider": "הפעל ספק",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "הגדרות נקודת הקצה של המודל השמור",
     "searchByModelAria": "חפש לפי דגם",
     "selectSupportedEndpoint": "בחר לפחות נקודת קצה אחת נתמכת",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsDisabled": "איסוף אוטומטי של מודל עליון מושבת",
+    "autoFetchModelsEnabled": "מודל upstream אוטומטי להורדה מופעל",
+    "autoFetchModels": "משוך אוטומטית מודלים מהמקור",
+    "autoFetchModelsTooltip": "שחזר ושמור במטמון מודלים עליונים כשצריך",
+    "autoFetchModelsToggleFailed": "נכשל בהחלפת מצב האיסוף האוטומטי של המודל העליון",
+    "autoFetchModelsPartialFailure": "כמה חיבורים עודכנו, אך מודל העל לא שונה בכל מקום",
+    "overridesUpstreamModel": "מעלים על עליון",
+    "overridesUpstreamModelHint": "ההגדרות שלך עוקפות את המודל העליון הזה",
+    "resetToUpstreamDefaults": "שחזר את ברירות המחדל של ה-upstream",
+    "resetToUpstreamDefaultsFailed": "נכשל בשחזור ברירות המחדל של המודל העליון",
+    "resetToUpstreamDefaultsSuccess": "שוחזרו ברירות המחדל של המודל העליון"
   },
   "settings": {
     "title": "הגדרות",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "מילות מפתח חסומות",
     "customBannedSignalsDesc": "מילות מפתח נוספות שמפעילות זיהוי לחסימה קבועה של החשבון. מילות מפתח מובנות חלות תמיד.",
     "customBannedSignalsPlaceholder": "לדוגמה: api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "דחיסה",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "הישגים נדירים"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "טוקן ראשון",
         "description": "ביצעת את בקשת ה-API הראשונה שלך",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "הגדרת ספק",
@@ -13658,23 +13710,6 @@
     "updateFailed": "נכשל בעדכון (HTTP {status})",
     "networkError": "שגיאת רשת — לא ניתן לעדכן את הגדרת החשיפה של הספק"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "הספק אינו תומך בראייה עבור בקשה זו של תמונה",

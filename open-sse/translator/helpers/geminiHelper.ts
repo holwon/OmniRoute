@@ -727,5 +727,33 @@ export function cleanJSONSchemaForAntigravity(schema: unknown): unknown {
 
   injectObjectType(cleaned);
 
+  // Phase 8: Ensure array types have an items schema (#10578).
+  // Gemini strictly requires array parameters to define their `items` schema.
+  // If an MCP tool defines an array but forgets the items, inject a safe default.
+  function ensureArrayItems(obj: unknown): void {
+    if (!obj || typeof obj !== "object") return;
+
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        ensureArrayItems(item);
+      }
+      return;
+    }
+
+    const record = obj as JsonRecord;
+    if (record.type === "array" && !record.items) {
+      record.items = { type: "string" };
+    }
+
+    // Recurse into remaining values.
+    for (const value of Object.values(record)) {
+      if (value && typeof value === "object") {
+        ensureArrayItems(value);
+      }
+    }
+  }
+
+  ensureArrayItems(cleaned);
+
   return cleaned;
 }

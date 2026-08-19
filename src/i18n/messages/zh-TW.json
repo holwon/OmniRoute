@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "將預算耗盡的請求路由到緊急免費備用提供者/模型。",
   "featureFlagArenaEloSyncEnabledDescription": "啟用定期 Arena AI 排行榜 ELO 同步，用於模型智慧排名。",
   "featureFlagExposeCcDiscoveryAliasesDescription": "在 /v1/models 上廣告 claude/&lt;provider&gt;/&lt;model&gt; 鏡像 ID，以便 Claude Code 閘道模型發現列出非 Claude 模型。警告：當全域啟用時，會為所有客戶端重複目錄條目。",
+  "featureFlagChatVirtualLanesEnabledDescription": "為提供者調度啟用按租戶的自適應虛擬准入通道（#9654）：一個租戶的突發流量不再導致另一個租戶收到 503。OMNIROUTE_CHAT_VIRTUAL_LANES 環境變數優先於此儀表板設定；變更在伺服器重新啟動後生效。",
   "sidebar": {
     "home": "首頁",
     "dashboard": "儀表板",
@@ -1082,21 +1083,21 @@
     "faviconPreview": "Favicon 預覽",
     "changelog": "更新日誌",
     "contextSection": "上下文與快取",
-    "contextCaveman": "Caveman",
-    "contextRtk": "RTK",
+    "contextCaveman": "穴居人",
+    "contextRtk": "指令輸出過濾",
     "contextCombos": "引擎組合",
-    "contextLite": "Lite",
-    "contextAggressive": "Aggressive",
-    "contextUltra": "Ultra",
-    "contextOmniglyph": "OmniGlyph",
-    "contextSettings": "Compression Settings",
-    "contextHeadroom": "Headroom",
-    "contextSessionDedup": "Session Dedup",
-    "contextCcr": "CCR",
+    "contextLite": "輕量",
+    "contextAggressive": "激進",
+    "contextUltra": "極致",
+    "contextOmniglyph": "全象形",
+    "contextSettings": "壓縮設定",
+    "contextHeadroom": "預留空間",
+    "contextSessionDedup": "工作階段去重",
+    "contextCcr": "內容定址檢索",
     "contextLlmlingua": "LLMLingua",
-    "combosLive": "Combo Studio",
+    "combosLive": "組合工作室",
     "combosLiveSubtitle": "即時路由串聯",
-    "compressionStudio": "Compression Studio",
+    "compressionStudio": "壓縮工作室",
     "compressionExclusions": "排除規則",
     "contextSettingsSubtitle": "全域預設值",
     "contextHeadroomSubtitle": "表格壓縮",
@@ -1290,7 +1291,9 @@
       "open": "打開",
       "close": "關閉"
     },
-    "noResults": "沒有結果"
+    "noResults": "沒有結果",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhook",
@@ -1736,6 +1739,8 @@
     "quotaShare": "配額分享",
     "discovery": "探索",
     "freeProviderRankings": "免費提供者排名",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "免費方案",
     "gamification": "遊戲化",
     "leaderboard": "排行榜",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "此提供者已棄用",
     "riskNotice": {
       "title": "繼續之前",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "該提供者有使用注意事項 —— 點選檢視詳情",
       "oauth": "此提供者使用你官方產品的會話 / OAuth,這並未被授權用於代理或路由用途。 不建議進行高強度的自主代理使用(OpenCloud 風格、長鏈路多步流程、大批次請求)—— 上游可能因此限制甚至封禁帳號。 使用風險自負。",
       "webCookie": "此提供者通過你的網頁會話 Cookie 進行鑑權。上游服務可能隨時讓會話失效,屆時你需要重新登入。不建議用於長時間無人值守的操作。 使用風險自負。",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "對此提供者不再顯示此提示",
       "understand": "我已瞭解,繼續",
       "cancel": "取消"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "已停用",
     "enableProvider": "啟用提供者",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "已儲存的模型端點設定",
     "searchByModelAria": "按型號搜尋",
     "selectSupportedEndpoint": "請選擇至少一個受支持的端點",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "自動獲取上游模型",
+    "autoFetchModelsDisabled": "上游模型自動獲取已禁用",
+    "autoFetchModelsEnabled": "上游模型自動獲取已啟用",
+    "autoFetchModelsTooltip": "在需要時獲取並緩存上游模型",
+    "autoFetchModelsToggleFailed": "無法切換上游模型自動獲取",
+    "autoFetchModelsPartialFailure": "某些連接已更新，但上游模型自動獲取並未在所有地方更改",
+    "overridesUpstreamModel": "覆蓋上游",
+    "overridesUpstreamModelHint": "您的設定覆蓋了此上游模型",
+    "resetToUpstreamDefaults": "恢復上游預設值",
+    "resetToUpstreamDefaultsSuccess": "已恢復上游模型預設值",
+    "resetToUpstreamDefaultsFailed": "無法恢復上游模型的預設值"
   },
   "settings": {
     "title": "設定",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "若提供者連線返回特定的永久封禁訊號（如 HTTP 403\"請驗證您的帳戶\"），則將其永久標記為停用。這會將其從組合輪換中移除。",
     "autoDisableThreshold": "封禁閾值",
     "autoDisableThresholdDesc": "觸發永久停用所需的連續封禁訊號次數。",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "禁止關鍵字",
     "customBannedSignalsDesc": "觸發永久帳戶封鎖偵測的額外關鍵字。內建關鍵字始終適用。",
     "customBannedSignalsPlaceholder": "例如：api key revoked",
@@ -7732,6 +7760,10 @@
         "label": "Ponytail (lazy senior dev)",
         "description": "Lazy senior-dev discipline: climb the YAGNI ladder, fix root cause, smallest working diff."
       },
+      "i-have-adhd": {
+        "label": "我有 ADHD（行動優先）",
+        "description": "行動優先輸出：先給出下一步操作、以數字編排步驟、只提供一個明確的後續步驟，且不加開場白。"
+      },
       "terse-cjk": {
         "label": "精簡 CJK（文言）",
         "description": "文言文極簡風格（僅適用於中文）。"
@@ -8010,8 +8042,12 @@
     "modelLockoutMaxBackoffStepsDescription": "冷卻時間停止增長前的最大回退步數。在大多數配置中，最大冷卻上限會先達到，這使得此設定成為提高最大冷卻時的安全上限。",
     "disableSessionStickiness": "停用工作階段黏性",
     "disableSessionStickinessDesc": "輪詢和隨機組合在每個請求輪換到不同的連線，而不是根據第一則訊息的雜湊將整個對話固定到一個連線。關閉以保留多輪聊天的提示快取命中。各組合的覆寫設定優先。",
-    "promptCacheAffinity": "Prompt-cache locality routing",
-    "promptCacheAffinityDesc": "Prefer the same provider account for matching prompt-cache keys while preserving health and quota failover.",
+    "promptCacheAffinity": "提示詞快取區域性路由",
+    "promptCacheAffinityDesc": "在維持健康檢查與配額容錯移轉的同時，針對相符的提示詞快取鍵，優先使用相同的提供者帳戶。",
+    "reasoningTokenBuffer": "推理權杖緩衝區",
+    "reasoningTokenBufferDesc": "僅在完整緩衝區不超過已知輸出上限時，才允許組合路由為已知的推理模型增加 max_tokens 預留空間。",
+    "zeroLatencyOptimizations": "零延遲最佳化",
+    "zeroLatencyOptimizationsDesc": "選擇啟用請求對沖、預測式 TTFT 略過與主動備援壓縮。保持關閉可避免這些延遲功能競逐多個目標，或壓縮備援請求。",
     "credentialRedaction": "憑證編輯",
     "credentialRedactionDesc": "從傳送給提供者的上下文和回應中編輯 API 金鑰、令牌和機密。",
     "enableCredentialRedaction": "啟用憑證遮蔽",
@@ -11045,7 +11081,8 @@
       "compressed": "壓縮",
       "tps": "TPS",
       "duration": "時長",
-      "time": "時間"
+      "time": "時間",
+      "conversation": "Conversation"
     },
     "loadingLogs": "正在載入日誌...",
     "noLogs": "暫無日誌記錄。進行一些API呼叫以在此處檢視它們。",
@@ -12437,6 +12474,11 @@
       "rare": "稀有成就"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "第一個代幣",
         "description": "已發出您的第一個 API 請求",
@@ -13157,7 +13199,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "提供者設置",
@@ -13658,23 +13718,6 @@
     "updateFailed": "更新失敗 (HTTP {status})",
     "networkError": "網絡錯誤 — 無法更新提供者曝光設置"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13738,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "提供者不支援此影像請求的視覺效果",

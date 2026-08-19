@@ -3,7 +3,6 @@ import { unorouterProvider } from "./registry/unorouter/index.ts";
 
 import { aimlapiProvider } from "./registry/aimlapi/index.ts";
 import { byteplusProvider } from "./registry/byteplus/index.ts";
-import { mimocodeProvider } from "./registry/mimocode/index.ts";
 import { ollama_cloudProvider } from "./registry/ollama-cloud/index.ts";
 import { syntheticProvider } from "./registry/synthetic/index.ts";
 import { ideogramProvider } from "./registry/ideogram/index.ts";
@@ -32,6 +31,7 @@ import { difyProvider } from "./registry/dify/index.ts";
 import { ovhcloudProvider } from "./registry/ovhcloud/index.ts";
 import { claudeProvider } from "./registry/claude/index.ts";
 import { claude_webProvider } from "./registry/claude/web/index.ts";
+import { cloudflarePlaygroundProvider } from "./registry/cloudflare-playground/index.ts";
 import { bedrockProvider } from "./registry/bedrock/index.ts";
 import { inner_aiProvider } from "./registry/inner-ai/index.ts";
 import { qoderProvider } from "./registry/qoder/index.ts";
@@ -291,6 +291,7 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   ovhcloud: ovhcloudProvider,
   claude: claudeProvider,
   "claude-web": claude_webProvider,
+  "cloudflare-playground": cloudflarePlaygroundProvider,
   bedrock: bedrockProvider,
   "inner-ai": inner_aiProvider,
   qoder: qoderProvider,
@@ -470,7 +471,6 @@ export const REGISTRY: Record<string, RegistryEntry> = {
   venice: veniceProvider,
   kiro: kiroProvider,
   byteplus: byteplusProvider,
-  mimocode: mimocodeProvider,
   wafer: waferProvider,
   openadapter: openadapterProvider,
   dit: ditProvider,

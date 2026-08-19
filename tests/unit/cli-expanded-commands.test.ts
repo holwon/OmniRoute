@@ -305,3 +305,54 @@ test("test-provider — compare requer pelo menos dois modelos sem server retorn
   }
   assert.ok(code === 0 || code === 1);
 });
+
+test("test-provider --all-providers consumes the connections envelope", async () => {
+  const origFetch = globalThis.fetch;
+  const connections = [
+    { id: "conn1", provider: "anthropic", defaultModel: "claude", authType: "apikey" },
+    { id: "conn2", provider: "gemini", defaultModel: "gemini", authType: "oauth" },
+  ];
+  const requests: string[] = [];
+  globalThis.fetch = ((url: string) => {
+    requests.push(url);
+    if (url.includes("/api/health")) return Promise.resolve(new Response("{}", { status: 200 }));
+    if (url.includes("/api/providers?limit=200")) {
+      return Promise.resolve(new Response(JSON.stringify({ connections }), { status: 200 }));
+    }
+    if (url.includes("/api/v1/providers/test")) {
+      return Promise.resolve(new Response(JSON.stringify({ success: true }), { status: 201 }));
+    }
+    throw new Error(`unexpected URL: ${url}`);
+  }) as typeof fetch;
+
+  try {
+    const { runTestProviderCommand } = await import("../../bin/cli/commands/test-provider.mjs");
+    const output: string[] = [];
+    const origWrite = process.stdout.write.bind(process.stdout);
+    process.stdout.write = ((chunk: string | Uint8Array) => {
+      if (typeof chunk === "string") output.push(chunk);
+      return true;
+    }) as typeof process.stdout.write;
+    try {
+      const code = await runTestProviderCommand(undefined, undefined, {
+        allProviders: true,
+        json: true,
+      });
+      assert.equal(code, 0);
+    } finally {
+      process.stdout.write = origWrite;
+    }
+    assert.ok(requests.some((url) => url.includes("/api/providers?limit=200")));
+    const parsed = JSON.parse(output.join(""));
+    assert.deepEqual(
+      parsed.map(({ provider, model }: { provider: string; model: string }) => ({ provider, model })),
+      [
+        { provider: "anthropic", model: "claude" },
+        { provider: "gemini", model: "gemini" },
+      ],
+    );
+    assert.ok(parsed.every(({ success }: { success: boolean }) => success));
+  } finally {
+    globalThis.fetch = origFetch;
+  }
+});

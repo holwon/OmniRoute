@@ -44,6 +44,23 @@ export interface AutoComboSpec {
   family?: ModelFamily;
 }
 
+/** Rate-limit empty-pool AUTO warns (same label can be resolved many times/min). */
+const emptyPoolWarnAt = new Map<string, number>();
+export const EMPTY_POOL_WARN_INTERVAL_MS = 60_000;
+
+export function warnEmptyAutoPoolOnce(label: string, message: string, now = Date.now()): boolean {
+  const last = emptyPoolWarnAt.get(label) ?? 0;
+  if (now - last < EMPTY_POOL_WARN_INTERVAL_MS) return false;
+  emptyPoolWarnAt.set(label, now);
+  log.warn("AUTO", message);
+  return true;
+}
+
+/** Test-only: reset the debounce map. */
+export function resetEmptyAutoPoolWarnStateForTests(): void {
+  emptyPoolWarnAt.clear();
+}
+
 /** Minimal connection shape needed for virtual auto-combo factory */
 interface VirtualFactoryConn extends ConnectionFields {
   id: string;
@@ -692,8 +709,8 @@ export async function createVirtualAutoComboFromPrepared(
       // Family combos always degrade to an empty pool when unavailable — a family
       // is a hard identity constraint, not a soft optimization bias, so there is
       // no sensible "fall back to the full pool" behavior for it.
-      log.warn(
-        "AUTO",
+      warnEmptyAutoPoolOnce(
+        label,
         `${label} matched no connected models; returning an empty pool.${spec?.family ? "" : ' Set OMNIROUTE_AUTO_FREE_FALLBACK_TO_FULL_POOL=true to restore the legacy "use full pool" behavior.'}`
       );
       effectivePool = [];

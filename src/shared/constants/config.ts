@@ -38,7 +38,8 @@ export const PROVIDER_ENDPOINTS = {
   helixmind: "https://helixmind.online/v1/chat/completions",
   glm: "https://api.z.ai/api/anthropic/v1/messages",
   glmt: "https://api.z.ai/api/anthropic/v1/messages",
-  "bailian-coding-plan": "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1/messages",
+  "bailian-coding-plan":
+    "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages",
   "qwen-cloud": "https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions",
   "qwen-cloud-token-plan":
     "https://token-plan.ap-southeast-1.maas.aliyuncs.com/compatible-mode/v1/chat/completions",

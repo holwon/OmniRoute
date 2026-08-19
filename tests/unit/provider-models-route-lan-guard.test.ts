@@ -95,7 +95,7 @@ test("#6939: LM Studio (LAN host, local OpenAI-compatible provider) model-list f
   delete process.env.OMNIROUTE_ALLOW_PRIVATE_PROVIDER_URLS;
 
   const connection = await seedConnection("lm-studio", {
-    providerSpecificData: { baseUrl: "http://192.168.1.50:1234/v1" },
+    providerSpecificData: { baseUrl: "http://192.168.1.50:1234/v1", autoFetchModels: true },
   });
 
   let fetchCalled = false;
@@ -126,7 +126,7 @@ test("#6939: LAN model-list fetch is still blocked when the local-first default 
   process.env.OMNIROUTE_ALLOW_LOCAL_PROVIDER_URLS = "false";
 
   const connection = await seedConnection("lm-studio", {
-    providerSpecificData: { baseUrl: "http://192.168.1.50:1234/v1" },
+    providerSpecificData: { baseUrl: "http://192.168.1.50:1234/v1", autoFetchModels: true },
   });
 
   let fetchCalled = false;

@@ -1,4 +1,5 @@
 import { getProviderConnectionById, resolveProxyForConnection } from "@/lib/localDb";
+import { isConnectionUnavailableToAuxiliaryActivity } from "@/lib/exclusiveLeaseIsolation";
 import {
   fetchAndPersistProviderLimits,
   refreshAndUpdateCredentials,
@@ -299,6 +300,13 @@ function buildCodexResetCreditHeaders(connection: CodexConnectionLike): Record<s
 }
 
 async function loadCodexConnection(connectionId: string): Promise<CodexConnectionLike> {
+  if (await isConnectionUnavailableToAuxiliaryActivity(connectionId)) {
+    throw new CodexResetCreditError(
+      409,
+      "exclusive_lease_active",
+      "Reset-credit operations are deferred while an exclusive lease is active."
+    );
+  }
   const connection = (await getProviderConnectionById(
     connectionId
   )) as unknown as CodexConnectionLike | null;

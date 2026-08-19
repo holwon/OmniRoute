@@ -1,24 +1,15 @@
 #!/usr/bin/env node
 /**
- * OmniRoute — Co-locate the LLMLingua-2 runtime into the raw Next standalone build.
+ * OmniRoute — Co-locate runtime workers into the raw Next standalone build.
  *
  * WHY: `npm run build` produces `.build/next/standalone/` and THIS machine's PM2
  * deployment runs `server.js` from that directory directly (not the assembled
- * `dist/` bundle). The standalone trace:
- *   - does NOT bundle `open-sse/services/compression/engines/llmlingua/onnxWorker.js`
- *     (dynamically spawned via worker_threads — untraceable by webpack), and
- *   - does NOT include the optional SLM deps (`@atjsh/llmlingua-2`,
- *     `@tensorflow/tfjs`, `js-tiktoken`) — they are optionalDependencies and are
- *     only installed at the ROOT `node_modules`.
+ * `dist/` bundle). The standalone trace cannot see worker_threads entrypoints
+ * resolved at runtime, including the required call-log artifact worker and the
+ * optional LLMLingua-2 worker. It also omits LLMLingua's optional dependencies.
  *
- * Result: after every plain `npm run build`, the LLMLingua engine silently
- * fail-opens (text returned unchanged, no error) because the worker's runtime
- * anchors (`process.cwd()` = the standalone dir) find neither the worker file
- * nor the deps. This script re-applies both, mirroring what prepublish.ts +
- * colocateOptionals.mjs do for the `dist/` bundle.
- *
- * Idempotent + fail-soft: skips quietly when the optional deps are absent at the
- * root (the common slim-install case) and never throws into the build.
+ * The call-log worker is required, so a bundle failure must fail the build.
+ * LLMLingua remains fail-soft when its optional dependencies are absent.
  *
  * Run manually after a build, or automatically via the `postbuild` npm hook.
  */
@@ -31,6 +22,8 @@ import { computeDependencyClosure } from "./colocateOptionals.mjs";
 const ROOT = dirname(dirname(dirname(fileURLToPath(import.meta.url))));
 const STANDALONE = join(ROOT, ".build", "next", "standalone");
 
+const CALL_LOG_WORKER_REL = join("src", "lib", "usage", "callLogArtifactWorker.js");
+const CALL_LOG_WORKER_SRC = join(ROOT, "src", "lib", "usage", "callLogArtifactWorker.ts");
 const WORKER_REL = join(
   "open-sse",
   "services",
@@ -49,6 +42,22 @@ if (!existsSync(STANDALONE)) {
   console.log("[colocate-standalone] .build/next/standalone not found — nothing to do.");
   process.exit(0);
 }
+const callLogWorkerDest = join(STANDALONE, CALL_LOG_WORKER_REL);
+mkdirSync(dirname(callLogWorkerDest), { recursive: true });
+execFileSync(
+  join(ROOT, "node_modules", ".bin", "esbuild"),
+  [
+    CALL_LOG_WORKER_SRC,
+    "--bundle",
+    "--platform=node",
+    "--packages=external",
+    "--format=esm",
+    `--outfile=${callLogWorkerDest}`,
+  ],
+  { stdio: "inherit" }
+);
+console.log("[colocate-standalone] ✅ call-log artifact worker bundled");
+
 if (!hasOptionals) {
   console.log(
     "[colocate-standalone] optional SLM deps absent at root node_modules — LLMLingua stays fail-open (slim install)."

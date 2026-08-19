@@ -45,17 +45,13 @@ export const KNOWN_DUPLICATE_VERSIONS = new Set([
 // Fonte: auditoria do disco (src/lib/db/migrations/). Além dos slots legados,
 // As migrations Radar 144–145, a migration 143 e a 147 já aterrissaram. O job
 // registry foi promovido de 139 para 146 pela tabela
-// RENAMED_MIGRATION_COMPATIBILITY. A 149 aterrissa junto com #10066
-// (149_api_key_combo_access.sql). 148 permanece reservada por PRs #10001 e
-// #10047 ainda em trânsito. O stale-enforcement exige que cada reserva seja
-// removida quando os arquivos correspondentes aterrissarem na release.
+// RENAMED_MIGRATION_COMPATIBILITY. A 148 aterrissou nesta branch
+// (148_provider_quota_state.sql) e a 149 aterrissou junto com #10066
+// (149_api_key_combo_access.sql) — nenhuma das duas é mais um gap. O
+// stale-enforcement exige que cada reserva seja removida quando os arquivos
+// correspondentes aterrissarem na release.
 // ---------------------------------------------------------------------------
-export const KNOWN_GAPS = new Set([
-  "026",
-  "055",
-  "121", // número queimado no ciclo v3.8.47 — 122 (#6909) mergeou antes e 121 nunca aterrissou (validação e2e 2026-07-12)
-  "148", // reserved by open PRs #10001 and #10047
-]);
+export const KNOWN_GAPS = new Set(["026", "055", "121"]); // 121: número queimado no ciclo v3.8.47 — 122 (#6909) mergeou antes e 121 nunca aterrissou (validação e2e 2026-07-12); 144/145 aterrissaram na release (radar offers/intel cache), 148/149 aterrissaram (provider_quota_state, api_key_combo_access)
 
 function pad3(n) {
   return String(n).padStart(3, "0");

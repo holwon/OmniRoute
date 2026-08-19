@@ -92,6 +92,12 @@ test("compliance audit log supports structured filters, totals and secret redact
       nested: {
         refreshToken: "refresh-secret",
       },
+      providerSpecificData: {
+        extraApiKeys: ["sk-extra-1", "sk-extra-2"],
+        token: "token-secret",
+        userToken: "user-token-secret",
+        cookie: "cookie-secret",
+      },
       changedFields: ["defaultModel"],
     },
     ipAddress: "10.0.0.4",
@@ -132,6 +138,12 @@ test("compliance audit log supports structured filters, totals and secret redact
     apiKey: "[redacted]",
     nested: {
       refreshToken: "[redacted]",
+    },
+    providerSpecificData: {
+      extraApiKeys: "[redacted]",
+      token: "[redacted]",
+      userToken: "[redacted]",
+      cookie: "[redacted]",
     },
     changedFields: ["defaultModel"],
   });

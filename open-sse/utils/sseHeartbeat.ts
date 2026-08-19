@@ -71,16 +71,17 @@ const HEARTBEAT_ENCODER = new TextEncoder();
 /**
  * Whether OmniRoute may emit SSE `:` comment lines (e.g. the `: keepalive` heartbeat).
  * Some strict OpenAI-compatible clients parse every SSE line as JSON and crash on `:` comments.
- * Set OMNIROUTE_SSE_COMMENTS=off to suppress comment-shaped heartbeats (they become a no-op).
- * Defaults to enabled for backward compatibility.
+ * Set OMNIROUTE_SSE_COMMENTS=on to enable comment-shaped heartbeats and telemetry trailers.
+ * #10524: defaults to disabled — strict SSE clients (WorkBuddy, etc.) break on `: x-omniroute-*`
+ * comment lines. Operators who want the telemetry can opt in with OMNIROUTE_SSE_COMMENTS=on.
  */
 export function sseCommentsEnabled(): boolean {
   // SSR/edge safety: `process` is not defined in Workers/Deno/edge runtimes.
-  if (typeof process === "undefined") return true;
+  if (typeof process === "undefined") return false;
   const v = process.env.OMNIROUTE_SSE_COMMENTS;
-  if (v === undefined || v === "") return true;
+  if (v === undefined || v === "") return false;
   const normalized = v.trim().toLowerCase();
-  return normalized !== "off" && normalized !== "false" && normalized !== "0" && normalized !== "no";
+  return normalized === "on" || normalized === "true" || normalized === "1" || normalized === "yes";
 }
 
 export function createSseHeartbeatTransform({

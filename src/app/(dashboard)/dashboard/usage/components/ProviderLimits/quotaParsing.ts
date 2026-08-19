@@ -217,6 +217,27 @@ function parseDeepseek(data: any) {
   return quotaEntries(data).map(([quotaKey, quota]) => parseDeepseekQuota(quotaKey, quota));
 }
 
+// #10078 follow-up: AgentRouter's `quotas.balance` entry (open-sse/services/usage/agentrouter.ts)
+// carries a real USD amount in `remaining` + `currency: "USD"`. The generic path
+// (normalizeQuotaEntry via parseGeneric) drops `currency` entirely and never sets
+// `isCredits`/`creditCount`, so QuotaCardBody/QuotaCardExpanded's dollar-formatted
+// renderer (which only activates on `q.isCredits`) never triggers — the balance was
+// rendered as a bare "100%/0% left" percentage instead of "$X.XX". Route it through
+// buildCreditsQuota() (same shape DeepSeek/Claude-extra-usage credits rows use) so the
+// dollar figure — and an exhausted ($0.00) balance — render unambiguously as USD.
+function parseAgentrouterQuota(quotaKey: string, quota: any) {
+  if (quotaKey !== "balance") return normalizeQuotaEntry(quotaKey, quota);
+  const remaining = Math.max(0, Number(quota?.remaining ?? 0));
+  const currency = quota?.currency || "USD";
+  const remainingPercentage =
+    safePercentage(quota?.remainingPercentage) ?? (remaining > 0 ? 100 : 0);
+  return buildCreditsQuota(currency, remaining, remainingPercentage, { currency });
+}
+
+function parseAgentrouter(data: any) {
+  return quotaEntries(data).map(([quotaKey, quota]) => parseAgentrouterQuota(quotaKey, quota));
+}
+
 function parseProviderQuotas(providerId: string, data: any) {
   if (providerId === "github") return parseGithub(data);
   if (["glm", "glm-cn", "glmt", "opencode-go"].includes(providerId)) return parseGlmFamily(data);
@@ -224,6 +245,7 @@ function parseProviderQuotas(providerId: string, data: any) {
   if (providerId === "codex") return parseCodex(data);
   if (providerId === "claude") return parseClaude(data);
   if (providerId === "deepseek") return parseDeepseek(data);
+  if (providerId === "agentrouter") return parseAgentrouter(data);
   return parseGeneric(data);
 }
 

@@ -22,6 +22,10 @@ import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
 import { handleComboChat } from "@omniroute/open-sse/services/combo.ts";
 import { resolveBareModelToConnectionDefault } from "@omniroute/open-sse/services/model.ts";
 import { findEmbeddingComboDimensionConflict } from "./familyGuard";
+import {
+  formatMissingEmbeddingCredentialsError,
+  formatUnknownEmbeddingProviderError,
+} from "./errors";
 import { isPrivateHost, isCloudMetadataHost } from "@/shared/network/outboundUrlGuard";
 import { calculateCost } from "@/lib/usage/costCalculator";
 import { attachOmniRouteMetaHeaders } from "@/domain/omnirouteResponseMeta";
@@ -217,7 +221,7 @@ export async function createEmbeddingResponse(
   if (!providerConfig) {
     return errorResponse(
       HTTP_STATUS.BAD_REQUEST,
-      `Unknown embedding provider: ${provider}. No matching hardcoded or local provider found.`
+      formatUnknownEmbeddingProviderError(provider, resolvedModel)
     );
   }
 
@@ -227,7 +231,7 @@ export async function createEmbeddingResponse(
     if (!credentials) {
       return errorResponse(
         HTTP_STATUS.BAD_REQUEST,
-        `No credentials for embedding provider: ${provider}`
+        formatMissingEmbeddingCredentialsError(provider)
       );
     }
     if ("allRateLimited" in credentials && credentials.allRateLimited) {
@@ -307,6 +311,7 @@ export async function createEmbeddingResponse(
       connectionId:
         ((credentials as { connectionId?: string } | null)?.connectionId) ||
         options.connectionId ||
+        connectionIdForProxy ||
         null,
     });
 

@@ -24,7 +24,7 @@ export const deepseekProvider: RegistryEntry = {
       contextLength: 1_000_000,
       maxOutputTokens: 384_000,
       supportsReasoning: true,
-      supportedThinkingEfforts: ["none", "high", "max"],
+      supportedThinkingEfforts: ["none", "low", "high", "max"],
       toolCalling: true,
     },
     {

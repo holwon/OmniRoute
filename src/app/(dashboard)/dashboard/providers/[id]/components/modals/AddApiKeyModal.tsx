@@ -435,7 +435,7 @@ export default function AddApiKeyModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          provider,
+          provider: provider === "kimi-coding" ? "kimi-coding-apikey" : provider,
           entries: parsed.entries.map((e) => ({
             name: e.name,
             apiKey: e.apiKey,

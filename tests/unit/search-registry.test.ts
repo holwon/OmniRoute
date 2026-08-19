@@ -33,8 +33,9 @@ test("SEARCH_PROVIDERS has all registered providers", () => {
   assert.ok(SEARCH_PROVIDERS["searxng-search"], "searxng should exist");
   assert.ok(SEARCH_PROVIDERS["ollama-search"], "ollama-search should exist");
   assert.ok(SEARCH_PROVIDERS["zai-search"], "zai should exist");
+  assert.ok(SEARCH_PROVIDERS["jina-search"], "jina-search should exist");
   assert.ok(SEARCH_PROVIDERS["duckduckgo-free"], "duckduckgo-free should exist");
-  assert.equal(Object.keys(SEARCH_PROVIDERS).length, 14);
+  assert.equal(Object.keys(SEARCH_PROVIDERS).length, 15);
 });
 
 test("duckduckgo-free config is a no-key, fallback-only provider", () => {
@@ -96,6 +97,8 @@ test("getSearchProvider returns config for valid ID", () => {
 
 test("getSearchProvider returns null for unknown ID", () => {
   assert.equal(getSearchProvider("unknown"), null);
+  // jina-ai is the Foundation embed/rerank card, not a search catalog id.
+  assert.equal(getSearchProvider("jina-ai"), null);
 });
 
 test("tavily config is correct", () => {
@@ -166,8 +169,9 @@ test("zai-search config is correct", () => {
 
 test("getAllSearchProviders returns flat list", () => {
   const all = getAllSearchProviders();
-  assert.equal(all.length, 14);
+  assert.equal(all.length, 15);
   assert.ok(all.some((p) => p.id === "duckduckgo-free"));
+  assert.ok(all.some((p) => p.id === "jina-search"));
   assert.ok(all.some((p) => p.id === "serper-search"));
   assert.ok(all.some((p) => p.id === "brave-search"));
   assert.ok(all.some((p) => p.id === "perplexity-search"));

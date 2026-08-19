@@ -294,7 +294,9 @@ export async function validateBailianCodingPlanProvider({
         providerSpecificData
       ),
       body: JSON.stringify({
-        model: "qwen3-coder-plus",
+        // qwen3-coder-plus belonged to the retired Coding Plan host and is absent from
+        // BAILIAN_CODING_PLAN_MODELS; probe with a model this plan actually serves.
+        model: providerSpecificData.validationModelId || "qwen3.7-max",
         max_tokens: 1,
         messages: [{ role: "user", content: "test" }],
       }),

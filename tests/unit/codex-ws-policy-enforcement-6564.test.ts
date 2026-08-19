@@ -154,6 +154,25 @@ test("WS prepare() allows the requested model when the key's policy permits it (
   assert.equal(body.error?.code, "codex_credentials_unavailable");
 });
 
+test("WS prepare() rejects managed lease keys before credential selection", async () => {
+  const managedKey = await apiKeysDb.createApiKey(
+    "Managed Lease WS Key",
+    "machine-lease-ws",
+    ["lease:exclusive"],
+    { allowedConnections: ["synthetic-managed-connection"] }
+  );
+  await apiKeysDb.updateApiKeyPermissions(managedKey.id, {
+    allowedModels: ["gpt-5.5"],
+  });
+
+  const response = await route.POST(buildPrepareRequest(managedKey.key, "gpt-5.5"));
+  const body = (await response.json()) as ErrorBody;
+
+  assert.equal(response.status, 409);
+  assert.equal(body.error.code, "LEASE_UNSUPPORTED_TRANSPORT");
+  assert.notEqual(body.error.code, "codex_credentials_unavailable");
+});
+
 test("WS prepare() rejects a combo not in the key's allowedCombos policy (403)", async () => {
   await combosDb.createCombo({
     name: "model-1.0",

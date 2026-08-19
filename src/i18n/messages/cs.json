@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Směrovat požadavky s vyčerpaným rozpočtem na nouzového bezplatného záložního poskytovatele/model.",
   "featureFlagArenaEloSyncEnabledDescription": "Povolit periodickou synchronizaci ELO z žebříčku Arena AI pro hodnocení inteligence modelů.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Inzerujte claude/&lt;provider&gt;/&lt;model&gt; zrcadlové ID na /v1/models, aby seznam objevování modelů brány Claude Code zahrnoval modely, které nejsou Claude. Upozornění: při globálním povolení zdvojuje katalogové položky pro všechny klienty.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Povolte adaptivní virtuální vstupní pruhy pro každého tenanta při odesílání poskytovatelům (#9654): špička jednoho tenanta už nezpůsobí 503 u jiného. Proměnná prostředí OMNIROUTE_CHAT_VIRTUAL_LANES má přednost před tímto nastavením na řídicím panelu; změny se projeví po restartu serveru.",
   "sidebar": {
     "home": "Domov",
     "dashboard": "Nástěnka",
@@ -1290,7 +1291,9 @@
       "open": "otevřít",
       "close": "zavřít"
     },
-    "noResults": "Žádné výsledky"
+    "noResults": "Žádné výsledky",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Webhooky",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Podíl kvóty",
     "discovery": "Průzkum",
     "freeProviderRankings": "Žebříčky bezplatných poskytovatelů",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Bezplatné tarify",
     "gamification": "Gamifikace",
     "leaderboard": "Žebříček",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Podpora tohoto poskytovatele byla ukončena",
     "riskNotice": {
       "title": "Než budete pokračovat",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Poskytovatel s upozorněními k použití — klikněte pro podrobnosti",
       "oauth": "Tento poskytovatel používá vaši oficiální relaci/OAuth produktu, což není autorizováno pro použití jako proxy/router. Nedoporučujeme intenzivní používání autonomních agentů (styl OpenCloud, dlouhé vícekrokové toky, velké dávky) — upstream může reagovat omezením nebo zablokováním účtu. Používejte na vlastní riziko.",
       "webCookie": "Tento poskytovatel se autentizuje pomocí souborů cookie vaší webové relace. Služba upstream může relaci kdykoli zneplatnit, což bude vyžadovat opětovné přihlášení. Nedoporučuje se pro dlouhé bezobslužné operace. Používejte na vlastní riziko.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Pro tohoto poskytovatele již znovu nezobrazovat",
       "understand": "Rozumím, pokračovat",
       "cancel": "Zrušit"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Zakázáno",
     "enableProvider": "Povolit poskytovatele",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Nastavení koncového bodu uloženého modelu",
     "searchByModelAria": "Hledat podle modelu",
     "selectSupportedEndpoint": "Vyberte alespoň jeden podporovaný koncový bod",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "Automaticky načíst modely z upstreamu",
+    "autoFetchModelsTooltip": "Načíst a uložit upstream modely, když je to potřeba",
+    "autoFetchModelsDisabled": "Automatické načítání modelu upstream je zakázáno",
+    "autoFetchModelsEnabled": "Automatické načítání modelu upstream je povoleno",
+    "overridesUpstreamModel": "Přepisuje upstream",
+    "autoFetchModelsToggleFailed": "Nepodařilo se přepnout automatické načítání modelu upstream",
+    "overridesUpstreamModelHint": "Vaše nastavení přepisují tento upstream model",
+    "autoFetchModelsPartialFailure": "Některé připojení byly aktualizovány, ale automatické načítání modelu upstream nebylo změněno všude",
+    "resetToUpstreamDefaultsSuccess": "Obnoveny výchozí modely upstream",
+    "resetToUpstreamDefaultsFailed": "Nepodařilo se obnovit výchozí hodnoty modelu upstream",
+    "resetToUpstreamDefaults": "Obnovit výchozí hodnoty upstream"
   },
   "settings": {
     "title": "Nastavení",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Trvale označí připojení poskytovatele jako deaktivovaná, pokud vrátí specifické signály zablokování (např. HTTP 403 'verify your account'). Tím je odstraní z rotace komb.",
     "autoDisableThreshold": "Prahová hodnota zablokování",
     "autoDisableThresholdDesc": "Počet po sobě jdoucích signálů zablokování před trvalou deaktivací.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Zakázaná klíčová slova",
     "customBannedSignalsDesc": "Další klíčová slova, která spouštějí detekci trvalého zablokování účtu. Vestavěná klíčová slova platí vždy.",
     "customBannedSignalsPlaceholder": "např. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Komprese",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Vzácné úspěchy"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "První token",
         "description": "Provedli jste svůj první požadavek na API",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Nastavení poskytovatele",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Nepodařilo se aktualizovat (HTTP {status})",
     "networkError": "Chyba sítě — nelze aktualizovat nastavení expozice poskytovatele"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Poskytovatel nepodporuje zobrazení pro tento požadavek na obrázek",

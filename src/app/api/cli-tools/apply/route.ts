@@ -3,9 +3,9 @@ import { z } from "zod";
 import { requireCliToolsAuth } from "@/lib/api/requireCliToolsAuth";
 import fs from "node:fs";
 import path from "node:path";
-import os from "node:os";
 import { generateConfig } from "@/lib/cli-helper/config-generator";
 import { guardCliConfigWrite } from "@/lib/api/cliConfigWriteGuard";
+import { getCliPrimaryConfigPath, normalizeCliToolId } from "@/shared/services/cliRuntime";
 
 const applySchema = z.object({
   toolId: z.string().min(1),
@@ -15,21 +15,13 @@ const applySchema = z.object({
   dryRun: z.boolean().optional(),
 });
 
-const TOOL_CONFIG_PATHS: Record<string, string> = {
-  claude: path.join(os.homedir(), ".claude", "settings.json"),
-  codex: path.join(os.homedir(), ".codex", "config.yaml"),
-  cline: path.join(os.homedir(), ".cline", "data", "globalState.json"),
-  kilocode: path.join(os.homedir(), ".config", "kilocode", "settings.json"),
-  continue: path.join(os.homedir(), ".continue", "config.yaml"),
-};
-
 /** The host-side command that does the same job when OmniRoute is containerised. */
 const HOST_SETUP_COMMANDS: Record<string, string> = {
   claude: "omniroute setup-claude",
   codex: "omniroute setup-codex",
   opencode: "omniroute setup-opencode",
   cline: "omniroute setup-cline",
-  kilocode: "omniroute setup-kilo",
+  kilo: "omniroute setup-kilo",
   continue: "omniroute setup-continue",
 };
 
@@ -56,8 +48,9 @@ export async function POST(request: Request) {
       );
     }
     const { toolId, baseUrl, apiKey, model, dryRun } = parsed.data;
+    const canonicalToolId = normalizeCliToolId(toolId);
 
-    const result = await generateConfig(toolId, {
+    const result = await generateConfig(canonicalToolId, {
       baseUrl: baseUrl || "http://localhost:20128/v1",
       apiKey,
       model,
@@ -72,10 +65,11 @@ export async function POST(request: Request) {
         dryRun: true,
         configPath: result.configPath,
         content: result.content,
+        ...(result.migration ? { migration: result.migration } : {}),
       });
     }
 
-    const configPath = toolId === "opencode" ? result.configPath : TOOL_CONFIG_PATHS[toolId];
+    const configPath = result.configPath || getCliPrimaryConfigPath(canonicalToolId);
     if (!configPath) {
       return NextResponse.json({ error: `Unknown tool: ${toolId}` }, { status: 400 });
     }
@@ -83,8 +77,8 @@ export async function POST(request: Request) {
     // A container write into an unmounted path looks successful and then
     // disappears with the container — refuse it and point at the host CLI.
     const refusal = guardCliConfigWrite(configPath, {
-      toolLabel: toolId,
-      hostCommand: HOST_SETUP_COMMANDS[toolId],
+      toolLabel: canonicalToolId,
+      hostCommand: HOST_SETUP_COMMANDS[canonicalToolId],
     });
     if (refusal) return refusal;
 
@@ -100,6 +94,7 @@ export async function POST(request: Request) {
       configPath,
       backupPath,
       content: result.content,
+      ...(result.migration ? { migration: result.migration } : {}),
     });
   } catch (error) {
     console.log("Error applying config:", error);

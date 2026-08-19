@@ -1300,7 +1300,7 @@
     "description": "Manage scoped CLI access tokens (remote mode)"
   },
   "configure": {
-    "description": "Pick a provider+model from the active server and write a local CLI config"
+    "description": "Pick a provider+model from the active server and configure a supported local CLI"
   },
   "launchCodex": {
     "description": "Launch Codex CLI pointed at OmniRoute (local or remote VPS)"

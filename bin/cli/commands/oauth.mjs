@@ -54,11 +54,20 @@ async function openBrowser(url) {
   }
 }
 
-async function pollStatus(endpoint, timeoutMs) {
+function targetApiOptions(opts = {}) {
+  return {
+    baseUrl: opts.baseUrl,
+    context: opts.context,
+    apiKey: opts.apiKey,
+    timeout: opts.timeout,
+  };
+}
+
+async function pollStatus(endpoint, timeoutMs, opts = {}) {
   const deadline = Date.now() + timeoutMs;
   while (Date.now() < deadline) {
     await sleep(2000);
-    const res = await apiFetch(endpoint);
+    const res = await apiFetch(endpoint, targetApiOptions(opts));
     if (!res.ok) continue;
     const data = await res.json();
     if (data.status === "complete" || data.status === "completed") return data;
@@ -85,7 +94,7 @@ async function runBrowserFlow(def, opts) {
   const authorizeUrl = `/api/oauth/${backendKey}/authorize${
     redirectUri ? `?redirect_uri=${encodeURIComponent(redirectUri)}` : ""
   }`;
-  const startRes = await apiFetch(authorizeUrl, { method: "GET" });
+  const startRes = await apiFetch(authorizeUrl, { ...targetApiOptions(opts), method: "GET" });
   if (!startRes.ok) {
     const detail = await safeErrorBody(startRes);
     process.stderr.write(`Failed to start OAuth for ${def.id}: ${startRes.status}${detail}\n`);
@@ -143,6 +152,7 @@ async function runBrowserFlow(def, opts) {
   }
 
   const exchangeRes = await apiFetch(`/api/oauth/${backendKey}/exchange`, {
+    ...targetApiOptions(opts),
     method: "POST",
     body: {
       code,
@@ -179,7 +189,7 @@ async function runImportFlow(def, opts) {
   const endpoint = opts.importFromSystem
     ? `/api/oauth/${def.id}/auto-import`
     : `/api/oauth/${def.id}/import`;
-  const res = await apiFetch(endpoint, { method: "POST" });
+  const res = await apiFetch(endpoint, { ...targetApiOptions(opts), method: "POST" });
   if (!res.ok) {
     process.stderr.write(`Import failed: ${res.status}\n`);
     process.exit(1);
@@ -195,6 +205,7 @@ async function runSocialFlow(def, opts) {
     process.exit(2);
   }
   const startRes = await apiFetch(`/api/oauth/${def.id}/social-authorize`, {
+    ...targetApiOptions(opts),
     method: "POST",
     body: { social },
   });
@@ -209,14 +220,18 @@ async function runSocialFlow(def, opts) {
   process.stderr.write("Waiting for social authorization...\n");
   const result = await pollStatus(
     `/api/oauth/${def.id}/social-exchange?state=${encodeURIComponent(start.state ?? "")}`,
-    opts.timeout ?? 300000
+    opts.timeout ?? 300000,
+    opts
   );
   process.stdout.write(`Authorized: ${result.email ?? result.userId ?? "connected"}\n`);
 }
 
 async function runDeviceFlow(def, opts) {
   const providerKey = resolveBackendKey(def.id);
-  const startRes = await apiFetch(`/api/providers/${providerKey}/auth/start`, { method: "POST" });
+  const startRes = await apiFetch(`/api/providers/${providerKey}/auth/start`, {
+    ...targetApiOptions(opts),
+    method: "POST",
+  });
   if (!startRes.ok) {
     process.stderr.write(`Failed to start device flow: ${startRes.status}\n`);
     process.exit(1);
@@ -233,12 +248,14 @@ async function runDeviceFlow(def, opts) {
   while (Date.now() < deadline) {
     await sleep(intervalMs);
     const statusRes = await apiFetch(
-      `/api/providers/${providerKey}/auth/status?state=${encodeURIComponent(start.state ?? "")}`
+      `/api/providers/${providerKey}/auth/status?state=${encodeURIComponent(start.state ?? "")}`,
+      targetApiOptions(opts)
     );
     if (!statusRes.ok) continue;
     const status = await statusRes.json();
     if (status.status === "complete" || status.status === "authorized") {
       await apiFetch(`/api/providers/${providerKey}/auth/apply`, {
+        ...targetApiOptions(opts),
         method: "POST",
         body: { state: start.state },
       });
@@ -255,6 +272,7 @@ async function runDeviceFlow(def, opts) {
 }
 
 export async function runOAuthStart(opts, cmd) {
+  opts = { ...(cmd?.optsWithGlobals ? cmd.optsWithGlobals() : {}), ...opts };
   const def = PROVIDERS_WITH_OAUTH.find((p) => p.id === opts.provider);
   if (!def) {
     process.stderr.write(
@@ -275,22 +293,23 @@ export async function runOAuthStart(opts, cmd) {
 }
 
 export async function runOAuthStatus(opts, cmd) {
-  const globalOpts = cmd.optsWithGlobals();
+  const globalOpts = { ...(cmd?.optsWithGlobals ? cmd.optsWithGlobals() : {}), ...opts };
   const params = new URLSearchParams();
   if (opts.provider) params.set("provider", opts.provider);
-  const res = await apiFetch(`/api/providers?${params}`);
+  const res = await apiFetch(`/api/providers?${params}`, targetApiOptions(globalOpts));
   if (!res.ok) {
     process.stderr.write(`Error: ${res.status}\n`);
     process.exit(1);
   }
   const data = await res.json();
-  const connections = (data.providers ?? data.items ?? data).filter(
+  const connections = (data.connections ?? data.providers ?? data.items ?? data).filter(
     (c) => c.authType === "oauth" || c.authType === "oauth2"
   );
   emit(connections, globalOpts, connectionSchema);
 }
 
 export async function runOAuthRevoke(opts, cmd) {
+  opts = { ...(cmd?.optsWithGlobals ? cmd.optsWithGlobals() : {}), ...opts };
   if (!opts.yes) {
     process.stdout.write(
       `Revoke OAuth for ${opts.provider}${opts.connectionId ? ` (${opts.connectionId})` : ""}? (yes/no) `
@@ -303,8 +322,11 @@ export async function runOAuthRevoke(opts, cmd) {
   }
   const id = opts.connectionId;
   const res = id
-    ? await apiFetch(`/api/providers/${id}`, { method: "DELETE" })
-    : await apiFetch(`/api/oauth/${opts.provider}/revoke`, { method: "POST" });
+    ? await apiFetch(`/api/providers/${id}`, { ...targetApiOptions(opts), method: "DELETE" })
+    : await apiFetch(`/api/oauth/${opts.provider}/revoke`, {
+        ...targetApiOptions(opts),
+        method: "POST",
+      });
   if (!res.ok) {
     process.stderr.write(`Error: ${res.status}\n`);
     process.exit(1);

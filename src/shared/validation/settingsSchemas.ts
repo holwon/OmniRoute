@@ -363,6 +363,7 @@ export const updateSettingsSchema = z.object({
   modalityBridgeVideoEnabled: z.boolean().optional(),
   modalityBridgeVideoModel: z.string().max(200).optional(),
   modalityBridgeVideoFrameCount: z.number().int().min(1).max(16).optional(),
+  modalityBridgeVideoSamplingPolicy: z.enum(["uniform", "scene_aware", "segment_aware"]).optional(),
   modalityBridgeVideoMaxVideos: z.number().int().min(1).max(4).optional(),
   modalityBridgeVideoTimeout: z
     .number()

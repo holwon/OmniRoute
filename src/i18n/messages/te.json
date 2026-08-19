@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "బడ్జెట్ ముగిసిపోయిన అభ్యర్థనలను అత్యవసర ఉచిత ఫాల్‌బ్యాక్ ప్రొవైడర్/మోడల్‌కు రూట్ చేయండి.",
   "featureFlagArenaEloSyncEnabledDescription": "మోడల్ ఇంటెలిజెన్స్ ర్యాంకింగ్‌ల కోసం క్రమానుగత Arena AI లీడర్‌బోర్డ్ ELO సమకాలీకరణను ప్రారంభించండి.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "/v1/models లో claude/&lt;provider&gt;/&lt;model&gt; మిర్రర్ ఐడీలను ప్రచారం చేయండి కాబట్టి Claude Code గేట్వే మోడల్ డిస్కవరీ non-Claude మోడళ్లను జాబితా చేస్తుంది. హెచ్చరిక: ఇది ప్రపంచవ్యాప్తంగా ప్రారంభించినప్పుడు అన్ని క్లయింట్ల కోసం కాటలాగ్ ఎంట్రీలను డబుల్ చేస్తుంది.",
+  "featureFlagChatVirtualLanesEnabledDescription": "ప్రొవైడర్ డిస్పాచ్ కోసం ప్రతి-టెనెంట్ అడాప్టివ్ వర్చువల్ అడ్మిషన్ లేన్లను ప్రారంభించండి (#9654): ఒక టెనెంట్ బర్స్ట్ ఇకపై మరొక టెనెంట్కు 503 ఇవ్వదు. OMNIROUTE_CHAT_VIRTUAL_LANES ఎన్విరాన్మెంట్ వేరియబుల్ ఈ డాష్బోర్డ్ సెట్టింగ్ కంటే ప్రాధాన్యత పొందుతుంది; మార్పులు సర్వర్ పునఃప్రారంభంలో ప్రభావం చూపుతాయి.",
   "sidebar": {
     "home": "Home",
     "dashboard": "Dashboard",
@@ -1290,7 +1291,9 @@
       "open": "తిరిగి తెరువు",
       "close": "మూసివేయండి"
     },
-    "noResults": "ఫలితాలు లేవు"
+    "noResults": "ఫలితాలు లేవు",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "వెబ్‌బూక్స్",
@@ -1736,6 +1739,8 @@
     "quotaShare": "కోటా షేర్",
     "discovery": "అన్వేషణ",
     "freeProviderRankings": "ఉచిత ప్రొవైడర్ ర్యాంకింగ్‌లు",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "ఉచిత శ్రేణులు",
     "gamification": "గేమిఫికేషన్",
     "leaderboard": "లీడర్‌బోర్డ్",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "ఈ ప్రొవైడర్ నిలిపివేయబడింది",
     "riskNotice": {
       "title": "కొనసాగడానికి ముందు",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "వినియోగ హెచ్చరికలు ఉన్న ప్రొవైడర్ — వివరాల కోసం క్లిక్ చేయండి",
       "oauth": "ఈ ప్రొవైడర్ మీ అధికారిక ప్రోడక్ట్ సెషన్/OAuthని ఉపయోగిస్తుంది, ఇది ప్రాక్సీ/రూటర్ వినియోగానికి అనుమతించబడలేదు. మేము తీవ్రమైన అటానమస్ ఏజెంట్ వినియోగాన్ని (OpenCloud-శైలి, సుదీర్ఘ బహుళ-దశల ఫ్లోలు, పెద్ద బ్యాచ్‌లు) సిఫార్సు చేయము — అప్‌స్ట్రీమ్ ఖాతాను పరిమితం చేయడం లేదా నిషేధించడం ద్వారా ప్రతిస్పందించవచ్చు. మీ స్వంత పూచీకత్తుపై ఉపయోగించండి.",
       "webCookie": "ఈ ప్రొవైడర్ మీ వెబ్ సెషన్ కుకీల ద్వారా ప్రామాణీకరిస్తుంది. అప్‌స్ట్రీమ్ సేవ ఎప్పుడైనా సెషన్‌ను చెల్లనిదిగా చేయవచ్చు, దీని వలన మీరు మళ్లీ లాగిన్ అవ్వాల్సి ఉంటుంది. ఎక్కువసేపు పర్యవేక్షణ లేని ఆపరేషన్ల కోసం సిఫార్సు చేయబడదు. మీ స్వంత పూచీకత్తుపై ఉపయోగించండి.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "ఈ ప్రొవైడర్ కోసం దీన్ని మళ్లీ చూపవద్దు",
       "understand": "నాకు అర్థమైంది, కొనసాగించు",
       "cancel": "రద్దు చేయండి"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Disabled",
     "enableProvider": "Enable provider",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "సేవ్ చేసిన మోడల్ ఎండ్‌పాయింట్ సెట్టింగ్స్",
     "searchByModelAria": "మోడల్ ద్వారా శోధించండి",
     "selectSupportedEndpoint": "కమిషన్ చేయబడిన కనెక్ట్ చేయబడిన ఎండ్‌పాయింట్‌లలో కనీసం ఒకటి ఎంచుకోండి",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsTooltip": "అవసరమైనప్పుడు అప్‌స్ట్రీమ్ మోడల్స్‌ను పొందండి మరియు కాష్ చేయండి",
+    "autoFetchModelsEnabled": "అప్‌స్ట్రీమ్ మోడల్ ఆటో-ఫెచ్ ప్రారంభించబడింది",
+    "autoFetchModels": "ఆటో-ఫెచ్ అప్‌స్ట్రీమ్ మోడల్స్",
+    "autoFetchModelsDisabled": "అప్‌స్ట్రీమ్ మోడల్ ఆటో-ఫెచ్ నిలిపివేయబడింది",
+    "overridesUpstreamModelHint": "మీ సెట్టింగ్స్ ఈ అప్‌స్ట్రీమ్ మోడల్‌ను అధిగమిస్తాయి",
+    "overridesUpstreamModel": "అప్‌స్ట్రీమ్‌ను ఓవర్‌రైడ్ చేయండి",
+    "autoFetchModelsToggleFailed": "అప్‌స్ట్రీమ్ మోడల్ ఆటో-ఫెచ్‌ను టోగుల్ చేయడంలో విఫలమైంది",
+    "autoFetchModelsPartialFailure": "కొన్ని కనెక్షన్లు నవీకరించబడ్డాయి, కానీ అప్‌స్ట్రీమ్ మోడల్ ఆటో-ఫెచ్ ప్రతి చోట మారలేదు",
+    "resetToUpstreamDefaultsSuccess": "అప్‌స్ట్రీమ్ మోడల్ డిఫాల్ట్స్ పునరుద్ధరించబడ్డాయి",
+    "resetToUpstreamDefaults": "అప్‌స్ట్రీమ్ డిఫాల్ట్స్‌ను పునరుద్ధరించండి",
+    "resetToUpstreamDefaultsFailed": "అప్‌స్ట్రీమ్ మోడల్ డిఫాల్ట్స్‌ను పునరుద్ధరించడంలో విఫలమైంది"
   },
   "settings": {
     "title": "Settings",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "నిషేధించబడిన కీలకపదాలు",
     "customBannedSignalsDesc": "శాశ్వత ఖాతా నిషేధ గుర్తింపును ప్రేరేపించే అదనపు కీలకపదాలు. అంతర్నిర్మిత కీలకపదాలు ఎల్లప్పుడూ వర్తిస్తాయి.",
     "customBannedSignalsPlaceholder": "ఉదా. api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "కుదింపు",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "అరుదైన విజయాలు"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "మొదటి టోకెన్",
         "description": "మీ మొదటి API అభ్యర్థనను చేసారు",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "ప్రొవైడర్ సెటప్",
@@ -13658,23 +13710,6 @@
     "updateFailed": "అప్‌డేట్ చేయడంలో విఫలమైంది (HTTP {status})",
     "networkError": "నెట్‌వర్క్ లోపం — ప్రొవైడర్ ఎక్స్‌పోజర్ సెటింగ్‌ను నవీకరించలేకపోయింది"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "ఈ చిత్రం అభ్యర్థనకు ప్రొవైడర్ దృష్టిని మద్దతు ఇవ్వడం లేదు",

@@ -1,5 +1,4 @@
 import { getEmbeddingProvider } from "@omniroute/open-sse/config/embeddingRegistry.ts";
-import { getRerankProvider } from "@omniroute/open-sse/config/rerankRegistry.ts";
 import { getRegistryEntry } from "@omniroute/open-sse/config/providerRegistry.ts";
 import {
   isClaudeCodeCompatibleProvider,
@@ -86,6 +85,7 @@ import { validateSearchProvider, SEARCH_VALIDATOR_CONFIGS } from "./validation/s
 import {
   validateClarifaiProvider,
   validateEmbeddingApiProvider,
+  validateJinaFoundationProvider,
   validateRerankApiProvider,
 } from "./validation/embeddingProviders";
 import {
@@ -106,6 +106,7 @@ import {
   bytezValidationResultFromStatus,
   validateBytezProvider,
 } from "./validation/webCookie";
+import { validateAiHordeProvider } from "./validation/aihorde";
 import {
   validateV0VercelProvider,
   validateAuggieProvider,
@@ -182,6 +183,7 @@ export async function validateProviderApiKey({ provider, apiKey, providerSpecifi
     // for parity with the "jules" cloud-agent entry above — see #6142.
     devin: validateDevinCloudAgentProvider,
     auggie: validateAuggieProvider,
+    aihorde: validateAiHordeProvider,
     qoder: validateQoderProvider,
     kiro: validateKiroProvider,
     "command-code": validateCommandCodeProvider,
@@ -279,15 +281,8 @@ export async function validateProviderApiKey({ provider, apiKey, providerSpecifi
         modelId: embeddingProvider?.models?.[0]?.id || "voyage-4-lite",
       });
     },
-    "jina-ai": ({ apiKey, providerSpecificData }: any) => {
-      const rerankProvider = getRerankProvider("jina-ai");
-      return validateRerankApiProvider({
-        apiKey,
-        providerSpecificData,
-        url: rerankProvider?.baseUrl,
-        modelId: rerankProvider?.models?.[0]?.id || "jina-reranker-v3",
-      });
-    },
+    "jina-ai": ({ apiKey, providerSpecificData }: any) =>
+      validateJinaFoundationProvider({ apiKey, providerSpecificData }),
     gitlab: ({ apiKey, providerSpecificData }: any) =>
       validateGitlabProvider({ apiKey, providerSpecificData, isLocal }),
     vertex: validateVertexProvider,

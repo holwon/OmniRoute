@@ -18,6 +18,7 @@ import {
   OPENAI_RESPONSES_ERROR_FRAME,
 } from "../../open-sse/utils/earlyStreamKeepalive.ts";
 import { assertResponsesOutputIndexLifecycle } from "../helpers/assertResponsesOutputIndexLifecycle.ts";
+import { takeEarlyKeepaliveBytes } from "../../open-sse/utils/earlyKeepaliveByteBuffer.ts";
 
 async function readAll(response: Response): Promise<string> {
   const reader = response.body!.getReader();
@@ -299,6 +300,48 @@ test("slow handler emits the Responses API startup frame before the real body", 
   assert.match(body, /event: response\.reasoning_summary_part\.done/);
   assert.match(body, /event: response\.created/, "should forward the real upstream body");
   assert.match(body, /data: \[DONE\]/);
+});
+
+test("a correlationId records the startup frame and keepalive ticks, but not the forwarded body", async () => {
+  const correlationId = "corr-record-test-1";
+  const slow = new Promise<Response>((resolve) => {
+    setTimeout(
+      () => resolve(sseResponse("event: response.created\ndata: {}\n\ndata: [DONE]\n\n")),
+      65
+    );
+  });
+
+  const result = await withEarlyStreamKeepalive(slow, {
+    thresholdMs: 25,
+    intervalMs: 20,
+    startupFrame: RESPONSES_STARTUP_THINKING_FRAME,
+    correlationId,
+  });
+  await readAll(result);
+
+  const recorded = takeEarlyKeepaliveBytes(correlationId).join("");
+  assert.match(recorded, /event: response\.output_item\.added/, "startup frame must be recorded");
+  assert.doesNotMatch(
+    recorded,
+    /event: response\.created/,
+    "the verbatim-forwarded real body must NOT be recorded here — the handler's own reqLogger already captures it, and double-recording would duplicate it in the persisted artifact"
+  );
+});
+
+test("omitting correlationId leaves the buffer untouched (today's behavior, unchanged)", async () => {
+  const correlationId = "corr-record-test-omitted";
+  const slow = new Promise<Response>((resolve) => {
+    setTimeout(() => resolve(sseResponse("event: response.created\ndata: {}\n\n")), 65);
+  });
+
+  const result = await withEarlyStreamKeepalive(slow, {
+    thresholdMs: 25,
+    intervalMs: 20,
+    startupFrame: RESPONSES_STARTUP_THINKING_FRAME,
+  });
+  await readAll(result);
+
+  assert.deepEqual(takeEarlyKeepaliveBytes(correlationId), []);
 });
 
 test("slow handler emits the custom keepaliveFrame (Anthropic ping) before the body", async () => {

@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Roteie solicitações com orçamento esgotado para o provedor/modelo de fallback gratuito de emergência.",
   "featureFlagArenaEloSyncEnabledDescription": "Ativar a sincronização periódica do ELO do leaderboard da Arena AI para classificações de inteligência do modelo.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Divulgar ids espelho claude/&lt;provider&gt;/&lt;model&gt; em /v1/models para que a descoberta de modelos do gateway Claude Code liste modelos não-Claude. Atenção: duplica as entradas do catálogo para todos os clientes quando ativado globalmente.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Ative faixas de admissão virtuais adaptativas por tenant para o despacho de provedores (#9654): o pico de um tenant não gera mais 503 para outro. A variável de ambiente OMNIROUTE_CHAT_VIRTUAL_LANES tem precedência sobre esta configuração do painel; as alterações entram em vigor ao reiniciar o servidor.",
   "sidebar": {
     "home": "Início",
     "dashboard": "Painel",
@@ -1281,6 +1282,8 @@
     "resilienceConnectionsSubtitle": "Cooldown, disjuntor, estado de bloqueio",
     "settingsModalityBridge": "Ponte de Modalidade",
     "settingsModalityBridgeSubtitle": "Fallback de imagem/áudio → texto para modelos apenas de texto",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations",
     "commandPalette": {
       "title": "Paleta de Comandos",
       "searchPlaceholder": "Pesquisar páginas, configurações, ferramentas...",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Compartilhamento de Cota",
     "discovery": "Descoberta",
     "freeProviderRankings": "Ranking de Provedores Gratuitos",
+    "radar": "Radar",
+    "setup": "Configuração",
     "freeTiers": "Níveis Gratuitos",
     "gamification": "Gamification",
     "leaderboard": "Leaderboard",
@@ -1753,9 +1758,7 @@
     "tools": "Ferramentas",
     "agentBridge": "Agent Bridge",
     "trafficInspector": "Inspector de Tráfego",
-    "usage": "Uso",
-    "radar": "Radar",
-    "setup": "Configuração"
+    "usage": "Uso"
   },
   "home": {
     "quickStart": "Início Rápido",
@@ -5094,6 +5097,7 @@
     "deprecatedProvider": "Este provedor foi descontinuado",
     "riskNotice": {
       "title": "Antes de continuar",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Provider com restrições de uso — clique para detalhes",
       "oauth": "Este provider usa sua sessão/OAuth oficial do produto, que não autoriza uso em proxy/router. Não recomendamos uso intensivo em agentes autônomos (estilo OpenCloud, multi-passos longos, batches grandes) — o upstream pode reagir restringindo ou banindo a conta. Use por sua conta e risco.",
       "webCookie": "Este provider autentica através dos cookies da sua sessão web. O serviço upstream pode invalidar a sessão a qualquer momento, exigindo re-login. Não recomendado para operações longas e não-supervisionadas. Use por sua conta e risco.",
@@ -5101,6 +5105,11 @@
       "dontShowAgain": "Não mostrar de novo para este provider",
       "understand": "Entendi, continuar",
       "cancel": "Cancelar"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Desativado",
     "enableProvider": "Ativar provedor",
@@ -6337,7 +6346,18 @@
     "savedModelEndpointSettings": "Configurações do endpoint do modelo salvo",
     "searchByModelAria": "Pesquisar por modelo",
     "selectSupportedEndpoint": "Selecione pelo menos um endpoint suportado",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModelsEnabled": "Modelo upstream de auto-busca habilitado",
+    "autoFetchModelsDisabled": "Busca automática do modelo upstream desativada",
+    "autoFetchModels": "Buscar automaticamente modelos upstream",
+    "autoFetchModelsTooltip": "Busque e armazene em cache os modelos upstream quando necessário",
+    "autoFetchModelsToggleFailed": "Falha ao alternar a busca automática do modelo upstream",
+    "overridesUpstreamModel": "Substitui upstream",
+    "autoFetchModelsPartialFailure": "Algumas conexões foram atualizadas, mas a busca automática do modelo upstream não foi alterada em todos os lugares",
+    "overridesUpstreamModelHint": "Suas configurações substituem este modelo upstream",
+    "resetToUpstreamDefaults": "Restaurar padrões do upstream",
+    "resetToUpstreamDefaultsFailed": "Falha ao restaurar as configurações padrão do modelo upstream",
+    "resetToUpstreamDefaultsSuccess": "Restaurados os padrões do modelo upstream"
   },
   "settings": {
     "title": "Configurações",
@@ -6556,6 +6576,12 @@
     "autoDisableDescription": "Marca permanentemente conexões de provedor como desativadas quando retornam sinais terminais de banimento (ex.: HTTP 403 'verify your account'). Isso remove a conexão da rotação de combos.",
     "autoDisableThreshold": "Limite de banimento",
     "autoDisableThresholdDesc": "Quantidade de sinais consecutivos de banimento antes da desativação permanente.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Palavras-Chave Proibidas",
     "customBannedSignalsDesc": "Palavras-chave adicionais que acionam a detecção de banimento permanente da conta. Palavras-chave integradas sempre se aplicam.",
     "customBannedSignalsPlaceholder": "chave da API revogada",
@@ -8534,13 +8560,13 @@
   },
   "omniglyph": {
     "preview": "Visualização",
-    "description": "Compressão de contexto como imagem. Renderiza o prompt de sistema, a documentação de ferramentas e o histórico denso como páginas PNG compactas que o Claude Fable 5 lê em vez de texto. Os tokens de imagem são cobrados por dimensões em vez de caracteres, então o bloco convertido custa cerca de 10× menos. Somente na rota direta da Anthropic.",
+    "description": "Compressão de contexto como imagem. Renderiza o prompt de sistema, a documentação de ferramentas e o histórico denso como páginas PNG compactas para a rota medida do Claude Fable 5. O pacote OmniGlyph também expõe transformadores nativos para GPT 5.6, mas o OmniRoute mantém essas rotas fail-closed até existirem recibos de fidelidade do provedor e de leitura.",
     "economicsTitle": "A economia",
     "economics": {
       "fewerTokens": "menos tokens no bloco convertido",
       "savings": "economia de ponta a ponta (medida)",
       "imageTokens": "tokens de imagem para uma página de 1568×728 (cerca de 28 mil caracteres)",
-      "accuracy": "precisão de leitura no Fable 5 (n=30)"
+      "accuracy": "recibo de leitura do Fable 5 (escopo medido)"
     },
     "beforeAfterTitle": "Antes → depois",
     "blockSavings": "−{percent}% de tokens neste bloco",
@@ -8553,18 +8579,18 @@
     "gates": {
       "model": {
         "label": "Modelo",
-        "pass": "claude-fable-5",
-        "why": "Somente o Fable 5 lê páginas densas com 100% de precisão (medido, n=30). GPT-5.5 e Gemini 2.5 Flash são bloqueados."
+        "pass": "claude-fable-5 (medido); gpt-5.6 (HOLD)",
+        "why": "Somente a rota medida do Fable 5 está habilitada no OmniRoute. O GPT 5.6 tem suporte estrutural no pacote, mas continua bloqueado até seu recibo do provedor; famílias não verificadas, como Grok, permanecem em texto."
       },
       "transport": {
         "label": "Transporte",
-        "pass": "direto Anthropic",
-        "why": "Agregadores reamostram imagens e destroem a legibilidade — apenas a rota direta é confiável."
+        "pass": "provedor direto",
+        "why": "Agregadores podem reamostrar imagens e destruir a legibilidade — apenas uma rota direta do provedor é confiável."
       },
       "format": {
         "label": "Formato",
-        "pass": "Claude nativo",
-        "why": "O corpo deve usar o formato Claude e nunca colocar um papel system dentro de messages."
+        "pass": "Claude/OpenAI nativo",
+        "why": "O corpo precisa corresponder ao wire do provedor: Claude Messages, OpenAI Chat Completions ou input[] nativo do OpenAI Responses."
       },
       "profitable": {
         "label": "Rentável",
@@ -8573,7 +8599,28 @@
       }
     },
     "enableTitle": "Ativar a engine",
-    "enableDescription": "Executa por último na pilha (depois que RTK/Caveman limpa o texto, o OmniGlyph converte o restante em imagens) e também roda de forma independente pelo modo <code>omniglyph</code>. Este é um preview e permanece desativado por padrão até que a validação de ponta a ponta seja concluída.",
+    "enableDescription": "Executa por último na pilha, depois que os engines de texto limpam a solicitação, usando o wire nativo do provedor; solicitações OpenAI Chat/Responses são comprimidas depois da tradução para preservar seu formato. Também roda de forma independente pelo modo <code>omniglyph</code>. Este é um preview e permanece desativado por padrão até que a validação de ponta a ponta seja concluída.",
+    "profileTitle": "Perfil de compressão",
+    "profileDescription": "O perfil é um teto, não um piso: um perfil mais restrito não pode ser reaberto por um override de passo. Medido nesta base: com coding-safe ou balanced, uma sessão que ainda não acumulou histórico não comprime nada, porque os dois elevam o mínimo de caracteres e mantêm o system prompt, os schemas de tools e os tool results nativos.",
+    "profiles": {
+      "aggressive": {
+        "label": "Agressivo (padrão)",
+        "description": "A política que os recibos publicados mediram. Imageia o system prompt, a documentação de tools e o histórico denso."
+      },
+      "balanced": {
+        "label": "Equilibrado",
+        "description": "Mantém o estado vivo nativo e protege os últimos 8 turnos; só colapsa histórico antigo já fechado."
+      },
+      "codingSafe": {
+        "label": "Seguro para código",
+        "description": "Mantém autoridade, schemas de tools e saída de ferramenta nativos, protegendo os últimos 12 turnos. Não comprime nada até a sessão acumular histórico."
+      },
+      "passthrough": {
+        "label": "Sem transformação",
+        "description": "Só roteia. A engine é pulada e o request segue intacto."
+      }
+    },
+    "profileAria": "Selecionar o perfil de compressão do OmniGlyph",
     "saved": "Salvo.",
     "saveFailed": "Não foi possível salvar.",
     "enableAria": "Ativar a engine OmniGlyph",
@@ -11047,7 +11094,8 @@
       "compressed": "Compressão",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12439,6 +12487,11 @@
       "rare": "Conquistas raras"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "Apoiador do Radar",
+        "description": "Verificou um feed ativo de apoiador do OmniRoute Radar",
+        "criteria": "Verifique um feed ativo e assinado de apoiador do Radar."
+      },
       "first-token": {
         "name": "Primeiro Token",
         "description": "Fez sua primeira solicitação de API",
@@ -12548,11 +12601,6 @@
         "name": "???",
         "description": "Uma conquista oculta espera...",
         "criteria": "Complete a conquista oculta para revelar este emblema."
-      },
-      "radar-supporter": {
-        "name": "Apoiador do Radar",
-        "description": "Verificou um feed ativo de apoiador do OmniRoute Radar",
-        "criteria": "Verifique um feed ativo e assinado de apoiador do Radar."
       }
     }
   },

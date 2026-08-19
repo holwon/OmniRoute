@@ -29,20 +29,21 @@ test.after(() => {
   fs.rmSync(TEST_DATA_DIR, { recursive: true, force: true });
 });
 
-test("DeepSeek registry declares the documented per-model thinking efforts", () => {
-  const models = new Map((REGISTRY.deepseek?.models || []).map((model) => [model.id, model]));
-
-  assert.deepEqual(models.get("deepseek-v4-flash")?.supportedThinkingEfforts, [
-    "none",
-    "low",
-    "high",
-    "max",
-  ]);
-  assert.deepEqual(models.get("deepseek-v4-pro")?.supportedThinkingEfforts, [
-    "none",
-    "high",
-    "max",
-  ]);
+test("DeepSeek registries declare none/low/high/max on both V4 models", () => {
+  const expectedEfforts = ["none", "low", "high", "max"];
+  for (const providerId of ["deepseek", "opencode-go"]) {
+    const models = new Map((REGISTRY[providerId]?.models || []).map((model) => [model.id, model]));
+    for (const modelId of ["deepseek-v4-flash", "deepseek-v4-pro"]) {
+      assert.deepEqual(models.get(modelId)?.supportedThinkingEfforts, expectedEfforts);
+      for (const effort of expectedEfforts) {
+        assert.equal(
+          models.has(`${modelId}-${effort}`),
+          false,
+          `${providerId} should derive ${modelId}-${effort} from the base model metadata`
+        );
+      }
+    }
+  }
 });
 
 test("DeepSeek catalog exposes only the declared effort aliases", async () => {
@@ -66,13 +67,38 @@ test("DeepSeek catalog exposes only the declared effort aliases", async () => {
   assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-flash-high")));
   assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-flash-max")));
   assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-pro-none")));
+  assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-pro-low")));
   assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-pro-high")));
   assert.ok([...ids].some((id) => id.endsWith("deepseek-v4-pro-max")));
-  assert.equal(
-    [...ids].some((id) => id.endsWith("deepseek-v4-pro-low")),
-    false,
-    "Pro does not advertise low"
+});
+
+test("OpenCode Go catalog derives the declared V4 effort aliases from base models", async () => {
+  await providersDb.createProviderConnection({
+    provider: "opencode-go",
+    authType: "apikey",
+    name: "opencode-go-deepseek-efforts",
+    apiKey: "opencode-go-test-key",
+    isActive: true,
+    testStatus: "active",
+  });
+
+  const response = await v1ModelsCatalog.getUnifiedModelsResponse(
+    new Request("http://localhost/api/v1/models")
   );
+  const body = (await response.json()) as {
+    data: Array<{ id: string; capabilities?: { effort_tiers?: string[] } }>;
+  };
+  const models = new Map(body.data.map((model) => [model.id, model]));
+  const expectedEfforts = ["none", "low", "high", "max"];
+
+  for (const modelId of ["deepseek-v4-flash", "deepseek-v4-pro"]) {
+    const baseId = `opencode-go/${modelId}`;
+    assert.deepEqual(models.get(baseId)?.capabilities?.effort_tiers, expectedEfforts);
+    for (const effort of expectedEfforts) {
+      assert.ok(models.has(`${baseId}-${effort}`), `${baseId}-${effort} must be advertised`);
+    }
+    assert.equal(models.has(`${baseId}-medium`), false);
+  }
 });
 test("Crof synced reasoning metadata exposes exactly none/low/medium/high/max aliases", async () => {
   const connection = await providersDb.createProviderConnection({
@@ -181,25 +207,31 @@ test("hardcoded DeepSeek effort suffixes resolve through the static registry", a
   assert.equal(flashNone.model, "deepseek-v4-flash");
   assert.equal(flashNone.resolvedThinkingEffort, "none");
 
-  const unsupportedProLow = await getModelInfo("ds/deepseek-v4-pro-low");
-  assert.equal(unsupportedProLow.model, "deepseek-v4-pro-low");
-  assert.equal(unsupportedProLow.resolvedThinkingEffort, undefined);
+  const proLow = await getModelInfo("ds/deepseek-v4-pro-low");
+  assert.equal(proLow.model, "deepseek-v4-pro");
+  assert.equal(proLow.resolvedThinkingEffort, "low");
 });
 
-test("native DeepSeek preserves Flash low while clamping unsupported Pro low", () => {
-  const flash = sanitizeReasoningEffortForProvider(
-    { model: "deepseek-v4-flash", reasoning_effort: "low" },
-    "deepseek",
-    "deepseek-v4-flash"
-  ) as Record<string, unknown>;
-  assert.equal(flash.reasoning_effort, "low");
+test("OpenCode Go V4 suffixes resolve from base-model effort metadata", async () => {
+  for (const modelId of ["deepseek-v4-flash", "deepseek-v4-pro"]) {
+    for (const effort of ["none", "low", "high", "max"]) {
+      const info = await getModelInfo(`opencode-go/${modelId}-${effort}`);
+      assert.equal(info.provider, "opencode-go");
+      assert.equal(info.model, modelId);
+      assert.equal(info.resolvedThinkingEffort, effort);
+    }
+  }
+});
 
-  const pro = sanitizeReasoningEffortForProvider(
-    { model: "deepseek-v4-pro", reasoning_effort: "low" },
-    "deepseek",
-    "deepseek-v4-pro"
-  ) as Record<string, unknown>;
-  assert.equal(pro.reasoning_effort, "high");
+test("native DeepSeek preserves the documented low effort for Flash and Pro", () => {
+  for (const model of ["deepseek-v4-flash", "deepseek-v4-pro"]) {
+    const body = { model, reasoning_effort: "low" };
+    assert.equal(
+      sanitizeReasoningEffortForProvider(body, "deepseek", model),
+      body,
+      `${model} must pass low through unchanged`
+    );
+  }
 });
 
 test("non-DeepSeek static reasoning models do not advertise unresolvable effort aliases", async () => {
@@ -266,9 +298,9 @@ test("custom model named deepseek-v4-flash-low is not rewritten by registry suff
   assert.equal(info.resolvedThinkingEffort, undefined);
 });
 
-test("none effort resolves and passes through the native DeepSeek sanitizer unchanged", async () => {
-  // The -none suffix resolves to base + effort "none", which reaches the native
-  // DeepSeek endpoint as reasoning_effort: "none" unchanged (#9485 review #8).
+test("none effort resolves and stays explicit through provider sanitation", async () => {
+  // The format translator subsequently carries this as reasoning.effort:"none"
+  // on DeepSeek's default Responses route, which disables thinking.
   const flashNone = await getModelInfo("ds/deepseek-v4-flash-none");
   assert.equal(flashNone.model, "deepseek-v4-flash");
   assert.equal(flashNone.resolvedThinkingEffort, "none");
@@ -281,9 +313,9 @@ test("none effort resolves and passes through the native DeepSeek sanitizer unch
   assert.equal(sanitized.reasoning_effort, "none");
 });
 
-test("isFlash check is robust to suffixed model ids", () => {
-  // A suffixed id like deepseek-v4-flash-low must still be recognized as Flash
-  // so its low effort is preserved, not clamped to high (#9485 review #5).
+test("suffixed Flash low remains valid before alias resolution", () => {
+  // Preserve low even if a future route sanitizes the raw suffixed id before
+  // resolving it to the registered base model.
   const sanitizedSuffixed = sanitizeReasoningEffortForProvider(
     { model: "deepseek-v4-flash-low", reasoning_effort: "low" },
     "deepseek",

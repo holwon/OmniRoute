@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "Перенаправляти запити з вичерпаним бюджетом на резервного безкоштовного провайдера/модель.",
   "featureFlagArenaEloSyncEnabledDescription": "Увімкнути періодичну синхронізацію ELO з таблиці лідерів Arena AI для рейтингу інтелекту моделей.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "Рекламуйте claude/&lt;provider&gt;/&lt;model&gt; mirror ids на /v1/models, щоб модель виявлення Claude Code gateway перераховувала не Claude моделі. Увага: подвоює записи каталогу для всіх клієнтів, коли увімкнено глобально.",
+  "featureFlagChatVirtualLanesEnabledDescription": "Увімкніть адаптивні віртуальні смуги допуску для кожного тенанта під час надсилання провайдерам (#9654): сплеск навантаження одного тенанта більше не викликає 503 в іншого. Змінна середовища OMNIROUTE_CHAT_VIRTUAL_LANES має пріоритет над цим налаштуванням у панелі; зміни набувають чинності після перезапуску сервера.",
   "sidebar": {
     "home": "додому",
     "dashboard": "Приладова панель",
@@ -1290,7 +1291,9 @@
       "open": "відкрити",
       "close": "закрити"
     },
-    "noResults": "Немає результатів"
+    "noResults": "Немає результатів",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "Веб-хуки",
@@ -1736,6 +1739,8 @@
     "quotaShare": "Частка квоти",
     "discovery": "Дослідження",
     "freeProviderRankings": "Рейтинги безкоштовних провайдерів",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "Безкоштовні тарифи",
     "gamification": "Гейміфікація",
     "leaderboard": "Таблиця лідерів",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "Цей постачальник більше не підтримується",
     "riskNotice": {
       "title": "Перед тим, як продовжити",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "Провайдер із застереженнями щодо використання — натисніть для подробиць",
       "oauth": "Цей провайдер використовує вашу офіційну продуктову сесію/OAuth, які не авторизовані для використання у проксі/маршрутизаторі. Ми не рекомендуємо інтенсивне автономне використання агентами (стиль OpenCloud, довгі багатокрокові потоки, великі пакети) — провайдер може у відповідь обмежити або заблокувати акаунт. Використовуйте на власний ризик.",
       "webCookie": "Цей провайдер автентифікується через cookie вашої веб-сесії. Сервіс може в будь-який момент анулювати сесію, що вимагатиме повторного входу. Не рекомендовано для довгих автоматизованих операцій. Використовуйте на власний ризик.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "Більше не показувати для цього провайдера",
       "understand": "Я розумію, продовжити",
       "cancel": "Скасувати"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "Вимкнено",
     "enableProvider": "Увімкнути провайдера",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "Налаштування кінцевої точки збереженої моделі",
     "searchByModelAria": "Пошук за моделлю",
     "selectSupportedEndpoint": "Виберіть принаймні одну підтримувану точку доступу",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "Автоматичне отримання моделей з upstream",
+    "autoFetchModelsDisabled": "Автоматичне отримання моделі з upstream вимкнено",
+    "autoFetchModelsTooltip": "Отримати та кешувати моделі з upstream за потреби",
+    "autoFetchModelsEnabled": "Увімкнено автоматичне отримання моделі з upstream",
+    "autoFetchModelsToggleFailed": "Не вдалося перемкнути автоматичне отримання моделі upstream",
+    "overridesUpstreamModel": "Перезаписує upstream",
+    "overridesUpstreamModelHint": "Ваші налаштування переважають цю модель вгору за течією",
+    "autoFetchModelsPartialFailure": "Деякі з'єднання оновлено, але автоматичне отримання моделі з верхнього рівня не було змінено скрізь",
+    "resetToUpstreamDefaultsSuccess": "Відновлено значення за замовчуванням моделі з upstream",
+    "resetToUpstreamDefaults": "Відновити значення за замовчуванням з upstream",
+    "resetToUpstreamDefaultsFailed": "Не вдалося відновити значення за замовчуванням моделі upstream"
   },
   "settings": {
     "title": "Налаштування",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "Banned Keywords",
     "customBannedSignalsDesc": "Додаткові ключові слова, які запускають виявлення постійного блокування акаунта. Вбудовані ключові слова застосовуються завжди.",
     "customBannedSignalsPlaceholder": "наприклад, api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "Компресія",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "Рідкісні досягнення"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "Перший токен",
         "description": "Зроблено перший запит до API",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "Налаштування постачальника",
@@ -13658,23 +13710,6 @@
     "updateFailed": "Не вдалося оновити (HTTP {status})",
     "networkError": "Помилка мережі — не вдалося оновити налаштування експозиції провайдера"
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "Постачальник не підтримує візуалізацію для цього запиту зображення",

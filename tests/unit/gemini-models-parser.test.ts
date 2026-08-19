@@ -3,9 +3,7 @@ import assert from "node:assert/strict";
 
 import { parseGeminiModelsList } from "../../src/lib/providerModels/geminiModelsParser";
 
-// A representative slice of the live generativelanguage v1beta/models response — including the
-// image models (gemini-*-image via generateContent, imagen-* via predict) that the Vertex catalog
-// must surface dynamically.
+// A representative slice of the live generativelanguage v1beta/models response.
 const SAMPLE = {
   models: [
     {
@@ -22,11 +20,6 @@ const SAMPLE = {
       supportedGenerationMethods: ["generateContent", "countTokens"],
     },
     {
-      name: "models/imagen-4.0-generate-001",
-      displayName: "Imagen 4.0",
-      supportedGenerationMethods: ["predict"],
-    },
-    {
       name: "models/text-embedding-004",
       displayName: "Text Embedding 004",
       supportedGenerationMethods: ["embedContent"],
@@ -39,13 +32,6 @@ const SAMPLE = {
     {
       name: "models/veo-3.0-generate-001",
       displayName: "Veo 3.0",
-      supportedGenerationMethods: ["predictLongRunning"],
-    },
-    {
-      // Defensive: an Imagen model exposed via a long-running method must stay
-      // "images", never "video".
-      name: "models/imagen-future-preview",
-      displayName: "Imagen Future",
       supportedGenerationMethods: ["predictLongRunning"],
     },
   ],
@@ -70,13 +56,6 @@ test("parseGeminiModelsList maps generateContent image models to the chat endpoi
   assert.deepEqual(proImage!.supportedEndpoints, ["chat"]);
 });
 
-test("parseGeminiModelsList maps Imagen predict models to the images endpoint", () => {
-  const models = parseGeminiModelsList(SAMPLE);
-  const imagen = models.find((m) => m.id === "imagen-4.0-generate-001");
-  assert.ok(imagen, "imagen-4.0-generate-001 should be present");
-  assert.deepEqual(imagen!.supportedEndpoints, ["images"]);
-});
-
 test("parseGeminiModelsList maps embedContent and bidiGenerateContent", () => {
   const models = parseGeminiModelsList(SAMPLE);
   assert.deepEqual(models.find((m) => m.id === "text-embedding-004")!.supportedEndpoints, [
@@ -92,13 +71,6 @@ test("parseGeminiModelsList maps Veo predictLongRunning models to the video endp
   const veo = models.find((m) => m.id === "veo-3.0-generate-001");
   assert.ok(veo, "veo-3.0-generate-001 should be present");
   assert.deepEqual(veo!.supportedEndpoints, ["video"]);
-});
-
-test("parseGeminiModelsList keeps Imagen as images even via a long-running method", () => {
-  const models = parseGeminiModelsList(SAMPLE);
-  const imagen = models.find((m) => m.id === "imagen-future-preview");
-  assert.ok(imagen, "imagen-future-preview should be present");
-  assert.deepEqual(imagen!.supportedEndpoints, ["images"]);
 });
 
 test("parseGeminiModelsList defaults to chat and tolerates empty/missing input", () => {

@@ -11,6 +11,7 @@ import {
   isForbiddenCustomHeaderName,
 } from "@/shared/constants/upstreamHeaders";
 import { MAX_TIMER_TIMEOUT_MS } from "@/shared/utils/runtimeTimeouts";
+import { AUTO_DISABLE_BANNED_SCOPES } from "@/shared/utils/autoDisableBanned";
 
 // Single source of truth: ../settingsSchemas (the schema the runtime settings route validates
 // against). Re-exported here so this modular barrel stays in exact lockstep — a divergent local
@@ -280,5 +281,6 @@ export const updateAutoDisableAccountsSchema = z
   .object({
     enabled: z.boolean(),
     threshold: z.number().int().min(1).max(10).optional(),
+    scope: z.enum(AUTO_DISABLE_BANNED_SCOPES).optional(),
   })
   .strict();

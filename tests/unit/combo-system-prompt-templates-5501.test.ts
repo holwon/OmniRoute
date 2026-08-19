@@ -157,12 +157,11 @@ test("resolveTargetFingerprint: pinned fingerprint wins", () => {
 });
 
 test("resolveTargetFingerprint: parses @fp: suffix from executionKey", () => {
-  assert.equal(resolveTargetFingerprint({ provider: "mcode", executionKey: "k@fp:abc" }), "abc");
+  assert.equal(resolveTargetFingerprint({ provider: "opencode", executionKey: "k@fp:abc" }), "abc");
 });
 
 test("resolveTargetFingerprint: null when no source", () => {
   assert.equal(resolveTargetFingerprint({ provider: "opencode", executionKey: "k" }), null);
-  assert.equal(resolveTargetFingerprint({ provider: "mimocode" }), null);
 });
 
 // ── Integration: hook + gate through handleComboChat (#5501) ──────────────────

@@ -18,6 +18,7 @@ import {
 } from "@omniroute/open-sse/services/accountFallback";
 import { looksLikeQuotaExhausted } from "@/shared/utils/classify429";
 import { getTrustedLocalRateLimitError } from "@omniroute/open-sse/services/rateLimitManager/errors";
+import { isConnectionUnavailableToAuxiliaryActivity } from "@/lib/exclusiveLeaseIsolation";
 
 const INTERNAL_ORIGIN = "http://omniroute.internal";
 export const DEFAULT_MODEL_TEST_TIMEOUT_MS = 30_000;
@@ -356,9 +357,10 @@ function isBotBlockMessage(message: string): boolean {
  * Reuses the routing path's existing quota vocabulary from accountFallback.ts
  * and classify429.ts instead of inventing a new vocabulary.
  */
-export function classifyTestErrorQuota(
-  errorText: string
-): { isQuota?: boolean; isTransient?: boolean } {
+export function classifyTestErrorQuota(errorText: string): {
+  isQuota?: boolean;
+  isTransient?: boolean;
+} {
   const trimmed = typeof errorText === "string" ? errorText.trim() : "";
   if (!trimmed) return {};
 
@@ -398,6 +400,17 @@ export async function runSingleModelTest(
     timeoutMs = DEFAULT_MODEL_TEST_TIMEOUT_MS,
     streamChat = true,
   } = options;
+
+  if (connectionId && (await isConnectionUnavailableToAuxiliaryActivity(connectionId))) {
+    const fullModelId = modelId.includes("/") ? modelId : `${providerId}/${modelId}`;
+    return {
+      modelId: fullModelId,
+      status: "error",
+      latencyMs: 0,
+      httpStatus: 409,
+      error: "Model tests are unavailable for managed lease connections",
+    };
+  }
 
   let fullModelStr = modelId;
   if (!fullModelStr.includes("/")) {
@@ -572,7 +585,8 @@ export async function runSingleModelTest(
       // error, not a bot-block. A bare 403 status without quota/bot wording still
       // falls through to the generic error branch.
       const quotaFlags = classifyTestErrorQuota(error);
-      const isBotBlock = !quotaFlags.isQuota && (streamError.statusCode === 403 || isBotBlockMessage(error));
+      const isBotBlock =
+        !quotaFlags.isQuota && (streamError.statusCode === 403 || isBotBlockMessage(error));
       return {
         modelId: fullModelStr,
         status: rateLimited ? "rate_limited" : "error",

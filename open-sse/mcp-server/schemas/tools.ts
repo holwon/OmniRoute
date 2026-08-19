@@ -68,6 +68,27 @@ export const getHealthOutput = z.object({
       provider: z.string(),
     })
     .optional(),
+  adaptiveAdmission: z
+    .object({
+      virtualLanes: z.boolean(),
+      pressure: z.string(),
+      utilization: z.number(),
+      laneCount: z.number(),
+      laneQueuedCount: z.number(),
+      laneQueuedCost: z.number(),
+      laneTenants: z.array(
+        z.object({
+          tenantKey: z.string(),
+          queuedCount: z.number(),
+          queuedCost: z.number(),
+        })
+      ),
+      admittedCount: z.number(),
+      rejectedCount: z.number(),
+      wouldRejectCount: z.number(),
+      shutdown: z.boolean(),
+    })
+    .optional(),
   degraded: z
     .array(
       z.object({
@@ -81,7 +102,7 @@ export const getHealthOutput = z.object({
 export const getHealthTool: McpToolDefinition<typeof getHealthInput, typeof getHealthOutput> = {
   name: "omniroute_get_health",
   description:
-    "Returns the current health status of OmniRoute including uptime, memory usage, circuit breaker states for all providers, rate limit status, and cache statistics. If an underlying source (health/resilience/rate-limits) could not be reached, it is listed in `degraded` instead of being silently reported as empty/zero.",
+    "Returns the current health status of OmniRoute including uptime, memory usage, circuit breaker states for all providers, rate limit status, and cache statistics. When adaptive virtual-lane admission is active, a curated `adaptiveAdmission` block reports per-lane queue pressure (top tenants by queued cost). If an underlying source (health/resilience/rate-limits) could not be reached, it is listed in `degraded` instead of being silently reported as empty/zero.",
   inputSchema: getHealthInput,
   outputSchema: getHealthOutput,
   scopes: ["read:health"],

@@ -13,6 +13,7 @@ import {
 import { encryptCredential } from "../encryption.mjs";
 import { openOmniRouteDb } from "../sqlite.mjs";
 import { t } from "../i18n.mjs";
+import { registerProviderCrud } from "./provider-crud.mjs";
 
 function publicConnection(connection) {
   return {
@@ -603,6 +604,8 @@ export function registerProviders(program) {
       const exitCode = await runProvidersStatusCommand({ ...opts, output: globalOpts.output });
       if (exitCode !== 0) process.exit(exitCode);
     });
+
+  registerProviderCrud(providers);
 
   extendProvidersMetrics(providers);
 }

@@ -24,6 +24,7 @@ test("Video Bridge settings default to a bounded disabled runtime and accept val
     enabled: false,
     model: "",
     frameCount: 8,
+    samplingPolicy: "uniform",
     maxVideos: 1,
     timeoutMs: 120_000,
     cacheEnabled: MODALITY_BRIDGE_DEFAULTS.cacheEnabled,
@@ -35,10 +36,15 @@ test("Video Bridge settings default to a bounded disabled runtime and accept val
     modalityBridgeVideoEnabled: true,
     modalityBridgeVideoModel: "openai/gpt-4o-mini",
     modalityBridgeVideoFrameCount: 16,
+    modalityBridgeVideoSamplingPolicy: "scene_aware",
     modalityBridgeVideoMaxVideos: 4,
     modalityBridgeVideoTimeout: 120_000,
   });
   assert.equal(valid.success, true);
+  assert.equal(
+    updateSettingsSchema.safeParse({ modalityBridgeVideoSamplingPolicy: "segment_aware" }).success,
+    true
+  );
 });
 
 test("Video Bridge settings schema rejects values outside extraction bounds", () => {
@@ -67,4 +73,12 @@ test("persisted legacy Video Bridge timeouts clamp to the broker's 120 second de
       `new writes must reject ${timeoutMs}ms instead of exceeding the broker deadline`
     );
   }
+});
+
+test("persisted segment-aware policy remains an explicit opt-in", () => {
+  assert.equal(
+    resolveVideoBridgeRuntimeSettings({ modalityBridgeVideoSamplingPolicy: "segment_aware" })
+      .samplingPolicy,
+    "segment_aware"
+  );
 });

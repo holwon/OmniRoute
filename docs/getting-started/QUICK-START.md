@@ -140,6 +140,8 @@ omniroute launch-codex --model auto
 
 You can do this manually via `codex` and command line parameters to specify endpoint and api key, but with the above command, OmniRoute takes care of everything for you.
 
+The same one-command launch works for other CLIs via the generic launcher — `omniroute run <target>` supports `claude`, `codex`, `aider`, `goose`, `opencode`, `qwen`, and `gemini` (see [CLI Integrations](../guides/CLI-INTEGRATIONS.md)).
+
 3. The CLI should be sending requests to OmniRoute now.
 
 ### Confirm your tool is routing to OmniRoute

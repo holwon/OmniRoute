@@ -1,4 +1,4 @@
-import { createRequire } from "node:module";
+import { runtimeRequire as _require } from "./runtimeRequire";
 import { existsSync } from "node:fs";
 import { createBetterSqliteAdapter } from "./betterSqliteAdapter";
 import { createBunSqliteAdapter, type BunSqliteDatabaseLike } from "./bunSqliteAdapter";
@@ -8,7 +8,6 @@ import {
 } from "./nodeSqliteShared";
 import type { SqliteAdapter } from "./types";
 
-const _require = createRequire(import.meta.url);
 
 type DriverLoader = (moduleName: string) => unknown;
 

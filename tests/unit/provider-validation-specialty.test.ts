@@ -288,13 +288,9 @@ test("embedding and rerank specialty validators cover Voyage AI and Jina AI", as
       return new Response(JSON.stringify({ data: [{ embedding: [0.1, 0.2] }] }), { status: 200 });
     }
 
-    if (target === "https://api.jina.ai/v1/rerank") {
+    if (target === "https://api.jina.ai/v1/models") {
       assert.equal((init.headers as Record<string, string>).Authorization, "Bearer jina-key");
-      const body = JSON.parse(String(init.body));
-      assert.equal(body.model, "jina-reranker-v3");
-      return new Response(JSON.stringify({ results: [{ index: 0, relevance_score: 0.99 }] }), {
-        status: 200,
-      });
+      return new Response(JSON.stringify({ data: [] }), { status: 200 });
     }
 
     throw new Error(`unexpected fetch: ${target}`);
@@ -352,7 +348,7 @@ test("embedding and rerank specialty validators surface auth failures for Voyage
     if (target === "https://api.voyageai.com/v1/embeddings") {
       return new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 });
     }
-    if (target === "https://api.jina.ai/v1/rerank") {
+    if (target === "https://api.jina.ai/v1/models") {
       return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
     }
     throw new Error(`unexpected fetch: ${target}`);
@@ -362,7 +358,7 @@ test("embedding and rerank specialty validators surface auth failures for Voyage
   const jina = await validateProviderApiKey({ provider: "jina-ai", apiKey: "jina-key" });
 
   assert.equal(voyage.error, "Invalid API key");
-  assert.equal(jina.error, "Invalid API key");
+  assert.equal(jina.error, "Invalid API key (GET https://api.jina.ai/v1/models)");
 });
 
 test("v0-vercel specialty validator checks the Platform API chats endpoint", async () => {
@@ -1451,7 +1447,9 @@ test("specialty validators cover remaining status branches for Deepgram, Assembl
     if (target.match(/inworld/i)) {
       throw new Error("inworld offline");
     }
-    if (target.match(/dashscope\.aliyuncs\.com/i)) {
+    // Alibaba-family hosts: dashscope.aliyuncs.com (pay-as-you-go / AIGC) and
+    // *.maas.aliyuncs.com (Token Plan).
+    if (target.match(/(?:dashscope|maas)\.aliyuncs\.com/i)) {
       return new Response(JSON.stringify({ error: "server" }), { status: 500 });
     }
     if (target.match(/longcat/i)) {
@@ -1468,7 +1466,7 @@ test("specialty validators cover remaining status branches for Deepgram, Assembl
     provider: "bailian-coding-plan",
     apiKey: "bailian-key",
     providerSpecificData: {
-      baseUrl: "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1/messages",
+      baseUrl: "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages",
     },
   });
   const longcatInvalid = await validateProviderApiKey({ provider: "longcat", apiKey: "lc-key" });

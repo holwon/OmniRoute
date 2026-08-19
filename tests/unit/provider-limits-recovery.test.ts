@@ -86,12 +86,9 @@ test("successful GLM quota refresh clears transient rate-limit state", async () 
   const connection = await createGlmConnectionWithTransientCooldown();
   const connectionId = (connection as { id: string }).id;
 
-  await withMockedFetch(
-    (() => glmQuotaResponse()) as typeof fetch,
-    async () => {
-      await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
-    }
-  );
+  await withMockedFetch((() => glmQuotaResponse()) as typeof fetch, async () => {
+    await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
+  });
 
   const updated = (await providersDb.getProviderConnectionById(connectionId)) as Record<
     string,
@@ -122,12 +119,9 @@ test("successful quota refresh does not clear terminal credits_exhausted status"
   const connection = await createGlmConnectionWithStatus("credits_exhausted");
   const connectionId = (connection as { id: string }).id;
 
-  await withMockedFetch(
-    (() => glmQuotaResponse()) as typeof fetch,
-    async () => {
-      await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
-    }
-  );
+  await withMockedFetch((() => glmQuotaResponse()) as typeof fetch, async () => {
+    await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
+  });
 
   const updated = (await providersDb.getProviderConnectionById(connectionId)) as Record<
     string,
@@ -141,12 +135,9 @@ test("successful quota refresh does not clear terminal banned status", async () 
   const connection = await createGlmConnectionWithStatus("banned");
   const connectionId = (connection as { id: string }).id;
 
-  await withMockedFetch(
-    (() => glmQuotaResponse()) as typeof fetch,
-    async () => {
-      await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
-    }
-  );
+  await withMockedFetch((() => glmQuotaResponse()) as typeof fetch, async () => {
+    await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
+  });
 
   const updated = (await providersDb.getProviderConnectionById(connectionId)) as Record<
     string,
@@ -159,12 +150,9 @@ test("successful quota refresh does not clear terminal expired status", async ()
   const connection = await createGlmConnectionWithStatus("expired");
   const connectionId = (connection as { id: string }).id;
 
-  await withMockedFetch(
-    (() => glmQuotaResponse()) as typeof fetch,
-    async () => {
-      await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
-    }
-  );
+  await withMockedFetch((() => glmQuotaResponse()) as typeof fetch, async () => {
+    await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
+  });
 
   const updated = (await providersDb.getProviderConnectionById(connectionId)) as Record<
     string,
@@ -268,6 +256,84 @@ test("partial quota refresh does not clear a quota cooldown before its reset", a
   assert.equal(after.rateLimitedUntil, resetAt);
 });
 
+test("Claude subscription quota recovery clears synthetic cooldown once the real window resets", async () => {
+  // Reproduces the reported deadlock: a Claude subscription 429 persists a synthetic
+  // 1h rateLimitedUntil (SUBSCRIPTION_QUOTA_COOLDOWN_MS, no parseable upstream reset).
+  // The scheduled poller later fetches the REAL quota windows and finds the session
+  // window has already reset with quota available — the connection must clear even
+  // though the synthetic rateLimitedUntil is still in the future.
+  const syntheticRateLimitedUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const created = await providersDb.createProviderConnection({
+    provider: "claude",
+    authType: "oauth",
+    accessToken: "claude-access-token",
+    refreshToken: "claude-refresh-token",
+    testStatus: "unavailable",
+    isActive: true,
+    lastError: "usage limit reached",
+    lastErrorType: "quota_exhausted",
+    errorCode: 429,
+    rateLimitedUntil: syntheticRateLimitedUntil,
+    backoffLevel: 1,
+  });
+  const connectionId = (created as { id: string }).id;
+  const connection = await providersDb.getProviderConnectionById(connectionId);
+
+  const realResetInThePast = new Date(Date.now() - 60 * 1000).toISOString();
+  const result = await providerLimits.maybeClearRecoveredQuotaState(connection, {
+    quotas: {
+      "session (5h)": { remaining: 87, remainingPercentage: 87, resetAt: realResetInThePast },
+      "weekly (7d)": { remaining: 62, remainingPercentage: 62, resetAt: realResetInThePast },
+    },
+  });
+
+  assert.equal(result.testStatus, "active", "returned snapshot should be cleared");
+  assert.equal(result.rateLimitedUntil, null, "returned snapshot should drop rateLimitedUntil");
+  assert.equal(result.lastErrorType, null, "returned snapshot should drop lastErrorType");
+
+  const after = await providersDb.getProviderConnectionById(connectionId);
+  assert.equal(after.testStatus, "active", "Sonnet/Opus connection should be usable again");
+  assert.equal(after.rateLimitedUntil, undefined, "synthetic cooldown must be cleared");
+  assert.equal(after.lastErrorType, undefined, "quota_exhausted marker must be cleared");
+  assert.equal(after.backoffLevel, 0, "backoff level should reset to 0");
+});
+
+test("Claude subscription quota still exhausted keeps the connection locked (no real recovery yet)", async () => {
+  // Inverse of the above: the real session window is still exhausted with no parseable
+  // reset (mirrors the existing kimi-coding test's semantics) — must stay locked even
+  // though other windows (e.g. weekly) show remaining quota.
+  const syntheticRateLimitedUntil = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  const created = await providersDb.createProviderConnection({
+    provider: "claude",
+    authType: "oauth",
+    accessToken: "claude-access-token",
+    refreshToken: "claude-refresh-token",
+    testStatus: "unavailable",
+    isActive: true,
+    lastError: "usage limit reached",
+    lastErrorType: "quota_exhausted",
+    errorCode: 429,
+    rateLimitedUntil: syntheticRateLimitedUntil,
+    backoffLevel: 1,
+  });
+  const connectionId = (created as { id: string }).id;
+  const connection = await providersDb.getProviderConnectionById(connectionId);
+
+  const result = await providerLimits.maybeClearRecoveredQuotaState(connection, {
+    quotas: {
+      "session (5h)": { remaining: 0, remainingPercentage: 0 },
+      "weekly (7d)": { remaining: 62, remainingPercentage: 62 },
+    },
+  });
+
+  assert.equal(result.testStatus, "unavailable", "still-exhausted session window must stay locked");
+
+  const after = await providersDb.getProviderConnectionById(connectionId);
+  assert.equal(after.testStatus, "unavailable");
+  assert.equal(after.lastErrorType, "quota_exhausted");
+  assert.equal(after.rateLimitedUntil, syntheticRateLimitedUntil);
+});
+
 test("CAS primitive clears when expected state matches", async () => {
   const created = await createGlmConnectionWithTransientCooldown();
   const connectionId = (created as { id: string }).id;
@@ -330,9 +396,10 @@ test("CAS primitive aborts when state changed concurrently", async () => {
 test("quota recovery path does NOT overwrite a concurrent mark (TOCTOU closed)", async () => {
   const created = await createGlmConnectionWithTransientCooldown();
   const connectionId = (created as { id: string }).id;
-  const snapshotBeforeClear = (await providersDb.getProviderConnectionById(
-    connectionId
-  )) as Record<string, unknown>;
+  const snapshotBeforeClear = (await providersDb.getProviderConnectionById(connectionId)) as Record<
+    string,
+    unknown
+  >;
   const expectedLastErrorAt = (snapshotBeforeClear.lastErrorAt as string) ?? null;
 
   // Mock fetch so that DURING the quota fetch (between read and clear), a
@@ -367,4 +434,99 @@ test("quota recovery path does NOT overwrite a concurrent mark (TOCTOU closed)",
   assert.equal(after.testStatus, "unavailable", "fresh testStatus must survive");
   assert.equal(after.backoffLevel, 3, "fresh backoff level must survive");
   assert.equal(after.lastError, "fresh concurrent 429");
+});
+
+function claudeUsageResponseWithQueuedExtraUsage() {
+  // Session/weekly windows are fully recovered (low utilization, future reset)
+  // but extra_usage.queued stays true — the two states are orthogonal upstream.
+  return new Response(
+    JSON.stringify({
+      tier: "pro",
+      five_hour: {
+        utilization: 5,
+        resets_at: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+      },
+      seven_day: {
+        utilization: 10,
+        resets_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+      },
+      extra_usage: { queued: true },
+    }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+}
+
+function claudeBootstrapResponseForExtraUsageTest() {
+  return new Response(
+    JSON.stringify({
+      oauth_account: {
+        account_uuid: "account-uuid-extra-usage-test",
+        account_email: "claude-extra-usage@example.test",
+        organization_uuid: "org-uuid-extra-usage-test",
+        organization_name: "Extra Usage Test Org",
+        organization_type: "pro",
+        organization_rate_limit_tier: "pro",
+      },
+    }),
+    { status: 200, headers: { "content-type": "application/json" } }
+  );
+}
+
+test("Claude extra-usage block stays locked through the real sync chain when recovered quota windows coexist with extraUsage.queued=true", async () => {
+  // Walks the REAL call order inside fetchLiveProviderLimitsWithOptions:
+  //   syncClaudeExtraUsageStateIfNeeded  → re-asserts the extra-usage block
+  //   maybeClearRecoveredQuotaState      → must NOT undo it just because the
+  //                                        session/weekly quota windows look
+  //                                        recovered in the same fetch.
+  const created = await providersDb.createProviderConnection({
+    provider: "claude",
+    authType: "oauth",
+    name: `Claude Extra Usage ${Date.now()} ${Math.random()}`,
+    email: `claude-extra-usage-${Date.now()}@example.test`,
+    accessToken: "claude-access-token",
+    refreshToken: "claude-refresh-token",
+    expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
+    testStatus: "unavailable",
+    isActive: true,
+    lastError: "Claude extra usage was detected and blocked by this connection policy.",
+    lastErrorType: "quota_exhausted",
+    lastErrorSource: "extra_usage",
+    errorCode: 429,
+    rateLimitedUntil: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+    backoffLevel: 1,
+    // blockExtraUsage defaults to enabled (policy is opt-out via `=== false`).
+    providerSpecificData: {},
+  });
+  const connectionId = (created as { id: string }).id;
+
+  await withMockedFetch(
+    (async (url) => {
+      const urlText = String(url);
+      if (urlText.includes("/api/claude_cli/bootstrap")) {
+        return claudeBootstrapResponseForExtraUsageTest();
+      }
+      return claudeUsageResponseWithQueuedExtraUsage();
+    }) as typeof fetch,
+    async () => {
+      const result = await providerLimits.fetchAndPersistProviderLimits(connectionId, "manual");
+      assert.equal(
+        result.connection.testStatus,
+        "unavailable",
+        "returned snapshot must stay blocked"
+      );
+      assert.equal(result.connection.lastErrorSource, "extra_usage");
+    }
+  );
+
+  const after = (await providersDb.getProviderConnectionById(connectionId)) as Record<
+    string,
+    unknown
+  >;
+  assert.equal(after.testStatus, "unavailable", "connection must remain unavailable");
+  assert.equal(after.lastErrorType, "quota_exhausted");
+  assert.equal(
+    after.lastErrorSource,
+    "extra_usage",
+    "extra_usage marker must survive the general recovery-clearing logic"
+  );
 });

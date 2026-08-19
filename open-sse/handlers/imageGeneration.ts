@@ -1,20 +1,5 @@
 import { randomUUID } from "crypto";
-/**
- * Image Generation Handler
- *
- * Handles POST /v1/images/generations requests.
- * Proxies to upstream image generation providers using OpenAI-compatible format.
- *
- * Request format (OpenAI-compatible):
- * {
- *   "model": "openai/gpt-image-2",
- *   "prompt": "a beautiful sunset over mountains",
- *   "n": 1,
- *   "size": "1024x1024",
- *   "quality": "standard",       // optional: "standard" | "hd"
- *   "response_format": "url"     // optional: "url" | "b64_json"
- * }
- */
+/** Image generation handler for POST /v1/images/generations (OpenAI-compatible). */
 
 import { getImageProvider, parseImageModel } from "../config/imageRegistry.ts";
 import { HTTP_STATUS } from "../config/constants.ts";
@@ -51,16 +36,11 @@ import {
 } from "@/shared/utils/fetchTimeout";
 import { sanitizeErrorMessage, sanitizeUpstreamDetails } from "../utils/error.ts";
 
-// --- Per-provider handlers (extracted to co-located files in PR-#4582-batch) ---
-// Imported locally so internal callers (handleImageGeneration / handleImageEdit)
-// resolve to a real binding. extractMarkdownImageUrls + CHATGPT_WEB_IMAGE_ID_RE
-// are still used by handleImageEdit below, so they are imported (not re-defined).
 import { handleSDWebUIImageGeneration } from "./imageGeneration/providers/sdWebUI.ts";
 import { handleHyperbolicImageGeneration } from "./imageGeneration/providers/hyperbolic.ts";
 import { handleHuggingFaceImageGeneration } from "./imageGeneration/providers/huggingface.ts";
 import { handleComfyUIImageGeneration } from "./imageGeneration/providers/comfyUI.ts";
 import { handleImagen3ImageGeneration } from "./imageGeneration/providers/imagen3.ts";
-import { handleGoogleImagenGeneration } from "./imageGeneration/providers/googleImagen.ts";
 import { handleIdeogramImageGeneration } from "./imageGeneration/providers/ideogram.ts";
 import { handleHaiperImageGeneration } from "./imageGeneration/providers/haiper.ts";
 import { handleLeonardoImageGeneration } from "./imageGeneration/providers/leonardo.ts";
@@ -70,12 +50,14 @@ import {
   extractMarkdownImageUrls,
   CHATGPT_WEB_IMAGE_ID_RE,
 } from "./imageGeneration/providers/chatgptWeb.ts";
+import { handleGeminiWebImageGeneration } from "./imageGeneration/providers/geminiWeb.ts";
 import { handleNvidiaNimImageGeneration } from "./imageGeneration/providers/nvidiaNim.ts";
 import { handleSegmindImageGeneration } from "./imageGeneration/providers/segmind.ts";
 import { handleDesignerWebImageGeneration } from "./imageGeneration/providers/designerWeb.ts";
 import { handleMinimaxImageGeneration } from "./imageGeneration/providers/minimax.ts";
 import { handleAdobeFireflyImageGeneration } from "./imageGeneration/providers/adobeFirefly.ts";
 import { handleAlibabaImageGeneration } from "./imageGeneration/providers/alibabaImage.ts";
+import { handleAiHordeImageGeneration } from "./imageGeneration/providers/aihorde.ts";
 import {
   applyPollinationsAnonymousFallback,
   reportPollinationsAnonOutcome,
@@ -373,23 +355,24 @@ export async function handleImageGeneration({
     });
   }
 
-  if (providerConfig.format === "gemini-image") {
-    return handleGeminiImageGeneration({ model, providerConfig, body, credentials, log });
-  }
-
-  if (providerConfig.format === "imagen3") {
-    return handleImagen3ImageGeneration({
+  if (providerConfig.format === "aihorde") {
+    return handleAiHordeImageGeneration({
       model,
       provider,
       providerConfig,
       body,
       credentials,
       log,
+      signal,
     });
   }
 
-  if (providerConfig.format === "google-imagen") {
-    return handleGoogleImagenGeneration({
+  if (providerConfig.format === "gemini-image") {
+    return handleGeminiImageGeneration({ model, providerConfig, body, credentials, log });
+  }
+
+  if (providerConfig.format === "imagen3") {
+    return handleImagen3ImageGeneration({
       model,
       provider,
       providerConfig,
@@ -489,6 +472,19 @@ export async function handleImageGeneration({
 
   if (providerConfig.format === "chatgpt-web") {
     return handleChatGptWebImageGeneration({
+      model,
+      provider,
+      body,
+      credentials,
+      log,
+      signal,
+      clientHeaders,
+    });
+  }
+
+  // #10466: Gemini Web session image generation (Nano Banana)
+  if (providerConfig.format === "gemini-web") {
+    return handleGeminiWebImageGeneration({
       model,
       provider,
       body,
@@ -2689,6 +2685,22 @@ export function saveImageErrorResult({
   error,
   requestBody = null,
   path = "/v1/images/generations",
+  // #10494: opt-in signal for executeImageWithCredentialFallback — set by a
+  // provider handler when the failure is account/session-specific (expired
+  // or blocked credentials) rather than a generic request/provider error, so
+  // the retry loop tries the next eligible account even when the upstream
+  // status isn't a plain 401. Defaults to unset (existing 401-only behavior
+  // for every other provider is unchanged).
+  retryable = undefined,
+}: {
+  provider: string;
+  model: string;
+  status: number;
+  startTime: number;
+  error: unknown;
+  requestBody?: unknown;
+  path?: string;
+  retryable?: boolean;
 }) {
   saveCallLog({
     method: "POST",
@@ -2705,6 +2717,7 @@ export function saveImageErrorResult({
     success: false,
     status,
     error,
+    ...(retryable !== undefined ? { retryable } : {}),
   };
 }
 

@@ -309,6 +309,8 @@ async function invokeChatCore({
   onCredentialsRefreshed = null,
   onRequestSuccess = null,
   sessionAffinityKey = null,
+  managedLease = null,
+  cachedSettings = null,
 }: any = {}) {
   const calls: any[] = [];
 
@@ -355,6 +357,8 @@ async function invokeChatCore({
       sessionAffinityKey,
       isCombo,
       comboStrategy,
+      managedLease,
+      cachedSettings,
       onCredentialsRefreshed,
       onRequestSuccess,
     } as any);

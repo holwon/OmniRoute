@@ -980,6 +980,7 @@
   "featureFlagOmnirouteEmergencyFallbackDescription": "예산이 소진된 요청을 긴급 무료 폴백 제공자/모델로 라우팅합니다.",
   "featureFlagArenaEloSyncEnabledDescription": "모델 지능 순위를 위해 주기적인 Arena AI 리더보드 ELO 동기화를 활성화합니다.",
   "featureFlagExposeCcDiscoveryAliasesDescription": "/v1/models에서 Claude Code 게이트웨이 모델 검색 목록에 비Claude 모델이 포함되도록 claude/&lt;provider&gt;/&lt;model&gt; 미러 ID를 광고합니다. 경고: 전역적으로 활성화하면 모든 클라이언트에 대해 카탈로그 항목이 두 배로 증가합니다.",
+  "featureFlagChatVirtualLanesEnabledDescription": "공급자 디스패치를 위해 테넌트별 적응형 가상 승인 레인을 활성화합니다(#9654): 한 테넌트의 폭증이 더 이상 다른 테넌트에 503을 반환하지 않습니다. OMNIROUTE_CHAT_VIRTUAL_LANES 환경 변수가 이 대시보드 설정보다 우선하며, 변경 사항은 서버 재시작 시 적용됩니다.",
   "sidebar": {
     "home": "홈",
     "dashboard": "대시보드",
@@ -1290,7 +1291,9 @@
       "open": "열기",
       "close": "닫기"
     },
-    "noResults": "결과가 없습니다"
+    "noResults": "결과가 없습니다",
+    "conversations": "Conversations",
+    "conversationsSubtitle": "Multi-turn agentic conversations"
   },
   "webhooks": {
     "title": "웹훅",
@@ -1736,6 +1739,8 @@
     "quotaShare": "할당량 공유",
     "discovery": "탐색",
     "freeProviderRankings": "무료 제공업체 순위",
+    "radar": "__MISSING__:Radar",
+    "setup": "__MISSING__:Setup",
     "freeTiers": "무료 티어",
     "gamification": "게이미피케이션",
     "leaderboard": "리더보드",
@@ -5092,6 +5097,7 @@
     "deprecatedProvider": "이 공급자는 더 이상 사용되지 않습니다.",
     "riskNotice": {
       "title": "계속하기 전에",
+      "detailsTitle": "__MISSING__:Usage caveats",
       "tooltip": "사용 시 주의 사항이 있는 제공자 — 자세한 내용을 보려면 클릭하세요",
       "oauth": "이 제공자는 공식 제품 세션/OAuth를 사용하며, 이는 프록시/라우터 사용에 대해 승인되지 않았습니다. 집중적인 자율 에이전트 사용(OpenCloud 스타일, 긴 다단계 흐름, 대량 배치)은 권장하지 않습니다. 업스트림에서 계정을 제한하거나 차단할 수 있습니다. 본인 책임 하에 사용하십시오.",
       "webCookie": "이 제공자는 웹 세션 쿠키를 통해 인증합니다. 업스트림 서비스가 언제든지 세션을 무효화할 수 있어 다시 로그인해야 할 수 있습니다. 장시간 자리를 비우는 작업에는 권장하지 않습니다. 본인 책임 하에 사용하십시오.",
@@ -5099,6 +5105,11 @@
       "dontShowAgain": "이 제공자에 대해 다시 표시하지 않음",
       "understand": "이해했습니다, 계속하기",
       "cancel": "취소"
+    },
+    "warningNotice": {
+      "tooltip": "__MISSING__:{count} connection(s) flagged — up to {maxFailures} recent failures{lastFailureSuffix}. Click to view connection health.",
+      "lastFailureSuffix": "__MISSING__: (last failure {time})",
+      "ariaLabel": "__MISSING__:View connection health details, {count} warning(s)"
     },
     "disabled": "비활성화됨",
     "enableProvider": "공급자 활성화",
@@ -6335,7 +6346,18 @@
     "savedModelEndpointSettings": "저장된 모델 엔드포인트 설정",
     "searchByModelAria": "모델로 검색",
     "selectSupportedEndpoint": "지원되는 엔드포인트를 최소한 하나 선택하세요.",
-    "antigravityClientProfileHarness": "Harness / CLI"
+    "antigravityClientProfileHarness": "Harness / CLI",
+    "autoFetchModels": "업스트림 모델 자동 가져오기",
+    "autoFetchModelsEnabled": "업스트림 모델 자동 가져오기 활성화됨",
+    "autoFetchModelsDisabled": "업스트림 모델 자동 가져오기 비활성화됨",
+    "autoFetchModelsTooltip": "필요할 때 업스트림 모델을 가져와 캐시합니다.",
+    "overridesUpstreamModel": "업스트림 재정의",
+    "autoFetchModelsPartialFailure": "일부 연결이 업데이트되었지만, 업스트림 모델 자동 가져오기가 모든 곳에서 변경되지 않았습니다.",
+    "autoFetchModelsToggleFailed": "업스트림 모델 자동 가져오기를 전환하지 못했습니다.",
+    "overridesUpstreamModelHint": "귀하의 설정이 이 업스트림 모델을 덮어씁니다.",
+    "resetToUpstreamDefaultsSuccess": "복원된 업스트림 모델 기본값",
+    "resetToUpstreamDefaults": "업스트림 기본값 복원",
+    "resetToUpstreamDefaultsFailed": "업스트림 모델 기본값을 복원하지 못했습니다."
   },
   "settings": {
     "title": "설정",
@@ -6554,6 +6576,12 @@
     "autoDisableDescription": "Permanently mark provider connections as deactivated if they return specific terminal ban signals (e.g. HTTP 403 'verify your account'). This removes them from the combo rotation.",
     "autoDisableThreshold": "Ban Threshold",
     "autoDisableThresholdDesc": "Consecutive ban signals required before permanent deactivation.",
+    "autoDisableBannedScope": "__MISSING__:Apply auto-disable to",
+    "autoDisableBannedScopeDesc": "__MISSING__:Login seats (paid subscriptions and free accounts) can be locked by the upstream if OmniRoute keeps retrying after a ban. Paid prepaid API keys do not have that risk — leave them in the pool so fill-first can use the next key.",
+    "autoDisableBannedScopeAll": "__MISSING__:All connections",
+    "autoDisableBannedScopeAllDesc": "__MISSING__:Deactivate every connection that returns a permanent ban signal, including prepaid API keys.",
+    "autoDisableBannedScopeSubscription": "__MISSING__:Login / subscription accounts only",
+    "autoDisableBannedScopeSubscriptionDesc": "__MISSING__:Deactivate OAuth, cookie, session, and web-login seats (paid or free). Prepaid API keys stay active so routing can fail over.",
     "customBannedSignals": "차단 키워드",
     "customBannedSignalsDesc": "영구 계정 차단 감지를 트리거하는 추가 키워드입니다. 기본 제공 키워드는 항상 적용됩니다.",
     "customBannedSignalsPlaceholder": "예: api key revoked",
@@ -11045,7 +11073,8 @@
       "compressed": "압축",
       "tps": "TPS",
       "duration": "Duration",
-      "time": "Time"
+      "time": "Time",
+      "conversation": "Conversation"
     },
     "loadingLogs": "Loading logs...",
     "noLogs": "No logs yet. Make some API calls to see them here.",
@@ -12437,6 +12466,11 @@
       "rare": "희귀한 업적"
     },
     "badges": {
+      "radar-supporter": {
+        "name": "__MISSING__:Radar Supporter",
+        "description": "__MISSING__:Verified a live OmniRoute Radar supporter feed",
+        "criteria": "__MISSING__:Verify a signed live Radar supporter feed."
+      },
       "first-token": {
         "name": "첫 토큰",
         "description": "첫 API 요청 완료",
@@ -13157,7 +13191,25 @@
     "modelEnabled": "Enabled locally",
     "localStateSaveFailed": "Failed to save local Radar settings",
     "guidedCombos": "Guided combos",
-    "offers": "Offers"
+    "offers": "Offers",
+    "intel": "__MISSING__:Intel"
+  },
+  "radarCombosPage": {
+    "title": "Radar guided combos",
+    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
+    "backToRadar": "Back to Radar",
+    "loading": "Loading combo suggestions...",
+    "familyLabel": "Model family",
+    "modelsLabel": "Priority order",
+    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
+    "generateButton": "Generate combo",
+    "generating": "Generating...",
+    "alreadyCreated": "Already created",
+    "created": "Combo created",
+    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
+    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
+    "loadFailed": "Failed to load Radar combo suggestions.",
+    "createFailed": "Failed to create the combo. Review your provider connections and try again."
   },
   "radarSetupPage": {
     "title": "제공자 설정",
@@ -13658,23 +13710,6 @@
     "updateFailed": "업데이트 실패 (HTTP {status})",
     "networkError": "네트워크 오류 — 공급자 노출 설정을 업데이트할 수 없습니다."
   },
-  "radarCombosPage": {
-    "title": "Radar guided combos",
-    "subtitle": "Create priority fallbacks from equivalent free models curated by Radar.",
-    "backToRadar": "Back to Radar",
-    "loading": "Loading combo suggestions...",
-    "familyLabel": "Model family",
-    "modelsLabel": "Priority order",
-    "strategyReason": "Priority uses the largest recurring free budget first, then falls back across active providers.",
-    "generateButton": "Generate combo",
-    "generating": "Generating...",
-    "alreadyCreated": "Already created",
-    "created": "Combo created",
-    "noSuggestions": "No eligible model family currently has active connections to at least two providers.",
-    "catalogRequired": "Sync the Radar catalog first to load curated model families.",
-    "loadFailed": "Failed to load Radar combo suggestions.",
-    "createFailed": "Failed to create the combo. Review your provider connections and try again."
-  },
   "radarOffersPage": {
     "title": "Supporter offers",
     "subtitle": "Official discounts, credits, trials, and reviewed partner benefits from Radar.",
@@ -13695,6 +13730,39 @@
     "noExpiry": "No announced expiry",
     "openOffer": "View offer",
     "trialDays": "{days, plural, one {# day} other {# days}}"
+  },
+  "radarIntelPage": {
+    "title": "__MISSING__:Radar Intel",
+    "subtitle": "__MISSING__:Radar-owned ELO rankings and factual catalog movement.",
+    "backToRadar": "__MISSING__:Back to Radar",
+    "loading": "__MISSING__:Loading Intel...",
+    "refresh": "__MISSING__:Refresh Intel",
+    "syncing": "__MISSING__:Refreshing...",
+    "loadFailed": "__MISSING__:We could not refresh Intel. The last verified local cache is kept.",
+    "empty": "__MISSING__:No verified Intel snapshot is available yet.",
+    "supporterBadge": "__MISSING__:Radar Supporter",
+    "methodology": "__MISSING__:Methodology",
+    "eloMethod": "__MISSING__:ELO, initial {initial}, K={factor}",
+    "freshness": "__MISSING__:Catalog freshness",
+    "ageDays": "__MISSING__:{days, plural, one {# day old} other {# days old}}",
+    "trend": "__MISSING__:Catalog trend",
+    "modelDelta": "__MISSING__:{current} models, +{added} / -{removed}",
+    "ranking": "__MISSING__:Model ranking",
+    "noRankings": "__MISSING__:No confirmed comparisons are available yet.",
+    "model": "__MISSING__:Model",
+    "category": "__MISSING__:Category",
+    "rating": "__MISSING__:Rating",
+    "matches": "__MISSING__:Matches",
+    "freshnessValues": {
+      "fresh": "__MISSING__:Fresh",
+      "aging": "__MISSING__:Aging",
+      "stale": "__MISSING__:Stale"
+    },
+    "trendValues": {
+      "growing": "__MISSING__:Growing",
+      "stable": "__MISSING__:Stable",
+      "shrinking": "__MISSING__:Shrinking"
+    }
   },
   "capabilityFilter": {
     "visionMismatch": "제공자가 이 이미지 요청에 대한 비전을 지원하지 않습니다.",

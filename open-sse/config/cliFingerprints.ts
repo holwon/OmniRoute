@@ -272,6 +272,7 @@ function stripInternalBodyFields(body: unknown): unknown {
   delete record._claudeCodeRequiresLowercaseToolNames;
   delete record._nativeCodexPassthrough;
   delete record._nativeXaiResponsesPassthrough;
+  delete record._nativeOpenAICompatibleResponsesPassthrough;
   delete record._omnirouteResponsesStore;
   return body;
 }

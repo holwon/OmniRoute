@@ -788,10 +788,26 @@ async function callVisionModelSingle(
               role: "user",
               content: [
                 {
+                  // Global, not OpenCode-scoped: this is OmniRoute's own internal
+                  // describe self-loop (VisionBridgeGuardrail), called for every
+                  // caller/provider when the target model lacks vision support —
+                  // there is no client-identity signal at this layer to gate on
+                  // (unlike the OpenCode-only `isOpencodeClient` default in
+                  // `chatCore/upstreamBody.ts`, which forwards the *caller's own*
+                  // image_url.detail and is deliberately scoped). "high" is
+                  // requested unconditionally because the describe prompt asks
+                  // the vision model to transcribe visible text
+                  // (`modalityBridgeVisionTaskAware`, see docs/security/GUARDRAILS.md)
+                  // — low-detail sampling degrades OCR accuracy for every
+                  // describe call, not just OpenCode-originated ones. This path
+                  // only affects the OpenAI-compatible wire format branch; the
+                  // Anthropic branch above has no `detail` concept and is
+                  // unaffected (see the "unaffected for Anthropic" compat
+                  // assertion in visionBridgeHelpers.callVisionModel.test.ts).
                   type: "image_url",
                   image_url: {
                     url: normalizedImageInput,
-                    detail: "low",
+                    detail: "high",
                   },
                 },
                 { type: "text", text: config.prompt },

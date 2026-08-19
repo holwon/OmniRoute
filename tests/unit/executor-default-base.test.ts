@@ -220,10 +220,10 @@ test("DefaultExecutor.buildUrl normalizes configurable chat-openai-compat base U
   assert.equal(
     bailian.buildUrl("qwen3-coder-plus", true, 0, {
       providerSpecificData: {
-        baseUrl: "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1",
+        baseUrl: "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1",
       },
     }),
-    "https://coding-intl.dashscope.aliyuncs.com/apps/anthropic/v1/messages"
+    "https://token-plan.ap-southeast-1.maas.aliyuncs.com/apps/anthropic/v1/messages"
   );
   assert.equal(
     heroku.buildUrl("claude-4-sonnet", true, 0, {

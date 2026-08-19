@@ -11,6 +11,7 @@ import type {
   CompressionEngineApplyOptions,
   CompressionStage,
   CompressionWireFormat,
+  ImageTransportFidelity,
 } from "./engines/types.ts";
 import { applyLiteCompression } from "./lite.ts";
 import { cavemanCompress } from "./caveman.ts";
@@ -266,6 +267,7 @@ export function applyCompression(
   options?: {
     model?: string;
     supportsVision?: boolean | null;
+    imageTransportFidelity?: ImageTransportFidelity;
     sourceFormat?: CompressionWireFormat;
     targetFormat?: CompressionWireFormat;
     compressionStage?: CompressionStage;
@@ -292,6 +294,7 @@ function runCompression(
   options?: {
     model?: string;
     supportsVision?: boolean | null;
+    imageTransportFidelity?: ImageTransportFidelity;
     sourceFormat?: CompressionWireFormat;
     targetFormat?: CompressionWireFormat;
     compressionStage?: CompressionStage;
@@ -479,6 +482,9 @@ export async function applyCompressionAsync(
     supportsVision?: boolean | null;
     /** Direct-to-provider vs. aggregator transport (gates transport-sensitive engines like omniglyph). */
     providerTransport?: "direct" | "aggregator";
+    /** Provider resolvido — a contabilidade do omniglyph depende dele. */
+    provider?: string;
+    imageTransportFidelity?: ImageTransportFidelity;
     sourceFormat?: CompressionWireFormat;
     targetFormat?: CompressionWireFormat;
     compressionStage?: CompressionStage;
@@ -501,6 +507,9 @@ async function runCompressionAsync(
     supportsVision?: boolean | null;
     /** Direct-to-provider vs. aggregator transport (gates transport-sensitive engines like omniglyph). */
     providerTransport?: "direct" | "aggregator";
+    /** Provider resolvido — a contabilidade do omniglyph depende dele. */
+    provider?: string;
+    imageTransportFidelity?: ImageTransportFidelity;
     sourceFormat?: CompressionWireFormat;
     targetFormat?: CompressionWireFormat;
     compressionStage?: CompressionStage;
@@ -693,6 +702,9 @@ interface StackOptions {
   supportsVision?: boolean | null;
   /** Direct-to-provider vs. aggregator transport (gates transport-sensitive engines like omniglyph). */
   providerTransport?: "direct" | "aggregator";
+  /** Provider resolvido — a contabilidade do omniglyph depende dele. */
+  provider?: string;
+  imageTransportFidelity?: ImageTransportFidelity;
   sourceFormat?: CompressionWireFormat;
   targetFormat?: CompressionWireFormat;
   compressionStage?: CompressionStage;
@@ -800,7 +812,11 @@ function canRunAtCompressionStage(
   stage: CompressionStage | undefined
 ): boolean {
   const effectiveStage = stage ?? "pre-translation";
-  const stages = engine.metadata.executionStages;
+  // `assertValidEngine` não exige `metadata`, então uma engine registrada sem
+  // esse campo é legal — e sem a guarda derrubava o pipeline inteiro com
+  // TypeError em vez de falhar aberto. Metadata ausente é o mesmo caso de "não
+  // declarou estágio" e cai no mesmo fallback: só pre-translation.
+  const stages = engine.metadata?.executionStages;
   return stages ? stages.includes(effectiveStage) : effectiveStage === "pre-translation";
 }
 

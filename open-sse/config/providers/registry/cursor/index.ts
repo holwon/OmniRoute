@@ -140,22 +140,19 @@ export const cursorProvider: RegistryEntry = {
     { id: "claude-4.6-sonnet-medium", name: "Claude 4.6 Sonnet Medium" },
     { id: "claude-4.6-sonnet-medium-thinking", name: "Claude 4.6 Sonnet Medium Thinking" },
     //
-    { id: "claude-4.5-sonnet", name: "Claude 4.5 Sonnet" },
-    { id: "claude-4.5-sonnet-thinking", name: "Claude 4.5 Sonnet Thinking" },
-    //
     { id: "gemini-3.1-pro", name: "Gemini 3.1 Pro" },
     //
+    { id: "gemini-3.7-flash", name: "Gemini 3.7 Flash" },
     { id: "gemini-3-flash", name: "Gemini 3 Flash" },
     //
-    { id: "grok-4.3", name: "Grok 4.3" },
+    { id: "grok-4.6-medium", name: "Grok 4.6 Medium" },
+    { id: "grok-4.6-fast-medium", name: "Grok 4.6 Fast Medium" },
+    { id: "grok-4.6-high", name: "Grok 4.6 High" },
+    { id: "grok-4.6-fast-high", name: "Grok 4.6 Fast High" },
+    { id: "grok-4.6-xhigh", name: "Grok 4.6 XHigh" },
+    { id: "grok-4.6-fast-xhigh", name: "Grok 4.6 Fast XHigh" },
     //
-    { id: "grok-4.5-medium", name: "Grok 4.5 Medium" },
-    { id: "grok-4.5-fast-medium", name: "Grok 4.5 Fast Medium" },
-    { id: "grok-4.5-high", name: "Grok 4.5 High" },
-    { id: "grok-4.5-fast-high", name: "Grok 4.5 Fast High" },
-    { id: "grok-4.5-xhigh", name: "Grok 4.5 XHigh" },
-    { id: "grok-4.5-fast-xhigh", name: "Grok 4.5 Fast XHigh" },
-    //
-    { id: "kimi-k2.5", name: "Kimi K2.5" },
+    { id: "kimi-k3", name: "Kimi K3" },
+    { id: "kimi-k2.7-code", name: "Kimi K2.7 Code" },
   ],
 };

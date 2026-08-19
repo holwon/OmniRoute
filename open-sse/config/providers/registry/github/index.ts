@@ -117,8 +117,8 @@ export const githubProvider: RegistryEntry = {
       maxOutputTokens: 64000,
     },
     {
-      id: "gemini-3.5-flash",
-      name: "Gemini 3.5 Flash",
+      id: "gemini-3.7-flash",
+      name: "Gemini 3.7 Flash",
       contextLength: 1000000,
       maxOutputTokens: 64000,
     },

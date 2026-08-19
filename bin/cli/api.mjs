@@ -1,6 +1,6 @@
 import { setTimeout as sleep } from "node:timers/promises";
 import { getCliToken, CLI_TOKEN_HEADER } from "./utils/cliToken.mjs";
-import { resolveActiveContext } from "./contexts.mjs";
+import { resolveActiveContext, resolveActiveContextAsync } from "./contexts.mjs";
 
 export const RETRY_DEFAULTS = Object.freeze({
   maxAttempts: 3,
@@ -77,7 +77,7 @@ export async function buildHeaders(opts) {
   let auth = explicitKey;
   if (!auth) {
     try {
-      const ctx = resolveActiveContext(opts.context ?? process.env.OMNIROUTE_CONTEXT);
+      const ctx = await resolveActiveContextAsync(opts.context ?? process.env.OMNIROUTE_CONTEXT);
       auth = ctx?.accessToken || ctx?.apiKey || null;
     } catch {
       // No context credential available — fall through to the ambient fallback.

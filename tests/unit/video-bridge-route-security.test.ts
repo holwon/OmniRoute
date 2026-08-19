@@ -131,6 +131,33 @@ test("broker route maps queue capacity, client disconnect, and deadline to disti
   assert.equal(deadline.headers.get("Retry-After"), null);
 });
 
+test("broker route accepts finite focus bounds and forwards them to the isolated extractor", async () => {
+  let receivedFocus: unknown;
+  const response = await handleVideoExtractionBrokerRequest(
+    new Request(`http://localhost${EXTRACT_PATH}?frames=2&start=2&end=8`, {
+      method: "POST",
+      headers: {
+        ...buildVideoBridgeBrokerHeaders(),
+        [AUTHZ_HEADER_PEER_LOCALITY]: "loopback",
+        "Content-Type": "application/octet-stream",
+      },
+      body: Buffer.from("video"),
+    }),
+    {
+      extractFrames: async (_bytes, options) => {
+        receivedFocus = options.focusWindow;
+        return {
+          durationSeconds: 10,
+          frames: [{ timestampSeconds: 3, dataUri: "data:image/jpeg;base64,QQ==" }],
+        };
+      },
+    }
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(receivedFocus, { endSeconds: 8, startSeconds: 2 });
+});
+
 test("configured base path preserves the exact self-hop without widening broker authentication", async () => {
   const previousBasePath = process.env.OMNIROUTE_BASE_PATH;
   process.env.OMNIROUTE_BASE_PATH = "/omniroute";

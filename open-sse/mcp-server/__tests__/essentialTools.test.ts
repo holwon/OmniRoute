@@ -400,4 +400,120 @@ describe("omniroute_get_health handler (via MCP dispatch)", () => {
     const data = JSON.parse(content[0].text);
     expect(data.degraded).toBeUndefined();
   });
+
+  it("should surface the curated adaptive-admission lane block when health carries it", async () => {
+    mockHealthSources({
+      health: {
+        uptime: 100,
+        version: "3.8.50",
+        adaptiveAdmission: {
+          virtualLanes: true,
+          pressure: "high",
+          utilization: 0.72,
+          laneCount: 3,
+          laneQueuedCount: 12,
+          laneQueuedCost: 340,
+          laneTenants: [
+            { tenantKey: "lane-a", queuedCount: 6, queuedCost: 200 },
+            { tenantKey: "lane-b", queuedCount: 4, queuedCost: 90 },
+            { tenantKey: "lane-c", queuedCount: 2, queuedCost: 50 },
+          ],
+          admittedCount: 900,
+          rejectedCount: 7,
+          wouldRejectCount: 3,
+          shutdown: false,
+        },
+      },
+      resilience: { circuitBreakers: [] },
+      rateLimits: { limits: [] },
+    });
+
+    const result = await client.callTool({ name: "omniroute_get_health", arguments: {} });
+
+    expect(result.isError).toBeFalsy();
+    const content = result.content as Array<{ type: string; text: string }>;
+    const data = JSON.parse(content[0].text);
+    expect(data.adaptiveAdmission.virtualLanes).toBe(true);
+    expect(data.adaptiveAdmission.pressure).toBe("high");
+    expect(data.adaptiveAdmission.utilization).toBe(0.72);
+    expect(data.adaptiveAdmission.laneTenants).toHaveLength(3);
+    expect(data.adaptiveAdmission.laneTenants[0]).toEqual({
+      tenantKey: "lane-a",
+      queuedCount: 6,
+      queuedCost: 200,
+    });
+    expect(data.adaptiveAdmission.admittedCount).toBe(900);
+    expect(data.adaptiveAdmission.rejectedCount).toBe(7);
+    expect(data.adaptiveAdmission.wouldRejectCount).toBe(3);
+    expect(data.adaptiveAdmission.shutdown).toBe(false);
+  });
+
+  it("should coerce string lane flags and malformed lane entries defensively", async () => {
+    mockHealthSources({
+      health: {
+        uptime: 1,
+        version: "x",
+        adaptiveAdmission: {
+          virtualLanes: "true",
+          shutdown: "false",
+          laneTenants: ["garbage", { tenantKey: "ok", queuedCount: 2, queuedCost: 7 }],
+        },
+      },
+      resilience: {},
+      rateLimits: {},
+    });
+
+    const result = await client.callTool({ name: "omniroute_get_health", arguments: {} });
+
+    const content = result.content as Array<{ type: string; text: string }>;
+    const data = JSON.parse(content[0].text);
+    // "true" string counts as on; "false" string must NOT invert to on.
+    expect(data.adaptiveAdmission.virtualLanes).toBe(true);
+    expect(data.adaptiveAdmission.shutdown).toBe(false);
+    // Malformed entries degrade to zeroed records instead of throwing.
+    expect(data.adaptiveAdmission.laneTenants).toEqual([
+      { tenantKey: "ok", queuedCount: 2, queuedCost: 7 },
+      { tenantKey: "", queuedCount: 0, queuedCost: 0 },
+    ]);
+  });
+
+  it("should cap laneTenants at the top 10 by queued cost", async () => {
+    const laneTenants = Array.from({ length: 12 }, (_, i) => ({
+      tenantKey: `tenant-${i}`,
+      queuedCount: i,
+      queuedCost: i * 10,
+    }));
+    mockHealthSources({
+      health: {
+        uptime: 1,
+        version: "x",
+        adaptiveAdmission: { virtualLanes: true, laneTenants },
+      },
+      resilience: {},
+      rateLimits: {},
+    });
+
+    const result = await client.callTool({ name: "omniroute_get_health", arguments: {} });
+
+    const content = result.content as Array<{ type: string; text: string }>;
+    const data = JSON.parse(content[0].text);
+    expect(data.adaptiveAdmission.laneTenants).toHaveLength(10);
+    // Highest queued cost first, lowest dropped from the cap.
+    expect(data.adaptiveAdmission.laneTenants[0].tenantKey).toBe("tenant-11");
+    expect(data.adaptiveAdmission.laneTenants[9].tenantKey).toBe("tenant-2");
+  });
+
+  it("should omit adaptiveAdmission entirely when the health payload has none", async () => {
+    mockHealthSources({
+      health: { uptime: 1, version: "x" },
+      resilience: { circuitBreakers: [] },
+      rateLimits: { limits: [] },
+    });
+
+    const result = await client.callTool({ name: "omniroute_get_health", arguments: {} });
+
+    const content = result.content as Array<{ type: string; text: string }>;
+    const data = JSON.parse(content[0].text);
+    expect(data).not.toHaveProperty("adaptiveAdmission");
+  });
 });

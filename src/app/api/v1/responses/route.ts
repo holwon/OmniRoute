@@ -9,6 +9,7 @@ import { resolveResponsesApiModel } from "@/app/api/internal/codex-responses-ws/
 import { getModelInfo, getComboForModel } from "@/sse/services/model";
 import { resolveKeepaliveThreshold } from "@omniroute/open-sse/utils/keepaliveThreshold";
 import { resolveStreamFlag } from "@omniroute/open-sse/utils/aiSdkCompat";
+import { generateRequestId } from "@/shared/utils/requestId";
 
 // NOTE: We do NOT call initTranslators() here — the translator registry is
 // bootstrapped at module level inside open-sse/translator/index.ts when it
@@ -100,11 +101,18 @@ async function postHandler(request: any, context: any, preParsedBody: any = null
     // Reuse resolvedBody.model — no extra clone/parse needed (#4041).
     const model = resolvedBody?.model;
     const thresholdMs = resolveKeepaliveThreshold(model);
-    return await withEarlyStreamKeepalive(handleChat(resolved, null, resolvedBody), {
+    // Generated here (rather than left to handleChatImplementation's own
+    // fallback) so withEarlyStreamKeepalive can tag its own direct-to-client
+    // writes with the same id chatCore.ts ends up persisting the call log
+    // under — see earlyKeepaliveByteBuffer.ts for why this is the only way
+    // the two sides of that boundary can agree on "which request."
+    const correlationId = generateRequestId();
+    return await withEarlyStreamKeepalive(handleChat(resolved, null, resolvedBody, correlationId), {
       signal: request.signal,
       thresholdMs,
       startupFrame: RESPONSES_STARTUP_THINKING_FRAME,
       errorFrame: OPENAI_RESPONSES_ERROR_FRAME,
+      correlationId,
     });
   }
   return await handleChat(resolved, null, resolvedBody);

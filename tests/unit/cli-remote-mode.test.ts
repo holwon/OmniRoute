@@ -258,7 +258,7 @@ test("createProgram wires the remote-mode commands into the real CLI program", a
   }
   const contexts = program.commands.find((c: any) => c.name() === "contexts");
   const subs = contexts.commands.map((c: any) => c.name());
-  for (const sub of ["list", "use", "current"]) {
+  for (const sub of ["list", "use", "current", "migrate"]) {
     assert.ok(subs.includes(sub), `expected 'contexts ${sub}' subcommand, got: ${subs.join(", ")}`);
   }
 });

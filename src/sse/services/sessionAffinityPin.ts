@@ -141,6 +141,43 @@ export async function selectSessionAffinityConnection<T extends SessionAffinityC
   return connection;
 }
 
+/**
+ * Read-only affinity selection used when another durable authority must claim
+ * the candidate before any affinity/LRU state is changed.
+ */
+export function planSessionAffinityConnection<T extends SessionAffinityConnection>(
+  provider: string,
+  sessionKey: string | null | undefined,
+  connections: T[],
+  ttlMs = 0
+) {
+  if (!sessionKey || connections.length === 0 || ttlMs <= 0) return null;
+  const existing = getSessionAccountAffinity(sessionKey, provider, ttlMs);
+  const existingConnection =
+    existing && connections.find((candidate) => candidate.id === existing.connectionId);
+  const connection = existingConnection ?? [...connections].sort(compareLruConnections)[0] ?? null;
+  if (!connection) return null;
+
+  return {
+    connection,
+    commit: async () => {
+      if (existingConnection) {
+        touchSessionAccountAffinity(sessionKey, provider, Date.now(), ttlMs);
+        const nextCount = (connection.consecutiveUseCount || 0) + 1;
+        await touchConnectionLastUsed(connection.id, nextCount);
+        connection.lastUsedAt = new Date().toISOString();
+        connection.consecutiveUseCount = nextCount;
+        return;
+      }
+      if (existing) deleteSessionAccountAffinity(sessionKey, provider);
+      upsertSessionAccountAffinity(sessionKey, provider, connection.id, Date.now(), ttlMs);
+      await touchConnectionLastUsed(connection.id, 1);
+      connection.lastUsedAt = new Date().toISOString();
+      connection.consecutiveUseCount = 1;
+    },
+  };
+}
+
 /** Inputs the combo-timeout eviction needs from the dispatch site. */
 export interface ComboTimeoutAffinityEvictionParams {
   sessionKey?: string | null;

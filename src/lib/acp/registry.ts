@@ -70,6 +70,15 @@ const AGENT_DEFINITIONS: Omit<CliAgentInfo, "version" | "installed">[] = [
     protocol: "stdio",
   },
   {
+    id: "gemini",
+    name: "Google Gemini CLI",
+    binary: "gemini",
+    versionCommand: "gemini --version",
+    providerAlias: "gemini",
+    spawnArgs: [],
+    protocol: "stdio",
+  },
+  {
     id: "goose",
     name: "Goose CLI",
     binary: "goose",
@@ -383,6 +392,24 @@ export function refreshAgentCache(): CliAgentInfo[] {
 export function getAgentById(id: string): CliAgentInfo | undefined {
   const agents = detectInstalledAgents();
   return agents.find((a) => a.id === id);
+}
+
+/**
+ * Check registration without probing every executable on PATH.
+ *
+ * Process lifecycle callers need an allowlist decision, not a fresh health
+ * scan. Keeping this lookup pure avoids making `spawn()` wait on one timeout
+ * per uninstalled agent while preserving detectInstalledAgents() for UI/status
+ * consumers.
+ */
+export function hasRegisteredAgent(id: string): boolean {
+  const normalized = String(id || "")
+    .trim()
+    .toLowerCase();
+  return (
+    AGENT_DEFINITIONS.some((agent) => agent.id === normalized) ||
+    _customAgentDefs.some((agent) => agent.id === normalized)
+  );
 }
 
 /**

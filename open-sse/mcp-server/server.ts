@@ -164,6 +164,12 @@ function toNumber(value: unknown, fallback = 0): number {
   return typeof value === "number" && Number.isFinite(value) ? value : fallback;
 }
 
+// Mirrors the runtime's env convention for lane flags ("1" | "true" are on) so a
+// future string serialization can never silently invert a boolean lane report.
+function isLaneFlagOn(value: unknown): boolean {
+  return value === true || value === "1" || value === "true";
+}
+
 function toStringArray(value: unknown, fallback: string[] = []): string[] {
   const values = toArray(value).filter((entry): entry is string => typeof entry === "string");
   return values.length > 0 ? values : fallback;
@@ -292,6 +298,20 @@ async function handleGetHealth() {
     const cacheStatsRaw = toRecord(health.cacheStats);
     const resilienceCircuitBreakers = toArray(resilience.circuitBreakers);
     const rateLimitEntries = toArray(rateLimits.limits);
+    const adaptiveAdmissionRaw = toRecord(health.adaptiveAdmission);
+    // Curated lane subset: top lanes by queued cost so a congested tenant is
+    // visible first without shipping the whole admission snapshot to agents.
+    const laneTenants = toArray(adaptiveAdmissionRaw.laneTenants)
+      .map((tenant) => {
+        const record = toRecord(tenant);
+        return {
+          tenantKey: toString(record.tenantKey),
+          queuedCount: toNumber(record.queuedCount, 0),
+          queuedCost: toNumber(record.queuedCost, 0),
+        };
+      })
+      .sort((a, b) => b.queuedCost - a.queuedCost)
+      .slice(0, 10);
 
     // Surface fetch failures instead of letting Promise.allSettled's {} fallback
     // masquerade as genuine zero/empty data (indistinguishable "no data" vs.
@@ -333,6 +353,22 @@ async function handleGetHealth() {
             provider: toString(toRecord(health.cryptography).provider, "unknown"),
           }
         : undefined,
+      adaptiveAdmission:
+        Object.keys(adaptiveAdmissionRaw).length > 0
+          ? {
+              virtualLanes: isLaneFlagOn(adaptiveAdmissionRaw.virtualLanes),
+              pressure: toString(adaptiveAdmissionRaw.pressure),
+              utilization: toNumber(adaptiveAdmissionRaw.utilization, 0),
+              laneCount: toNumber(adaptiveAdmissionRaw.laneCount, 0),
+              laneQueuedCount: toNumber(adaptiveAdmissionRaw.laneQueuedCount, 0),
+              laneQueuedCost: toNumber(adaptiveAdmissionRaw.laneQueuedCost, 0),
+              laneTenants,
+              admittedCount: toNumber(adaptiveAdmissionRaw.admittedCount, 0),
+              rejectedCount: toNumber(adaptiveAdmissionRaw.rejectedCount, 0),
+              wouldRejectCount: toNumber(adaptiveAdmissionRaw.wouldRejectCount, 0),
+              shutdown: isLaneFlagOn(adaptiveAdmissionRaw.shutdown),
+            }
+          : undefined,
       degraded: degraded.length > 0 ? degraded : undefined,
     };
 

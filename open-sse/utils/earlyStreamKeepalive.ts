@@ -32,6 +32,7 @@
  */
 
 import { ResponsesOutputIndexStack } from "./responsesOutputIndexStack.ts";
+import { recordEarlyKeepaliveBytes } from "./earlyKeepaliveByteBuffer.ts";
 
 const ENCODER = new TextEncoder();
 const KEEPALIVE_FRAME = ENCODER.encode(": keepalive\n\n");
@@ -207,6 +208,19 @@ export type EarlyStreamKeepaliveOptions = {
    * instead — see the doc comment on the default ERROR_FRAME above for why.
    */
   errorFrame?: Uint8Array;
+  /**
+   * Request correlation id, threaded from the route's own handleChat(...,
+   * correlationId) call. When set, every byte this wrapper writes to the
+   * client directly (startup frame, periodic keepalive ticks, and any
+   * in-band error frame) — everything except the verbatim-forwarded real
+   * response body, which the handler's own reqLogger already captures — is
+   * recorded via earlyKeepaliveByteBuffer and merged into this same
+   * request's call-log streamChunks.client by
+   * chatCore/attemptLogging.ts, so the persisted artifact reflects what
+   * actually went out on the wire instead of only what the inner handler
+   * produced. Omit to leave today's behavior unchanged (no recording).
+   */
+  correlationId?: string;
 };
 
 /**
@@ -234,6 +248,15 @@ export async function withEarlyStreamKeepalive(
   // Responses) — derived from errorFrame itself so the dynamic real-upstream-body case
   // below stays consistent with the static default-message case without a second option.
   const errorFrameUsesNamedEvent = new TextDecoder().decode(errorFrame).startsWith("event:");
+  const correlationId = options.correlationId;
+  const frameDecoder = correlationId ? new TextDecoder() : null;
+  // Records every direct-to-client write EXCEPT the forwarded real response
+  // body — that one is already captured by the handler's own reqLogger, so
+  // recording it again here would duplicate it in the persisted artifact.
+  const recordClientBytes = (chunk: Uint8Array): void => {
+    if (!correlationId || !frameDecoder) return;
+    recordEarlyKeepaliveBytes(correlationId, frameDecoder.decode(chunk));
+  };
 
   // Settle into a tagged result so neither race branch leaves an unhandled
   // rejection when the threshold timer wins.
@@ -272,6 +295,7 @@ export async function withEarlyStreamKeepalive(
         if (stopped) return;
         try {
           controller.enqueue(keepaliveFrame);
+          recordClientBytes(keepaliveFrame);
         } catch {
           stopped = true;
           clearInterval(interval);
@@ -286,6 +310,7 @@ export async function withEarlyStreamKeepalive(
       // sub-interval gap, defeating the keepalive for exactly the case it targets.
       try {
         controller.enqueue(startupFrame);
+        recordClientBytes(startupFrame);
       } catch {
         /* consumer already gone */
       }
@@ -326,6 +351,7 @@ export async function withEarlyStreamKeepalive(
         if (result.status === "rejected") {
           // Handler rejected — emit a generic error frame (never the raw error/stack).
           controller.enqueue(errorFrame);
+          recordClientBytes(errorFrame);
         } else {
           const response = result.response;
           const contentType = (response.headers.get("content-type") || "").toLowerCase();
@@ -352,6 +378,7 @@ export async function withEarlyStreamKeepalive(
               // the stream end naturally.
               if (bytesForwarded === 0) {
                 controller.enqueue(errorFrame);
+                recordClientBytes(errorFrame);
               }
             }
           } else {
@@ -366,7 +393,9 @@ export async function withEarlyStreamKeepalive(
             const framed = errorFrameUsesNamedEvent
               ? `event: error\ndata: ${dataLine}\n\n`
               : `data: ${dataLine}\n\n`;
-            controller.enqueue(ENCODER.encode(framed));
+            const framedBytes = ENCODER.encode(framed);
+            controller.enqueue(framedBytes);
+            recordClientBytes(framedBytes);
           }
         }
       } catch {
@@ -374,6 +403,7 @@ export async function withEarlyStreamKeepalive(
         if (!aborted) {
           try {
             controller.enqueue(errorFrame);
+            recordClientBytes(errorFrame);
           } catch {
             /* consumer gone */
           }

@@ -948,8 +948,11 @@ Content-Type: multipart/form-data
 curl -X POST http://localhost:20128/v1/audio/transcriptions \
   -H "Authorization: Bearer your-api-key" \
   -F "file=@audio.mp3" \
-  -F "model=deepgram/nova-3"
+  -F "model=openai/whisper-1"
 ```
+
+`deepgram/nova-3` is the native Deepgram route and needs a Deepgram API key.
+If only OpenRouter is configured, use `openrouter/deepgram/nova-3`.
 
 **Speech-to-Text (transcription)** providers:
 

@@ -41,6 +41,7 @@ export const OUTPUT_STYLE_CATALOG: Record<string, OutputStyle> = {
       "pt-BR": CAVEMAN_INSTRUCTION_BY_LANGUAGE["pt-BR"],
       ja: CAVEMAN_INSTRUCTION_BY_LANGUAGE.ja,
       id: CAVEMAN_INSTRUCTION_BY_LANGUAGE.id,
+      vi: CAVEMAN_INSTRUCTION_BY_LANGUAGE.vi,
     },
   },
   "less-code": {
@@ -52,6 +53,28 @@ export const OUTPUT_STYLE_CATALOG: Record<string, OutputStyle> = {
       lite: `Write the smallest change that satisfies the request. Skip speculative abstractions. ${SHARED_BOUNDARIES}`,
       full: `Act like a lazy senior dev applying YAGNI. Smallest working change only. No unrequested abstractions, no premature generalization, no extra layers, no defensive scaffolding the request did not ask for. Reuse existing code over adding new code. ${SHARED_BOUNDARIES}`,
       ultra: `Minimal diff discipline. Touch the fewest lines that make it work. Zero new files, classes, or config unless strictly required. Inline over abstract. No "while we're here" extras. ${SHARED_BOUNDARIES}`,
+    },
+    i18n: {
+      "pt-BR": {
+        lite: `Escreva a menor alteração que satisfaça o pedido. Pule abstrações especulativas. ${SHARED_BOUNDARIES}`,
+        full: `Aja como um dev sênior preguiçoso aplicando YAGNI. Apenas a menor alteração funcional. Nenhuma abstração não solicitada, generalização prematura, camadas extras ou estrutura defensiva não pedida. Reutilize código existente em vez de adicionar novo. ${SHARED_BOUNDARIES}`,
+        ultra: `Disciplina de diff mínimo. Toque no menor número de linhas para funcionar. Zero arquivos, classes ou configs novos a menos que estritamente necessário. Inline em vez de abstrair. Sem extras "já que estamos aqui". ${SHARED_BOUNDARIES}`,
+      },
+      vi: {
+        lite: `Viết thay đổi nhỏ nhất đáp ứng yêu cầu. Bỏ qua các abstraction suy đoán. ${SHARED_BOUNDARIES}`,
+        full: `Hành động như một senior dev lười biếng áp dụng YAGNI. Chỉ làm thay đổi nhỏ nhất chạy được. Không abstraction không được yêu cầu, không tổng quát hóa sớm, không thêm layer, không dàn giáo phòng thủ mà yêu cầu không hỏi. Dùng lại code có sẵn thay vì thêm code mới. ${SHARED_BOUNDARIES}`,
+        ultra: `Kỷ luật diff tối thiểu. Chạm ít dòng nhất để chạy được. Không file, class hay config mới trừ khi bắt buộc. Inline thay vì abstract. Không thêm thắt kiểu "tiện tay làm luôn". ${SHARED_BOUNDARIES}`,
+      },
+      ja: {
+        lite: `要求を満たす最小の変更を書け。推測に基づく抽象化はスキップ。${SHARED_BOUNDARIES}`,
+        full: `YAGNIを適用する怠惰なシニア開発者のように振る舞え。動く最小の変更のみ。要求されていない抽象化、時期尚早な汎用化、余分なレイヤー、要求されていない防御的足場は禁止。新規コード追加より既存コードの再利用。${SHARED_BOUNDARIES}`,
+        ultra: `最小diffの規律。動くようにするための変更行数を最小に。厳密に必要でない限り、新規ファイル、クラス、設定はゼロ。抽象化よりインライン。ついでに行う余分な変更は禁止。${SHARED_BOUNDARIES}`,
+      },
+      id: {
+        lite: `Tulis perubahan terkecil yang memenuhi permintaan. Lewati abstraksi spekulatif. ${SHARED_BOUNDARIES}`,
+        full: `Bertindak seperti dev senior malas yang menerapkan YAGNI. Hanya perubahan terkecil yang berfungsi. Tanpa abstraksi yang tidak diminta, generalisasi prematur, lapisan ekstra, atau scaffolding defensif yang tidak diminta. Pakai ulang kode yang ada daripada menambah kode baru. ${SHARED_BOUNDARIES}`,
+        ultra: `Disiplin diff minimal. Sentuh baris sesedikit mungkin yang membuatnya berfungsi. Nol file, kelas, atau config baru kecuali sangat diperlukan. Inline daripada abstract. Tanpa tambahan "mumpung di sini". ${SHARED_BOUNDARIES}`,
+      },
     },
   },
   // Ponytail (lazy-senior-dev mode) — integrated into the output-style registry

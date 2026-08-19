@@ -261,3 +261,54 @@ test("GitlabExecutor falls back to the public Code Suggestions endpoint when dir
     globalThis.fetch = originalFetch;
   }
 });
+
+// #10365: a 401 from the direct_access exchange must ALSO fall back to the public
+// Code Suggestions completions endpoint (same resilience as the 403-disabled case
+// above), instead of surfacing an opaque 401 token error with no fallback.
+test("GitlabExecutor falls back to the public Code Suggestions endpoint when direct_access returns 401", async () => {
+  const executor = getExecutor("gitlab-duo") as GitlabExecutor;
+  const originalFetch = globalThis.fetch;
+  const calls: string[] = [];
+
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+
+    if (String(url) === "https://gitlab.example.com/api/v4/code_suggestions/direct_access") {
+      return jsonResponse({ error: "invalid_token" }, 401);
+    }
+
+    return jsonResponse({
+      model: { name: "code-gecko" },
+      choices: [{ text: "monolith fallback works" }],
+    });
+  };
+
+  try {
+    const result = await executor.execute({
+      model: "gitlab-duo-code-suggestions",
+      body: {
+        messages: [{ role: "user", content: "Say hello" }],
+      },
+      stream: false,
+      credentials: {
+        accessToken: "oauth-access",
+        providerSpecificData: {
+          baseUrl: "https://gitlab.example.com",
+        },
+      },
+      signal: AbortSignal.timeout(10_000),
+      log: null,
+    });
+
+    assert.deepEqual(calls, [
+      "https://gitlab.example.com/api/v4/code_suggestions/direct_access",
+      "https://gitlab.example.com/api/v4/code_suggestions/completions",
+    ]);
+
+    const body = (await result.response.json()) as any;
+    assert.equal(body.model, "code-gecko");
+    assert.match(body.choices[0].message.content, /monolith fallback works/i);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

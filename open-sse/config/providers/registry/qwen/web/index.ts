@@ -17,13 +17,13 @@ export const qwen_webProvider: RegistryEntry = {
   // MODEL_ALIASES map for backward compatibility.
   models: [
     {
-      id: "qwen3.8-max-preview",
-      name: "Qwen3.8 Max Preview",
+      id: "qwen3.8-max",
+      name: "Qwen3.8 Max",
       toolCalling: false,
       supportsReasoning: true,
       supportsVision: true,
       contextLength: 1_000_000,
-      maxOutputTokens: 65_536,
+      maxOutputTokens: 131_072,
     },
     {
       id: "qwen3.7-max",

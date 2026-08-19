@@ -711,6 +711,85 @@ export function parseTranslationModel(modelStr: string | null, dynamicProviders?
   return parseAudioModel(modelStr, AUDIO_TRANSLATION_PROVIDERS, dynamicProviders);
 }
 
+export interface AudioProviderMatch {
+  provider: string;
+  model: string;
+  config: AudioProvider;
+}
+
+/**
+ * Candidate model ids to try when the prefix-matched provider has no credentials.
+ * Includes the raw request string (a gateway may list `deepgram/nova-3` as its
+ * own model id) plus the parsed native id and `provider/model`.
+ */
+export function audioModelAliasCandidates(
+  originalModel: string,
+  failedProvider: string,
+  resolvedModel: string | null
+): string[] {
+  const candidates = [originalModel];
+  if (resolvedModel) {
+    candidates.push(resolvedModel);
+    candidates.push(`${failedProvider}/${resolvedModel}`);
+  }
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+/**
+ * Find another registry provider that lists one of the candidate model ids.
+ * Used when `deepgram/nova-3` prefix-matches native Deepgram but only a
+ * gateway such as OpenRouter has credentials for that model id.
+ */
+export function findAlternateAudioProvider(
+  registry: Record<string, AudioProvider>,
+  failedProvider: string,
+  candidates: string[]
+): AudioProviderMatch | null {
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate || seen.has(candidate)) continue;
+    seen.add(candidate);
+    for (const [providerId, config] of Object.entries(registry)) {
+      if (providerId === failedProvider) continue;
+      if (config.models.some((m) => m.id === candidate)) {
+        return { provider: providerId, model: candidate, config };
+      }
+    }
+  }
+  return null;
+}
+
+/** Qualified catalog ids (`gateway/model`) that list the same nested model. */
+export function listAlternateAudioModelIds(
+  registry: Record<string, AudioProvider>,
+  failedProvider: string,
+  candidates: string[]
+): string[] {
+  const ids: string[] = [];
+  const seen = new Set<string>();
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    for (const [providerId, config] of Object.entries(registry)) {
+      if (providerId === failedProvider) continue;
+      if (!config.models.some((m) => m.id === candidate)) continue;
+      const id = `${providerId}/${candidate}`;
+      if (seen.has(id)) continue;
+      seen.add(id);
+      ids.push(id);
+    }
+  }
+  return ids;
+}
+
+export function missingAudioProviderCredentialsMessage(
+  provider: string,
+  alternateIds: string[] = []
+): string {
+  const base = `No credentials for provider: ${provider}`;
+  if (alternateIds.length === 0) return base;
+  return `${base}. The catalog also lists this model as ${alternateIds.join(", ")}`;
+}
+
 /**
  * Get all audio models as a flat list
  */

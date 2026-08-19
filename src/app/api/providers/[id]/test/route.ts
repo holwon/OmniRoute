@@ -19,9 +19,17 @@ import { saveCallLog } from "@/lib/usageDb";
 import { shouldHideLogs } from "@/lib/tokenHealthCheck";
 import { logProxyEvent } from "@/lib/proxyLogger";
 import { runWithProxyContext } from "@omniroute/open-sse/utils/proxyFetch.ts";
-import { isGitLabDirectAccessDisabled } from "@/lib/oauth/gitlab";
+import {
+  buildGitLabDuoProbeBody,
+  buildGitLabDuoProbeHeaders,
+  buildGitLabOAuthEndpoints,
+  resolveGitLabOAuthBaseUrl,
+  shouldFallbackToPublicCodeSuggestions,
+} from "@/lib/oauth/gitlab";
 import { providerAllowsOptionalApiKey } from "@/shared/constants/providers";
+import { shouldUseApiKeyConnectionTest } from "./webSessionTestDispatch";
 import { removeConnectionHealth } from "@omniroute/open-sse/services/apiKeyRotator.ts";
+import { isConnectionUnavailableToAuxiliaryActivity } from "@/lib/exclusiveLeaseIsolation";
 import { classifyAmbiguousOrAuthError, type ClassifyFailureArgs } from "./mistralAmbiguousAuth";
 import { buildApiKeyConnectionTestResult } from "./apiKeyTestResult";
 import { OAUTH_TEST_CONFIG } from "./oauthTestConfig";
@@ -307,6 +315,39 @@ function isTokenExpired(connection: any) {
 }
 
 /**
+ * #10365 / #10499: the real chat path (open-sse/executors/gitlab.ts) treats a rejected
+ * `direct_access` exchange (401) or an explicitly disabled direct-connections tenant
+ * (403) as recoverable — it falls back to the public Code Suggestions completions
+ * endpoint and keeps serving. "Test Connection" / Retest must apply the SAME contract:
+ * a `direct_access` failure alone is not proof the token is bad, so probe the fallback
+ * endpoint before reporting the connection unhealthy. Only a fallback-probe 401/403
+ * means the token itself is rejected; any other status (including validation errors on
+ * the deliberately minimal probe body) means auth was accepted.
+ */
+async function probeGitLabDuoPublicFallback(
+  connection: any,
+  accessToken: string,
+  timeoutMs: number
+): Promise<boolean> {
+  const endpoints = buildGitLabOAuthEndpoints(
+    resolveGitLabOAuthBaseUrl(connection?.providerSpecificData)
+  );
+  try {
+    const fallbackRes = await fetch(endpoints.publicCompletionsUrl, {
+      method: "POST",
+      headers: buildGitLabDuoProbeHeaders(accessToken),
+      body: JSON.stringify(buildGitLabDuoProbeBody()),
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+    return fallbackRes.status !== 401 && fallbackRes.status !== 403;
+  } catch {
+    // Network/timeout failures on the probe are not an auth verdict either way —
+    // fall through to the caller's existing 401/403 handling instead of masking them.
+    return false;
+  }
+}
+
+/**
  * Sync to cloud if enabled
  */
 async function syncToCloudIfEnabled() {
@@ -487,14 +528,17 @@ export async function testOAuthConnection(
 
     if (connection.provider === "gitlab-duo") {
       const gitlabText = await res.text();
-      if (isGitLabDirectAccessDisabled(res.status, gitlabText)) {
-        return {
-          valid: true,
-          error: null,
-          refreshed,
-          newTokens,
-          diagnosis: makeDiagnosis("ok", "upstream", null, null),
-        };
+      if (shouldFallbackToPublicCodeSuggestions(res.status, gitlabText)) {
+        const fallbackOk = await probeGitLabDuoPublicFallback(connection, accessToken, timeoutMs);
+        if (fallbackOk) {
+          return {
+            valid: true,
+            error: null,
+            refreshed,
+            newTokens,
+            diagnosis: makeDiagnosis("ok", "upstream", null, null),
+          };
+        }
       }
     }
 
@@ -541,9 +585,33 @@ export async function testOAuthConnection(
           };
         }
 
+        const retryBody = await retryRes.text().catch(() => "");
+
+        // #10365 / #10499: same fallback contract as the first attempt above — a
+        // rejected direct_access exchange with a freshly-refreshed token is still
+        // recoverable via the public Code Suggestions endpoint.
+        if (
+          connection.provider === "gitlab-duo" &&
+          shouldFallbackToPublicCodeSuggestions(retryRes.status, retryBody)
+        ) {
+          const fallbackOk = await probeGitLabDuoPublicFallback(
+            connection,
+            tokens.accessToken,
+            timeoutMs
+          );
+          if (fallbackOk) {
+            return {
+              valid: true,
+              error: null,
+              refreshed: true,
+              newTokens: tokens,
+              diagnosis: makeDiagnosis("ok", "upstream", null, null),
+            };
+          }
+        }
+
         // #1444: a fresh token that still gets a 401 because the account itself was
         // deactivated must be labeled account_deactivated, not a generic auth error.
-        const retryBody = await retryRes.text().catch(() => "");
         const error = isAccountDeactivatedMessage(retryBody)
           ? "Account deactivated by the provider"
           : `API returned ${retryRes.status} after token refresh`;
@@ -661,6 +729,17 @@ export async function testSingleConnection(connectionId: string, validationModel
     return { valid: false, error: "Connection not found", diagnosis: null, latencyMs: 0 };
   }
 
+  if (await isConnectionUnavailableToAuxiliaryActivity(connectionId)) {
+    const error = "Connection test deferred while an exclusive session lease is active";
+    return {
+      valid: false,
+      skipped: true,
+      error,
+      diagnosis: makeDiagnosis("lease_active", "local", error, "exclusive_lease_active"),
+      latencyMs: 0,
+    };
+  }
+
   const provider = typeof connection.provider === "string" ? connection.provider : "";
   if (!provider) {
     return {
@@ -695,7 +774,7 @@ export async function testSingleConnection(connectionId: string, validationModel
       refreshed: false,
       diagnosis: (runtime as any).diagnosis,
     };
-  } else if (connection.authType === "apikey") {
+  } else if (shouldUseApiKeyConnectionTest(connection.authType, provider)) {
     const enrichedConnection = validationModelId
       ? {
           ...connection,

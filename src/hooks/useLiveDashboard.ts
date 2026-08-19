@@ -19,6 +19,11 @@ import { deriveLiveWsPath } from "@/shared/utils/wsPath";
 
 const WS_RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 16000, 30000];
 
+// Must stay <= the server's HEARTBEAT_TIMEOUT_MS (35s in src/server/ws/liveServer.ts) so a
+// healthy, connected-but-idle client is never force-terminated by the server's heartbeat sweep.
+// Matches the server's own HEARTBEAT_INTERVAL_MS (15s).
+const CLIENT_PING_INTERVAL_MS = 15_000;
+
 /** Only accept ws:// or wss:// URLs (mirrors the guard in src/app/api/v1/ws/route.ts). */
 function sanitizeWsPublicUrl(url: unknown): string | null {
   if (typeof url !== "string" || url.length === 0) return null;
@@ -152,7 +157,15 @@ export function useLiveDashboard({
   const [events, setEvents] = useState<WsEventPayload[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const mountedRef = useRef(true);
+
+  const stopPingHeartbeat = useCallback(() => {
+    if (pingIntervalRef.current) {
+      clearInterval(pingIntervalRef.current);
+      pingIntervalRef.current = null;
+    }
+  }, []);
   const maxEvents = 500;
 
   const onEventRef = useRef(onEvent);
@@ -189,6 +202,16 @@ export function useLiveDashboard({
 
         // Subscribe to channels
         ws.send(JSON.stringify({ type: "subscribe", channels }));
+
+        // Heartbeat: send a periodic ping so the server (which only refreshes
+        // liveness from inbound messages) never terminates a healthy, idle
+        // connection for exceeding its inactivity timeout (#10319).
+        stopPingHeartbeat();
+        pingIntervalRef.current = setInterval(() => {
+          if (ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "ping" }));
+          }
+        }, CLIENT_PING_INTERVAL_MS);
       };
 
       ws.onmessage = (event) => {
@@ -236,6 +259,7 @@ export function useLiveDashboard({
       };
 
       ws.onclose = () => {
+        stopPingHeartbeat();
         if (!mountedRef.current) return;
         wsRef.current = null;
         setConnection((prev) => ({
@@ -271,7 +295,14 @@ export function useLiveDashboard({
         error: err instanceof Error ? err.message : "Connection failed",
       }));
     }
-  }, [effectiveWsUrl, apiKey, channels.join(","), autoReconnect, connection.reconnectAttempt]);
+  }, [
+    effectiveWsUrl,
+    apiKey,
+    channels.join(","),
+    autoReconnect,
+    connection.reconnectAttempt,
+    stopPingHeartbeat,
+  ]);
 
   // Connect on mount and on reconnect trigger
   useEffect(() => {
@@ -281,6 +312,7 @@ export function useLiveDashboard({
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
+      stopPingHeartbeat();
       wsRef.current?.close();
       wsRef.current = null;
       setConnection({
@@ -302,9 +334,10 @@ export function useLiveDashboard({
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
+      stopPingHeartbeat();
       wsRef.current?.close();
     };
-  }, [connect, enabled, wsUrlResolved]);
+  }, [connect, enabled, wsUrlResolved, stopPingHeartbeat]);
 
   // Connect (for manual retry)
   const reconnect = useCallback(() => {

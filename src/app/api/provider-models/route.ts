@@ -448,6 +448,7 @@ export async function DELETE(request) {
     const { searchParams } = new URL(request.url);
     const provider = searchParams.get("provider");
     const modelId = searchParams.get("model");
+    const resetOverride = searchParams.get("resetOverride") === "true";
 
     if (!provider) {
       return Response.json(
@@ -487,15 +488,25 @@ export async function DELETE(request) {
       );
     }
 
-    // A custom row and a synced row can share one id. Prefer the custom row when
-    // both exist; otherwise delete the synced row from the current discovery
-    // snapshot. A later sync may restore an upstream model, while Hide remains
-    // the persistent way to exclude an automatically discovered model.
+    // Resetting a user-owned overlay must never delete the same-id synced base.
+    // The normal delete action retains its existing behavior for a standalone
+    // synced row, while the detail-page reset control uses resetOverride=true.
     const removedCustom = await removeCustomModel(provider, modelId);
-    const removedSynced = removedCustom
-      ? false
-      : await removeSyncedAvailableModel(provider, modelId);
+    const removedSynced =
+      removedCustom || resetOverride ? false : await removeSyncedAvailableModel(provider, modelId);
     const removed = removedCustom || removedSynced;
+    if (resetOverride && removedCustom) {
+      removeModelContextOverride(provider, modelId);
+      const aliasChanges = await syncManagedAvailableModelAliases(provider, [modelId], {
+        pruneMissing: false,
+      });
+      return Response.json({
+        removed,
+        resetOverride: true,
+        aliasChanges,
+      });
+    }
+
     const removedAliases = await deleteManagedAvailableModelAliases(provider, [modelId]);
     return Response.json({ removed, aliasChanges: { removed: removedAliases, assigned: [] } });
   } catch (error) {

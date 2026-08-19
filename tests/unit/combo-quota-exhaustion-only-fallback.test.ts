@@ -458,6 +458,15 @@ test("opted-in combo ref remains a black box and only quota exhaustion advances 
   }
 });
 
+// #10501: the child combo's terminal status is now derived from
+// resolveComboTerminalStatus instead of a bare `lastStatus`. A quality failure
+// (openai/quality-invalid) mixed with a genuine quota-exhaustion 429
+// (anthropic/quota) is a heterogeneous, non-"the request itself is invalid"
+// mix, so it normalizes to a 5xx — the `fallbackOnlyOnQuotaExhaustion` STOP
+// decision itself is untouched (it is driven by internal quota-observation
+// tracking, not by re-reading the final HTTP status — asserted below via
+// `calls`, which must still show the parent stopping instead of falling back
+// to paid/backup).
 test("protected parent combo-ref stops after normal child quality rejection then quota exhaustion", async () => {
   const calls: string[] = [];
   const child = {
@@ -496,8 +505,16 @@ test("protected parent combo-ref stops after normal child quality rejection then
           : ok(modelStr);
     },
   });
-  assert.equal(result.status, 429);
-  assert.deepEqual(calls, ["openai/quality-invalid", "anthropic/quota"]);
+  assert.ok(
+    result.status >= 500,
+    `heterogeneous quality+quota-exhaustion mix must normalize to a 5xx, got ${result.status}`
+  );
+  assert.deepEqual(
+    calls,
+    ["openai/quality-invalid", "anthropic/quota"],
+    "the parent must still STOP at the child (not fall back to paid/backup) — the " +
+      "fallbackOnlyOnQuotaExhaustion decision is unaffected by the status-code change"
+  );
 });
 
 test("protected parent combo-ref stops when a child has mixed quota and non-quota failures", async () => {
